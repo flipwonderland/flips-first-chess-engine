@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include "util.h"
+
 static enum piece {
 
 	none = 0b00000,
@@ -166,20 +168,34 @@ int main()
 
 		if (input == "uci") {
 			uci = true;
+			cout << "id name flipgine" << "\n";
+			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
 		}
-		else if (input == "ready") {
+		else if (input == "debug") {
+
+		}
+		else if (input == "isready") {
 			//see if it's ready to run and then
 			cout << "readyok" << "\n";
 		}
 		else if (input == "setoption name") {
 			// if I figure out how to do multithreading I'll put a command here
 		}
-		else if (input == "position") {
-
+		else if (input == "register") {
+			//idk if I'm gonna need this one actually
 		}
 		else if (input == "ucinewgame") {
 			fenToGamestate(startingFenString);
+		}
+		else if (input == "position") /*position[fen | startpos]  moves  ....*/ {
+
+		}
+		else if (input == "go") {
+
+		}
+		else if (input == "ponderhit") {
+			//this will do nothing until I implement pondering
 		}
 		else if (input == "quit")
 			keepRunning = false;
@@ -495,12 +511,6 @@ Engine to GUI:
 	   If  is greater than 1, always send all k lines in k strings together.
 		The engine should only send this if the option "UCI_ShowCurrLine" is set to true.
 
-
-Made possible by the following Sponsors
-
-www.12secure.nl
-
-www.ip-camera.nl
 
 * option
 	This command tells the GUI which parameters can be changed in the engine.

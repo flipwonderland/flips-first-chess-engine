@@ -23,3 +23,5 @@ clampf(float min, float val, float max) {
     if (val > max) return max;
     return val;
 }
+
+//this was taken from the pong game that I followed the tutorial for
