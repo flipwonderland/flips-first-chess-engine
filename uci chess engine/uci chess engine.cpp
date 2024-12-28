@@ -490,7 +490,7 @@ Engine to GUI:
 	* nps
 		x nodes per second searched, the engine should send this info regularly
 	* tbhits
-		x positions where found in the endgame table bases
+		x positions were found in the endgame table bases
 	* cpuload
 		the cpu usage of the engine is x permill.
 	* string
