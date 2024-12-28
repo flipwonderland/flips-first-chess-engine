@@ -173,7 +173,7 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (input == "debug") {
-			// put all the test info here, I have a feeling I'm gonna use this a lot
+			// put all the test info here, I have a feeling I'm gonna use this a lot p
 		}
 		else if (input == "isready") {
 			//see if it's ready to run and then
