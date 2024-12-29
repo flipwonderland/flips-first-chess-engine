@@ -33,15 +33,15 @@ public:
 	int fullmoveNumber;
 };
 
-gameState clearBoard;
+gameState clearBoard; //add this so you can clear the board before doing anything so you don't get junk data in the board
 gameState currentBoard;
 
 std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 std::string inputFenString{};
 
 void fenToGamestate(std::string fenString) {
-	int position;
 	int stringPlace = 0;
+	int position;
 	int rank = 0;
 	int file = 7;
 	int piecesLeftInRank = 8;
@@ -162,6 +162,29 @@ void fenToGamestate(std::string fenString) {
 			break;
 		}
 	}
+
+	stringPlace++;
+	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
+
+	stringPlace++;
+	for (int x = 0; x != 4; x++) {
+		switch (fenString[stringPlace]) {
+		case 'K':
+			currentBoard.whiteShortCastle = true;
+		case 'Q':
+			currentBoard.whiteShortCastle = true;
+		case 'k':
+			currentBoard.blackShortCastle = true;
+		case 'q':
+			currentBoard.blackLongCastle = true;
+		}
+		stringPlace++;
+	}
+	//otherwise it'll just be unallocated
+	if (!currentBoard.whiteShortCastle) currentBoard.whiteShortCastle = false;
+	if (!currentBoard.whiteLongCastle) currentBoard.whiteLongCastle = false;
+	if (!currentBoard.blackShortCastle) currentBoard.blackShortCastle = false;
+	if (!currentBoard.blackLongCastle) currentBoard.blackLongCastle = false;
 
 }
 
