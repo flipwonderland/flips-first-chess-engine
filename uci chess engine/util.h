@@ -24,4 +24,4 @@ clampf(float min, float val, float max) {
     return val;
 }
 
-//this was taken from the pong game that I followed the tutorial for
+//this was taken from the pong game that I followed a tutorial for
