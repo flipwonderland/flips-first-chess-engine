@@ -29,8 +29,11 @@ public:
 	bool whiteLongCastle;
 	bool blackShortCastle;
 	bool blackLongCastle;
+	/*
+	* might need these might not
 	int halfmoveClock;
 	int fullmoveNumber;
+	*/
 };
 
 gameState clearBoard; //add this so you can clear the board before doing anything so you don't get junk data in the board
@@ -39,6 +42,7 @@ gameState currentBoard;
 std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 std::string inputFenString{};
 
+//this is incredibly inefficient, but I can optimize it when I have the skillz to do so
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
 	int position;
@@ -185,7 +189,80 @@ void fenToGamestate(std::string fenString) {
 	if (!currentBoard.whiteLongCastle) currentBoard.whiteLongCastle = false;
 	if (!currentBoard.blackShortCastle) currentBoard.blackShortCastle = false;
 	if (!currentBoard.blackLongCastle) currentBoard.blackLongCastle = false;
+	//when I set up the clear board function I'll remove this
 
+	stringPlace++;
+	if (fenString[stringPlace] != '-') {
+		int fileLetterAdd = 0;
+		int rankNumberMultiply = 0;
+		switch (fenString[stringPlace]) {
+		case 'a':
+			break;
+		case 'b':
+			fileLetterAdd = 1;
+			break;
+		case 'c':
+			fileLetterAdd = 2;
+			break;
+		case 'd':
+			fileLetterAdd = 3;
+			break;
+		case 'e':
+			fileLetterAdd = 4;
+			break;
+		case 'f':
+			fileLetterAdd = 5;
+			break;
+		case 'g':
+			fileLetterAdd = 6;
+			break;
+		case 'h':
+			fileLetterAdd = 7;
+			break;
+		}
+		stringPlace++;
+		switch (fenString[stringPlace]) /*again the char ints aren't the same as *int* ints */ {
+		case('1'):
+			rankNumberMultiply = 0;
+			break;
+		case('2'):
+			rankNumberMultiply = 1;
+			break;
+		case('3'):
+			rankNumberMultiply = 2;
+			break;
+		case('4'):
+			rankNumberMultiply = 3;
+			break;
+		case('5'):
+			rankNumberMultiply = 4;
+			break;
+		case('6'):
+			rankNumberMultiply = 5;
+			break;
+		case('7'):
+			rankNumberMultiply = 6;
+			break;
+		case('8'):
+			rankNumberMultiply = 7;
+			break;
+		}
+
+		int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
+		//this is slow so I'll change this as well when I get the clear board function
+		for (int i = 0; i <= 63; i++) {
+			enPassantSquare == i ? currentBoard.enPassant[i] = true : currentBoard.enPassant[i] = false; //this could be wrong make sure to test it when you get the interface working
+		}
+
+	}
+	else {
+		//delete this when the clear board function is made
+		for (int i = 0; i <= 63; i++) {
+			currentBoard.enPassant[i] = false;
+		}
+	}
+
+	// there's more for the half clock and full move counters but I don't think the engine has to worry about those
 }
 
 
