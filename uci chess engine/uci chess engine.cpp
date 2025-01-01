@@ -304,40 +304,40 @@ int main()
 	do {
 		std::string input = {};
 		std::getline(cin >> std::ws, input);
+		std::string command = inputParser(input, 0);
 
-
-		if (input == "uci") {
+		if (command == "uci")/*should turn this into a switch*/ {
 			uci = true;
 			cout << "id name flipgine" << "\n";
 			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
 		}
-		else if (input == "debug") {
+		else if (command == "debug") {
 			// put all the test info here, I have a feeling I'm gonna use this a lot p
 		}
-		else if (input == "isready") {
+		else if (command == "isready") {
 			//see if it's ready to run and then
 			cout << "readyok" << "\n";
 		}
-		else if (input == "setoption name") {
+		else if (command == "setoption name") {
 			// if I figure out how to do multithreading I'll put a command here
 		}
-		else if (input == "register") {
+		else if (command == "register") {
 			//idk if I'm gonna need this one actually
 		}
-		else if (input == "ucinewgame") {
+		else if (command == "ucinewgame") {
 			fenToGamestate(startingFenString);
 		}
-		else if (input == "position") /*position[fen | startpos]  moves  ....*/ {
+		else if (command == "position") /*position[fen | startpos]  moves  ....*/ {
 
 		}
-		else if (input == "go") {
+		else if (command == "go") {
 
 		}
-		else if (input == "ponderhit") {
+		else if (command == "ponderhit") {
 			//this will do nothing until I implement pondering
 		}
-		else if (input == "quit")
+		else if (command == "quit")
 			keepRunning = false;
 		else
 			cout << "unknown command, try again" << "\n";
