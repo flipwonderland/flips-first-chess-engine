@@ -55,7 +55,7 @@ void clearGameState() {
 	currentBoard = clearBoard;
 }
 
-//this is incredibly inefficient, but I can optimize it when I have the skillz to do so
+//this is incredibly inefficient (I think), but I can optimize it when I have the skillz to do so
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
 	int position;
@@ -263,9 +263,33 @@ void fenToGamestate(std::string fenString) {
 
 	}
 	
-	// there's more for the half clock and full move counters but I don't think the engine has to worry about those
+	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
 
+std::string inputParser(std::string input, int desiredToken) {
+	std::string temp = input;
+	std::string token;
+	int tokenCount = 0;
+	bool stop = false;
+	while (!stop) {
+		size_t stopTokenPlace = temp.find(' ');
+		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
+			stop = true;
+		}
+		else {
+			if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
+				temp.erase(0, stopTokenPlace);
+			}
+			else {
+				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
+				if (deleteAllAfterDesiredToken != std::string::npos) temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
+				token = temp;
+			}
+			tokenCount++;
+		}
+	}  
+	return token;
+}
 
 bool uci = false;
 bool keepRunning = true;
@@ -318,6 +342,7 @@ int main()
 		else
 			cout << "unknown command, try again" << "\n";
 	} while (keepRunning);
+	return 0;
 }
 
 
