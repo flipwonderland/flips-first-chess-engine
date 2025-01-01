@@ -36,11 +36,24 @@ public:
 	*/
 };
 
-gameState clearBoard; //add this so you can clear the board before doing anything so you don't get junk data in the board
+gameState clearBoard;
 gameState currentBoard;
 
-std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"; //rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; 
 std::string inputFenString{};
+
+void clearGameState() {
+	for (int i = 0; i <= 63; i++) {
+		clearBoard.square[i] = piece::none;
+		clearBoard.enPassant[i] = false;
+	}
+	clearBoard.whiteToMove = true;
+	clearBoard.whiteShortCastle = false;
+	clearBoard.whiteLongCastle = false;
+	clearBoard.blackLongCastle = false;
+	clearBoard.blackShortCastle = false;
+	currentBoard = clearBoard;
+}
 
 //this is incredibly inefficient, but I can optimize it when I have the skillz to do so
 void fenToGamestate(std::string fenString) {
@@ -184,13 +197,7 @@ void fenToGamestate(std::string fenString) {
 		}
 		stringPlace++;
 	}
-	//otherwise it'll just be unallocated
-	if (!currentBoard.whiteShortCastle) currentBoard.whiteShortCastle = false;
-	if (!currentBoard.whiteLongCastle) currentBoard.whiteLongCastle = false;
-	if (!currentBoard.blackShortCastle) currentBoard.blackShortCastle = false;
-	if (!currentBoard.blackLongCastle) currentBoard.blackLongCastle = false;
-	//when I set up the clear board function I'll remove this
-
+	
 	stringPlace++;
 	if (fenString[stringPlace] != '-') {
 		int fileLetterAdd = 0;
@@ -255,21 +262,15 @@ void fenToGamestate(std::string fenString) {
 		}
 
 	}
-	else {
-		//delete this when the clear board function is made
-		for (int i = 0; i <= 63; i++) {
-			currentBoard.enPassant[i] = false;
-		}
-	}
-
+	
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those
 }
 
 
-
 bool uci = false;
 bool keepRunning = true;
-
+//what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
+//I think I could just do that by making a nn that changes the move order possibly, because with ab pruning if the best move is first the search will be extremely fast
 int main()
 {
 	using std::cout;
