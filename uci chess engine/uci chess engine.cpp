@@ -277,6 +277,7 @@ std::string inputParser(std::string input, int desiredToken) {
 			stop = true;
 		}
 		else {
+			//might be able to change this to !=
 			if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
 				temp.erase(0, stopTokenPlace);
 			}
@@ -284,11 +285,12 @@ std::string inputParser(std::string input, int desiredToken) {
 				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
 				if (deleteAllAfterDesiredToken != std::string::npos) temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
 				token = temp;
+				return token;
 			}
 			tokenCount++;
 		}
 	}  
-	return token;
+	
 }
 
 bool uci = false;
@@ -319,17 +321,23 @@ int main()
 			//see if it's ready to run and then
 			cout << "readyok" << "\n";
 		}
-		else if (command == "setoption name") {
+		else if (command == "setoption name") /*gotta fix this, this is 2 tokens in one*/ {
 			// if I figure out how to do multithreading I'll put a command here
 		}
 		else if (command == "register") {
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-			fenToGamestate(startingFenString);
+			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
 		}
 		else if (command == "position") /*position[fen | startpos]  moves  ....*/ {
-
+			if (inputParser(input, 1) == "startpos") {
+				fenToGamestate(startingFenString);
+			}
+			else {
+				std::string inputFenString = inputParser(input, 1);
+				fenToGamestate(inputFenString);
+			}  // also have to add the moves
 		}
 		else if (command == "go") {
 
