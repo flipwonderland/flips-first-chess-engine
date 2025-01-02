@@ -20,6 +20,9 @@ static enum piece {
 
 };
 
+int movesPassed = 0;
+int moves[17697]; //longest possible chess game, will never need to store more moves than that
+
 class gameState {
 public:
 	char square[64];
@@ -291,7 +294,7 @@ std::string inputParser(std::string input, int desiredToken) {
 			tokenCount++;
 		}
 	}  
-	return "endOfTheLinePal.";
+	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
 
 bool uci = false;
@@ -346,7 +349,64 @@ int main()
 				inputFenString.append(inputFenStringPart2);
 				inputFenString.append(inputFenStringPart3); // I think this is really stupid and redundant but I am very tired sorry future me
 				fenToGamestate(inputFenString); //also I need to change it if I want to use the half clock and move counter
-			}  // also have to add the moves
+
+				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
+				std::string moveString = inputParser(input, movePlace);
+				while (moveString != "endOfTheLinePal.") {
+					//have to take the moves, decode the string, and encode them into an int that are in an array 
+					//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
+					int readNumber = 0;
+					char toRead = moveString[readNumber];
+					if (readNumber != 4) {
+						switch (toRead) {
+						case 'a':
+							break;
+						case 'b':
+							break;
+						case 'c':
+							break;
+						case 'd':
+							break;
+						case 'e':
+							break;
+						case 'f':
+							break;
+						case 'g':
+							break;
+						case 'h':
+							break;
+						case '1':
+							break;
+						case '2':
+							break;
+						case '3':
+							break;
+						case '4':
+							break;
+						case '5':
+							break;
+						case '6':
+							break;
+						case '7':
+							break;
+						case '8':
+							break;
+					}
+					}
+					else {
+						switch (toRead) /*this will just be promotions*/ {
+						case 'q':
+							break;
+						case 'r':
+							break;
+						case 'b':
+							break;
+						case 'n':
+							break;
+						}
+					}
+				}
+			}  
 		}
 		else if (command == "go") {
 
