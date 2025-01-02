@@ -269,10 +269,11 @@ void fenToGamestate(std::string fenString) {
 std::string inputParser(std::string input, int desiredToken) {
 	std::string temp = input;
 	std::string token;
+	size_t stopTokenPlace;
 	int tokenCount = 0;
 	bool stop = false;
 	while (!stop) {
-		size_t stopTokenPlace = temp.find(' ');
+		stopTokenPlace = temp.find(' ');
 		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
 			stop = true;
 		}
@@ -290,7 +291,7 @@ std::string inputParser(std::string input, int desiredToken) {
 			tokenCount++;
 		}
 	}  
-	
+	return "endOfTheLinePal.";
 }
 
 bool uci = false;
@@ -310,6 +311,7 @@ int main()
 
 		if (command == "uci")/*should turn this into a switch*/ {
 			uci = true;
+			clearGameState();
 			cout << "id name flipgine" << "\n";
 			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
@@ -336,10 +338,20 @@ int main()
 			}
 			else {
 				std::string inputFenString = inputParser(input, 1);
-				fenToGamestate(inputFenString);
+				std::string inputFenStringPart2 = inputParser(input, 2);
+				std::string inputFenStringPart3 = inputParser(input, 3);
+				inputFenString.append(" ");
+				inputFenStringPart2.append(" ");
+				inputFenStringPart3.append(" "); 
+				inputFenString.append(inputFenStringPart2);
+				inputFenString.append(inputFenStringPart3); // I think this is really stupid and redundant but I am very tired sorry future me
+				fenToGamestate(inputFenString); //also I need to change it if I want to use the half clock and move counter
 			}  // also have to add the moves
 		}
 		else if (command == "go") {
+
+		}
+		else if (command == "stop") {
 
 		}
 		else if (command == "ponderhit") {
