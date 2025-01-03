@@ -37,6 +37,43 @@ public:
 	int halfmoveClock;
 	int fullmoveNumber;
 	*/
+	void move(int moveId) {
+		int temp1 = moveId;
+		int temp2 = moveId;
+		int temp3 = moveId;
+		int temp4 = moveId;
+		int temp5 = moveId;
+
+		int fromFile;
+		int fromRank;
+		int toFile;
+		int toRank;
+		int promotion;
+
+		temp1 & 0b000000000000111;
+		temp2 & 0b000000000111000;
+		temp3 & 0b000000111000000;
+		temp4 & 0b000111000000000;
+		temp5 & 0b111000000000000;
+
+		temp2 >> 3;
+		temp3 >> 6;
+		temp4 >> 9;
+		temp5 >> 12;
+
+		fromFile = temp1;
+		fromRank = temp2;
+		toFile = temp3;
+		toRank = temp4;
+		promotion = temp5;
+
+		int fromSquare = (fromRank * 8) + fromFile;
+		int toSquare = (toRank * 8) + toFile;
+
+		currentBoard.square[toSquare] = currentBoard.square[fromSquare];
+		currentBoard.square[fromSquare] = piece::none;
+
+	}
 };
 
 gameState clearBoard;
