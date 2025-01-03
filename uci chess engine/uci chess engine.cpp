@@ -56,7 +56,7 @@ void clearGameState() {
 	clearBoard.blackLongCastle = false;
 	clearBoard.blackShortCastle = false;
 	clearBoard.movesPassed = 0;
-	for (int i = 0; i <= 17696; i--) {
+	for (int i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
 	currentBoard = clearBoard;
