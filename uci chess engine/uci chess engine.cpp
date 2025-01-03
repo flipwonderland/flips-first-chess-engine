@@ -69,10 +69,20 @@ public:
 
 		int fromSquare = (fromRank * 8) + fromFile;
 		int toSquare = (toRank * 8) + toFile;
+		int toPiece; //only for promotions
 
+		if (promotion == 0) {
 		currentBoard.square[toSquare] = currentBoard.square[fromSquare];
+		}
+		else {
+			//I'm sorta proud of this one, I was thinking how to get the side then I realized I store the side in the piece data, why not just use that
+			//I was thinking about including another variable in the func that tracks the side to move but that would've been a lot more clunky and redundant
+			int pieceSide;
+			pieceSide = currentBoard.square[fromSquare] & 0b11000; 
+			int newPromotionPiece = pieceSide | promotion;
+			currentBoard.square[toSquare] = newPromotionPiece;
+		}
 		currentBoard.square[fromSquare] = piece::none;
-
 	}
 };
 
@@ -455,13 +465,13 @@ int main()
 						else {
 							switch (toRead) /*this will just be promotions*/ {
 							case 'q':
-								currentBoard.moves[currentBoard.movesPassed] += 0b111000000000000;
-								break;
-							case 'r':
 								currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
 								break;
-							case 'b':
+							case 'r':
 								currentBoard.moves[currentBoard.movesPassed] += 0b101000000000000;
+								break;
+							case 'b':
+								currentBoard.moves[currentBoard.movesPassed] += 0b100000000000000;
 								break;
 							case 'n':
 								currentBoard.moves[currentBoard.movesPassed] += 0b011000000000000;
