@@ -6,7 +6,7 @@
 
 #include "util.h"
 
-static enum piece {
+enum piece {
 
 	none = 0b00000,
 	king = 0b00001,
@@ -20,8 +20,6 @@ static enum piece {
 
 };
 
-int movesPassed = 0;
-int moves[17697]; //longest possible chess game, will never need to store more moves than that
 
 class gameState {
 public:
@@ -32,6 +30,8 @@ public:
 	bool whiteLongCastle;
 	bool blackShortCastle;
 	bool blackLongCastle;
+	int movesPassed;
+	int moves[17697]; //longest possible chess game, will never need to store more moves than that
 	/*
 	* might need these might not
 	int halfmoveClock;
@@ -55,6 +55,10 @@ void clearGameState() {
 	clearBoard.whiteLongCastle = false;
 	clearBoard.blackLongCastle = false;
 	clearBoard.blackShortCastle = false;
+	clearBoard.movesPassed = 0;
+	for (int i = 0; i <= 17696; i--) {
+		clearBoard.moves[i] = 0;
+	}
 	currentBoard = clearBoard;
 }
 
@@ -355,59 +359,84 @@ int main()
 				while (moveString != "endOfTheLinePal.") {
 					//have to take the moves, decode the string, and encode them into an int that are in an array 
 					//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
+					int readLength = moveString.length() - 1;
 					int readNumber = 0;
-					char toRead = moveString[readNumber];
-					if (readNumber != 4) {
-						switch (toRead) {
-						case 'a':
-							break;
-						case 'b':
-							break;
-						case 'c':
-							break;
-						case 'd':
-							break;
-						case 'e':
-							break;
-						case 'f':
-							break;
-						case 'g':
-							break;
-						case 'h':
-							break;
-						case '1':
-							break;
-						case '2':
-							break;
-						case '3':
-							break;
-						case '4':
-							break;
-						case '5':
-							break;
-						case '6':
-							break;
-						case '7':
-							break;
-						case '8':
-							break;
-					}
-					}
-					else {
-						switch (toRead) /*this will just be promotions*/ {
-						case 'q':
-							break;
-						case 'r':
-							break;
-						case 'b':
-							break;
-						case 'n':
-							break;
+					while (readNumber <= readLength) {
+						char toRead = moveString[readNumber];
+						if (readNumber != 4) {
+							switch (toRead) {
+							case 'a':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
+								break;
+							case 'b':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000001 : currentBoard.moves[currentBoard.movesPassed] += 0b000000001000000;
+								break;
+							case 'c':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000010 : currentBoard.moves[currentBoard.movesPassed] += 0b000000010000000;
+								break;
+							case 'd':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000011 : currentBoard.moves[currentBoard.movesPassed] += 0b000000011000000;
+								break;
+							case 'e':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000100 : currentBoard.moves[currentBoard.movesPassed] += 0b000000100000000;
+								break;
+							case 'f':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000101 : currentBoard.moves[currentBoard.movesPassed] += 0b000000101000000;
+								break;
+							case 'g':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000110 : currentBoard.moves[currentBoard.movesPassed] += 0b000000110000000;
+								break;
+							case 'h':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000111 : currentBoard.moves[currentBoard.movesPassed] += 0b000000111000000;
+								break;
+							case '1':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
+								break;
+							case '2':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000001000 : currentBoard.moves[currentBoard.movesPassed] += 0b000001000000000;
+								break;
+							case '3':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000010000 : currentBoard.moves[currentBoard.movesPassed] += 0b000010000000000;
+								break;
+							case '4':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000011000 : currentBoard.moves[currentBoard.movesPassed] += 0b000011000000000;
+								break;
+							case '5':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000100000 : currentBoard.moves[currentBoard.movesPassed] += 0b000100000000000;
+								break;
+							case '6':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000101000 : currentBoard.moves[currentBoard.movesPassed] += 0b000101000000000;
+								break;
+							case '7':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000110000 : currentBoard.moves[currentBoard.movesPassed] += 0b000110000000000;
+								break;
+							case '8':
+								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000111000 : currentBoard.moves[currentBoard.movesPassed] += 0b000111000000000;
+								break;
 						}
+						}
+						else {
+							switch (toRead) /*this will just be promotions*/ {
+							case 'q':
+								currentBoard.moves[currentBoard.movesPassed] += 0b111000000000000;
+								break;
+							case 'r':
+								currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
+								break;
+							case 'b':
+								currentBoard.moves[currentBoard.movesPassed] += 0b101000000000000;
+								break;
+							case 'n':
+								currentBoard.moves[currentBoard.movesPassed] += 0b011000000000000;
+								break;
+							}
+						}
+						readNumber++;
 					}
+					currentBoard.movesPassed++;
 				}
 			}  
-		}
+		} //what am I doing :sob:
 		else if (command == "go") {
 
 		}
