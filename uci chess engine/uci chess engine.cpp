@@ -467,7 +467,7 @@ int main()
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
 
-				for (int i = 0; i < currentBoard.movesPassed; i++) {
+				for (int i = 0; i <= currentBoard.movesPassed; i++) {
 					currentBoard.move(currentBoard.moves[i]);
 				}
 
