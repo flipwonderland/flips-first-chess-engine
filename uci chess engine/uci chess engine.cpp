@@ -480,7 +480,9 @@ int main()
 						}
 						readNumber++;
 					}
-					currentBoard.movesPassed++;
+					movePlace++;
+					std::string moveString = inputParser(input, movePlace); //this is super clunky
+					currentBoard.movesPassed++; 
 				}
 			}  
 		} //what am I doing :sob:
