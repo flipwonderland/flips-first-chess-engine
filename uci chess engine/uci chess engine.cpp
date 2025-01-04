@@ -72,17 +72,17 @@ public:
 		int toPiece; //only for promotions
 
 		if (promotion == 0) {
-		currentBoard.square[toSquare] = currentBoard.square[fromSquare];
+		square[toSquare] = square[fromSquare];
 		}
 		else {
 			//I'm sorta proud of this one, I was thinking how to get the side then I realized I store the side in the piece data, why not just use that
 			//I was thinking about including another variable in the func that tracks the side to move but that would've been a lot more clunky and redundant
 			int pieceSide;
-			pieceSide = currentBoard.square[fromSquare] & 0b11000; 
+			pieceSide = square[fromSquare] & 0b11000; 
 			int newPromotionPiece = pieceSide | promotion;
-			currentBoard.square[toSquare] = newPromotionPiece;
+			square[toSquare] = newPromotionPiece;
 		}
-		currentBoard.square[fromSquare] = piece::none;
+		square[fromSquare] = piece::none;
 	}
 };
 
@@ -348,6 +348,101 @@ std::string inputParser(std::string input, int desiredToken) {
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
 
+void moveCollector(std::string input, int movePlace) {
+	std::string inputFenString = inputParser(input, 1);
+	std::string inputFenStringPart2 = inputParser(input, 2);
+	std::string inputFenStringPart3 = inputParser(input, 3);
+	inputFenString.append(" ");
+	inputFenStringPart2.append(" ");
+	inputFenStringPart3.append(" ");
+	inputFenString.append(inputFenStringPart2);
+	inputFenString.append(inputFenStringPart3); // I think this is really stupid and redundant but I am very tired sorry future me
+	fenToGamestate(inputFenString); //also I need to change it if I want to use the half clock and move counter
+
+	std::string moveString = inputParser(input, movePlace);
+	while (moveString != "endOfTheLinePal.") {
+		//have to take the moves, decode the string, and encode them into an int that are in an array 
+		//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
+		int readLength = moveString.length() - 1;
+		int readNumber = 0;
+		while (readNumber <= readLength) {
+			char toRead = moveString[readNumber];
+			if (readNumber != 4) {
+				switch (toRead) {
+				case 'a':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
+					break;
+				case 'b':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000001 : currentBoard.moves[currentBoard.movesPassed] += 0b000000001000000;
+					break;
+				case 'c':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000010 : currentBoard.moves[currentBoard.movesPassed] += 0b000000010000000;
+					break;
+				case 'd':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000011 : currentBoard.moves[currentBoard.movesPassed] += 0b000000011000000;
+					break;
+				case 'e':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000100 : currentBoard.moves[currentBoard.movesPassed] += 0b000000100000000;
+					break;
+				case 'f':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000101 : currentBoard.moves[currentBoard.movesPassed] += 0b000000101000000;
+					break;
+				case 'g':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000110 : currentBoard.moves[currentBoard.movesPassed] += 0b000000110000000;
+					break;
+				case 'h':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000111 : currentBoard.moves[currentBoard.movesPassed] += 0b000000111000000;
+					break;
+				case '1':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
+					break;
+				case '2':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000001000 : currentBoard.moves[currentBoard.movesPassed] += 0b000001000000000;
+					break;
+				case '3':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000010000 : currentBoard.moves[currentBoard.movesPassed] += 0b000010000000000;
+					break;
+				case '4':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000011000 : currentBoard.moves[currentBoard.movesPassed] += 0b000011000000000;
+					break;
+				case '5':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000100000 : currentBoard.moves[currentBoard.movesPassed] += 0b000100000000000;
+					break;
+				case '6':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000101000 : currentBoard.moves[currentBoard.movesPassed] += 0b000101000000000;
+					break;
+				case '7':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000110000 : currentBoard.moves[currentBoard.movesPassed] += 0b000110000000000;
+					break;
+				case '8':
+					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000111000 : currentBoard.moves[currentBoard.movesPassed] += 0b000111000000000;
+					break;
+				}
+			}
+			else {
+				switch (toRead) /*this will just be promotions*/ {
+				case 'q':
+					currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
+					break;
+				case 'r':
+					currentBoard.moves[currentBoard.movesPassed] += 0b101000000000000;
+					break;
+				case 'b':
+					currentBoard.moves[currentBoard.movesPassed] += 0b100000000000000;
+					break;
+				case 'n':
+					currentBoard.moves[currentBoard.movesPassed] += 0b011000000000000;
+					break;
+				}
+			}
+			readNumber++;
+		}
+		movePlace++;
+		std::string moveString = inputParser(input, movePlace); //this is super clunky
+		currentBoard.movesPassed++;
+	}
+}
+
 bool uci = false;
 bool keepRunning = true;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
@@ -391,99 +486,8 @@ int main()
 				fenToGamestate(startingFenString);
 			}
 			else {
-				std::string inputFenString = inputParser(input, 1);
-				std::string inputFenStringPart2 = inputParser(input, 2);
-				std::string inputFenStringPart3 = inputParser(input, 3);
-				inputFenString.append(" ");
-				inputFenStringPart2.append(" ");
-				inputFenStringPart3.append(" "); 
-				inputFenString.append(inputFenStringPart2);
-				inputFenString.append(inputFenStringPart3); // I think this is really stupid and redundant but I am very tired sorry future me
-				fenToGamestate(inputFenString); //also I need to change it if I want to use the half clock and move counter
-
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
-				std::string moveString = inputParser(input, movePlace);
-				while (moveString != "endOfTheLinePal.") {
-					//have to take the moves, decode the string, and encode them into an int that are in an array 
-					//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
-					int readLength = moveString.length() - 1;
-					int readNumber = 0;
-					while (readNumber <= readLength) {
-						char toRead = moveString[readNumber];
-						if (readNumber != 4) {
-							switch (toRead) {
-							case 'a':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
-								break;
-							case 'b':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000001 : currentBoard.moves[currentBoard.movesPassed] += 0b000000001000000;
-								break;
-							case 'c':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000010 : currentBoard.moves[currentBoard.movesPassed] += 0b000000010000000;
-								break;
-							case 'd':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000011 : currentBoard.moves[currentBoard.movesPassed] += 0b000000011000000;
-								break;
-							case 'e':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000100 : currentBoard.moves[currentBoard.movesPassed] += 0b000000100000000;
-								break;
-							case 'f':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000101 : currentBoard.moves[currentBoard.movesPassed] += 0b000000101000000;
-								break;
-							case 'g':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000110 : currentBoard.moves[currentBoard.movesPassed] += 0b000000110000000;
-								break;
-							case 'h':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000111 : currentBoard.moves[currentBoard.movesPassed] += 0b000000111000000;
-								break;
-							case '1':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000 : currentBoard.moves[currentBoard.movesPassed] += 0b000000000000000;
-								break;
-							case '2':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000001000 : currentBoard.moves[currentBoard.movesPassed] += 0b000001000000000;
-								break;
-							case '3':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000010000 : currentBoard.moves[currentBoard.movesPassed] += 0b000010000000000;
-								break;
-							case '4':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000011000 : currentBoard.moves[currentBoard.movesPassed] += 0b000011000000000;
-								break;
-							case '5':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000100000 : currentBoard.moves[currentBoard.movesPassed] += 0b000100000000000;
-								break;
-							case '6':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000101000 : currentBoard.moves[currentBoard.movesPassed] += 0b000101000000000;
-								break;
-							case '7':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000110000 : currentBoard.moves[currentBoard.movesPassed] += 0b000110000000000;
-								break;
-							case '8':
-								readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000111000 : currentBoard.moves[currentBoard.movesPassed] += 0b000111000000000;
-								break;
-						}
-						}
-						else {
-							switch (toRead) /*this will just be promotions*/ {
-							case 'q':
-								currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
-								break;
-							case 'r':
-								currentBoard.moves[currentBoard.movesPassed] += 0b101000000000000;
-								break;
-							case 'b':
-								currentBoard.moves[currentBoard.movesPassed] += 0b100000000000000;
-								break;
-							case 'n':
-								currentBoard.moves[currentBoard.movesPassed] += 0b011000000000000;
-								break;
-							}
-						}
-						readNumber++;
-					}
-					movePlace++;
-					std::string moveString = inputParser(input, movePlace); //this is super clunky
-					currentBoard.movesPassed++; 
-				}
+				moveCollector(input, movePlace); //moveplace is the start of the move tokens
 			}  
 		} //what am I doing :sob:
 		else if (command == "go") {
@@ -493,7 +497,7 @@ int main()
 
 		}
 		else if (command == "ponderhit") {
-			//this will do nothing until I implement pondering
+
 		}
 		else if (command == "quit")
 			keepRunning = false;
