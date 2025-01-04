@@ -336,16 +336,6 @@ std::string inputParser(std::string input, int desiredToken) {
 
 void moveCollector(std::string input, int movePlace) {
 
-	std::string inputFenString = inputParser(input, 1);
-	std::string inputFenStringPart2 = inputParser(input, 2);
-	std::string inputFenStringPart3 = inputParser(input, 3);
-	inputFenString.append(" ");
-	inputFenStringPart2.append(" ");
-	inputFenStringPart3.append(" ");
-	inputFenString.append(inputFenStringPart2);
-	inputFenString.append(inputFenStringPart3); // I think this is really stupid and redundant but I am very tired sorry future me
-	fenToGamestate(inputFenString); //also I need to change it if I want to use the half clock and move counter
-
 	std::string moveString = inputParser(input, movePlace);
 	while (moveString != "endOfTheLinePal.") {
 		//have to take the moves, decode the string, and encode them into an int that are in an array 
@@ -428,6 +418,7 @@ void moveCollector(std::string input, int movePlace) {
 		std::string moveString = inputParser(input, movePlace); //this is super clunky
 		currentBoard.movesPassed++;
 	}
+
 }
 
 bool uci = false;
@@ -473,6 +464,7 @@ int main()
 				fenToGamestate(startingFenString);
 			}
 			else {
+				fenToGamestate(input); 
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens
 			}  
