@@ -50,16 +50,16 @@ public:
 		int toRank;
 		int promotion;
 
-		temp1 & 0b000000000000111;
-		temp2 & 0b000000000111000;
-		temp3 & 0b000000111000000;
-		temp4 & 0b000111000000000;
-		temp5 & 0b111000000000000;
+		temp1 = temp1 & 0b000000000000111;
+		temp2 = temp2 & 0b000000000111000;
+		temp3 = temp3 & 0b000000111000000;
+		temp4 = temp4 & 0b000111000000000;
+		temp5 = temp5 & 0b111000000000000;
 
-		temp2 >> 3;
-		temp3 >> 6;
-		temp4 >> 9;
-		temp5 >> 12;
+		temp2 = temp2 >> 3;
+		temp3 = temp3 >> 6;
+		temp4 = temp4 >> 9;
+		temp5 = temp5 >> 12;
 
 		fromFile = temp1;
 		fromRank = temp2;
@@ -69,7 +69,6 @@ public:
 
 		int fromSquare = (fromRank * 8) + fromFile;
 		int toSquare = (toRank * 8) + toFile;
-		int toPiece; //only for promotions
 
 		if (promotion == 0) {
 		square[toSquare] = square[fromSquare];
@@ -466,7 +465,12 @@ int main()
 			else {
 				fenToGamestate(input); 
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
-				moveCollector(input, movePlace); //moveplace is the start of the move tokens
+				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
+
+				for (int i = 0; i < currentBoard.movesPassed; i++) {
+					currentBoard.move(currentBoard.moves[i]);
+				}
+
 			}  
 		} //what am I doing :sob:
 		else if (command == "go") {
