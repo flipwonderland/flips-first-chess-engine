@@ -161,80 +161,66 @@ void fenToGamestate(std::string fenString) {
 				position++;
 			}
 			skips = 0;
-			stringPlace++;
 			break;
 		case('/'):
 			rank = 0;
 			file--;
-			stringPlace++;
 			break;
 		case('K'):
 			currentBoard.square[position] = piece::white | piece::king;
 			rank++;
-			stringPlace++;
 			break;
 		case('P'):
 			currentBoard.square[position] = piece::white | piece::pawn;
 			rank++;
-			stringPlace++;
 			break;
 		case('N'):
 			currentBoard.square[position] = piece::white | piece::knight;
 			rank++;
-			stringPlace++;
 			break;
 		case('B'):
 			currentBoard.square[position] = piece::white | piece::bishop;
 			rank++;
-			stringPlace++;
 			break;
 		case('R'):
 			currentBoard.square[position] = piece::white | piece::rook;
 			rank++;
-			stringPlace++;
 			break;
 		case('Q'):
 			currentBoard.square[position] = piece::white | piece::queen;
 			rank++;
-			stringPlace++;
 			break;
 		case('k'):
 			currentBoard.square[position] = piece::black | piece::king;
 			rank++;
-			stringPlace++;
 			break;
 		case('p'):
 			currentBoard.square[position] = piece::black | piece::pawn;
 			rank++;
-			stringPlace++;
 			break;
 		case('n'):
 			currentBoard.square[position] = piece::black | piece::knight;
 			rank++;
-			stringPlace++;
 			break;
 		case('b'):
 			currentBoard.square[position] = piece::black | piece::bishop;
 			rank++;
-			stringPlace++;
 			break;
 		case('r'):
 			currentBoard.square[position] = piece::black | piece::rook;
 			rank++;
-			stringPlace++;
 			break;
 		case('q'):
 			currentBoard.square[position] = piece::black | piece::queen;
 			rank++;
-			stringPlace++;
 			break;
 		default:
 			rank++;
 			break;
 		}
+		stringPlace++;
 	}
 
-	stringPlace++;
 	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
 
 	stringPlace++;
@@ -349,6 +335,7 @@ std::string inputParser(std::string input, int desiredToken) {
 }
 
 void moveCollector(std::string input, int movePlace) {
+
 	std::string inputFenString = inputParser(input, 1);
 	std::string inputFenStringPart2 = inputParser(input, 2);
 	std::string inputFenStringPart3 = inputParser(input, 3);
