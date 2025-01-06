@@ -394,8 +394,7 @@ void moveCollector(std::string input, int movePlace) {
 					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000111000 : currentBoard.moves[currentBoard.movesPassed] += 0b000111000000000;
 					break;
 				}
-			}
-			else {
+			} else {
 				switch (toRead) /*this will just be promotions*/ {
 				case 'q':
 					currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
@@ -418,6 +417,42 @@ void moveCollector(std::string input, int movePlace) {
 		currentBoard.movesPassed++;
 	}
 
+}
+
+//got these from sebastian lagues vid :D
+int pawnValue = 100;
+int bishopValue = 300;
+int knightValue = 300;
+int rookValue = 500;
+int queenValue = 900;
+
+int countPieces() {
+	int material = 0;
+	int	piece = 0;
+	int side = 0;
+	for (int i = 0; i <= 63; i++) {
+		piece = currentBoard.square[i] & 0b00111;
+		side = currentBoard.square[i] & 0b11000;
+		switch (piece) {
+		case piece::none:
+			break;
+		case piece::pawn:
+			side == 1 ? material += pawnValue : material += -pawnValue;
+			break;
+		case piece::bishop:
+			side == 1 ? material += bishopValue : material += -bishopValue;
+			break;
+		case piece::knight:
+			side == 1 ? material += knightValue : material += -knightValue;
+			break;
+		case piece::rook:
+			side == 1 ? material += rookValue : material += -rookValue;
+			break;
+		case piece::queen:
+			side == 1 ? material += queenValue : material += -queenValue;
+			break;
+		}
+	}
 }
 
 bool uci = false;
@@ -469,7 +504,7 @@ int main()
 
 				for (int i = 0; i <= currentBoard.movesPassed; i++) {
 					currentBoard.move(currentBoard.moves[i]);
-				}
+				}  
 
 			}  
 		} //what am I doing :sob:
