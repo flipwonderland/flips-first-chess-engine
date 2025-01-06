@@ -453,6 +453,7 @@ int countPieces() {
 			break;
 		}
 	}
+	return material;
 }
 
 bool uci = false;
