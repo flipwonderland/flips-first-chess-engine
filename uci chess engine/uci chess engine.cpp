@@ -426,7 +426,7 @@ int knightValue = 300;
 int rookValue = 500;
 int queenValue = 900;
 
-int countPieces() {
+int countPieceMaterial() {
 	int material = 0;
 	int	piece = 0;
 	int side = 0;
@@ -454,6 +454,12 @@ int countPieces() {
 		}
 	}
 	return material;
+}
+
+bool checkLegalMove(int board[], int moveId) {
+	//uuuuuuuuuuuuuuuh idk how to do this
+
+
 }
 
 bool uci = false;
