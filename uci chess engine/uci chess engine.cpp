@@ -462,6 +462,129 @@ bool checkLegalMove(int board[], int moveId) {
 
 }
 
+//copied this from my old code I think it works
+bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
+	if (whitesTurn) {
+		switch (currentBoard.square[from]) {
+		case 9:  //piece::white && piece::king
+			switch (from - to) {
+			case -1:
+			case -7:
+			case -8:
+			case -9:
+			case 1:
+			case 7:
+			case 8:
+			case 9:
+				switch (currentBoard.square[to]) {
+				case 0:
+				case 17:
+				case 18:
+				case 19:
+				case 20:
+				case 21:
+				case 22:
+					return true;
+				default:
+					return false;
+				}
+			default:
+				return false;
+			}
+
+		case 10: //piece::white && piece::pawn
+			switch (currentBoard.square[to]) {
+			case 0:
+				switch (to - from) {
+				case 8:
+					return true;
+				case 16: // this is the first double move
+					switch (from) { // for the first row of pawns
+					case 8:
+					case 9:
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 14:
+					case 15:
+						return true;
+					default:
+						return false;
+					}
+				}
+			case 17:
+			case 18:
+			case 19:
+			case 20:
+			case 21:
+			case 22:
+				switch (to - from) { //captures here
+				case 7:
+				case 9:
+					return true;
+				default:
+					return false;
+				}
+			default:
+				return false;
+			}
+			break; //add en passant and promotions later
+		case 11: //piece::white && piece::knight:
+			switch (currentBoard.square[to]) {
+			case 0:
+			case 18:
+			case 19:
+			case 20:
+			case 21:
+			case 22:
+				switch (from - to) {
+				case -17:
+				case -15:
+				case -10:
+				case -6:
+				case 6:
+				case 10:
+				case 15:
+				case 17:
+					return true;
+				default:
+					return false;
+
+				}
+			default:
+				return false;
+			}
+		case 12://piece::white && piece::bishop:
+			break;
+
+
+		}
+
+	}
+	else {
+		switch (currentBoard.square[from]) {
+		case 17: //piece::black && piece::king:
+		case 18: //piece::black && piece::pawn:
+		case 19: //piece::black && piece::knight:
+		case 20: //piece::black && piece::bishop:
+		case 21: //piece::black && piece::rook:
+		case 22: //piece::black && piece::queen:
+
+			return true;
+		default:
+			return false;
+		}
+
+
+	}
+
+	return false;
+
+
+}
+
+
 bool uci = false;
 bool keepRunning = true;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
