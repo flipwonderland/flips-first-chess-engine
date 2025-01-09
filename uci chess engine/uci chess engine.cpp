@@ -557,9 +557,68 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 12://piece::white && piece::bishop:
+			bool onEvenSquare = from % 2;
+			bool toEvenSquare = to % 2;
+			bool slidingMovePossible = false;
+			int slidingCheck = 0;
+			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
+				return false;
+			else {
+				/*here I'll put the function that sees if the move would be possible
+				I'll compute it at the start like sebastian lague did */
+			
+			
+			}
+			if (slidingMovePossible) {
+
+				bool pieceInTheWayLeft = false;
+				bool pieceInTheWayRight = false;
+				int storePieceLeft = 0;
+				int storePieceRight = 0;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
+				if (to < from) /*basically if the count is positive*/ {
+					while (!pieceInTheWayLeft) {
+						toGoToTest += 7;
+						if (!currentBoard.square[toGoToTest] == piece::none)
+							pieceInTheWayLeft = false;
+						else {
+							pieceInTheWayLeft = true;
+							storePieceLeft = currentBoard.square[toGoToTest];
+						}
+
+						if (toGoToTest > 63)
+							break;
+					}
+					while (!pieceInTheWayRight) {
+						toGoToTest += 9;
+						if (!currentBoard.square[toGoToTest] == piece::none)
+							pieceInTheWayRight = false;
+						else {
+							pieceInTheWayRight = true;
+							storePieceRight = currentBoard.square[toGoToTest];
+						}
+
+						if (toGoToTest > 63)
+							break;
+					}
+
+					if (!pieceInTheWayLeft && !pieceInTheWayRight) {
+
+					}
+
+				}
+			}
+			else {
+				return false;
+			}
+		case 13://white + bishop
 			break;
-
-
+		case 14://white + rook
+			break;
+		case 15://white + queen
+			break; //this is just bishop + rook
 		}
 
 	}
@@ -627,7 +686,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			default:
 				return false;
 			}
-			break;
+			break; // en passant here
 		case 19: //piece::black && piece::knight:
 		case 20: //piece::black && piece::bishop:
 		case 21: //piece::black && piece::rook:
