@@ -522,7 +522,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				switch (to - from) { //captures here
 				case 7:
 				case 9:
-					return true;
+					return true; 
 				default:
 					return false;
 				}
@@ -565,6 +565,30 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 	else {
 		switch (currentBoard.square[from]) {
 		case 17: //piece::black && piece::king:
+			switch (from - to) {
+			case -1:
+			case -7:
+			case -8:
+			case -9:
+			case 1:
+			case 7:
+			case 8:
+			case 9:
+				switch (currentBoard.square[to]) {
+				case 0:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+					return true;
+				default:
+					return false;
+				}
+			default:
+				return false;
+			}
 		case 18: //piece::black && piece::pawn:
 		case 19: //piece::black && piece::knight:
 		case 20: //piece::black && piece::bishop:
