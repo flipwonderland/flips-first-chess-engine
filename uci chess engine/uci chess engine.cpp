@@ -530,6 +530,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 			break; //add en passant and promotions later
+			//actually promotions can be handled elsewhere, but en passant will be handled here I think
 		case 11: //piece::white && piece::knight:
 			switch (currentBoard.square[to]) {
 			case 0:
@@ -590,6 +591,43 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 18: //piece::black && piece::pawn:
+			switch (currentBoard.square[to]) {
+			case 0:
+				switch (to - from) {
+				case -8:
+					return true;
+				case -16: // this is the first double move
+					switch (from) { // for the first row of pawns
+					case 48:
+					case 49:
+					case 50:
+					case 51:
+					case 52:
+					case 53:
+					case 54:
+					case 55:
+						return true;
+					default:
+						return false;
+					}
+				}
+			case 17:
+			case 18:
+			case 19:
+			case 20:
+			case 21:
+			case 22:
+				switch (to - from) { //captures here
+				case 7:
+				case 9:
+					return true;
+				default:
+					return false;
+				}
+			default:
+				return false;
+			}
+			break;
 		case 19: //piece::black && piece::knight:
 		case 20: //piece::black && piece::bishop:
 		case 21: //piece::black && piece::rook:
