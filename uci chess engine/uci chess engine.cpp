@@ -458,8 +458,7 @@ int countPieceMaterial() {
 
 bool checkLegalMove(int board[], int moveId) {
 	//uuuuuuuuuuuuuuuh idk how to do this
-
-
+	return false;
 }
 
 //precomputed move table
@@ -469,7 +468,7 @@ bool moveTableCardinal[64][64];
 
 //doesn't matter if this is slow, it'll only be ran once at startup
 void computeMoveBoards()  {
-	for (int boardArray = 0; boardArray <= 63; boardArray--) {
+	for (int boardArray = 0; boardArray <= 63; boardArray++) {
 
 		int currentRank = 0;
 		int currentFile = 0;
@@ -477,7 +476,7 @@ void computeMoveBoards()  {
 		int testFile = 0;
 		bool testComplete = false;
 		
-		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray--) {
+		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray++) {
 			
 			//nw
 			testRank = currentRank;
@@ -546,7 +545,7 @@ void computeMoveBoards()  {
 
 		}
 
-		for (int cardinalArray = 0; cardinalArray <= 63; cardinalArray--) {
+		for (int cardinalArray = 0; cardinalArray <= 63; cardinalArray++) {
 			//n
 			testRank = currentRank;
 			testFile = currentFile;
@@ -622,6 +621,12 @@ void computeMoveBoards()  {
 
 //copied this from my old code I think it works
 bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
+	
+	bool onEvenSquare = from % 2;
+	bool toEvenSquare = to % 2;
+	bool slidingMovePossible = false;
+	int slidingCheck = 0;
+
 	if (whitesTurn) {
 		switch (currentBoard.square[from]) {
 		case 9:  //piece::white && piece::king
@@ -680,7 +685,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				switch (to - from) { //captures here
 				case 7:
 				case 9:
-					return true; 
+					return true;
 				default:
 					return false;
 				}
@@ -715,17 +720,11 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 12://piece::white && piece::bishop:
-			bool onEvenSquare = from % 2;
-			bool toEvenSquare = to % 2;
-			bool slidingMovePossible = false;
-			int slidingCheck = 0;
+			
 			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
 				return false;
 			else {
-				/*here I'll put the function that sees if the move would be possible
-				I'll compute it at the start like sebastian lague did */
-			
-			
+
 			}
 			if (slidingMovePossible) {
 
@@ -862,7 +861,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 
 
 }
-
 
 bool uci = false;
 bool keepRunning = true;
