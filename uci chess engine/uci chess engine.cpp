@@ -462,6 +462,56 @@ bool checkLegalMove(int board[], int moveId) {
 
 }
 
+//precomputed move table
+//got this idea from sebastian lauges vid cause I had no idea what to do
+bool moveTableDiagonal[64][64];
+bool moveTableCardinal[64][64];
+
+void computeMoveBoards() {
+	for (int boardArray = 0; boardArray <= 63; boardArray--) {
+
+		int currentRank = 0;
+		int currentFile = 0;
+		int testRank = 0;
+		int testFile = 0;
+		
+		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray--) {
+			
+			//nw
+			bool testComplete = false;
+
+			while (testComplete != true) {
+				testRank += 1;
+				testFile -= 1;
+				if (testRank >= 7 && testFile <= 0) {
+					moveTableDiagonal[boardArray][diagonalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][diagonalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+			//ne
+
+		}
+
+		for (int cardinalArray = 0; cardinalArray <= 63; cardinalArray--) {
+
+		}
+
+		if (currentFile >= 7) {
+			currentFile++;
+		}
+		else {
+			currentRank++;
+			currentFile = 0;
+		}
+	}
+}
+
+
 //copied this from my old code I think it works
 bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 	if (whitesTurn) {
@@ -715,6 +765,8 @@ int main()
 	using std::cout;
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
+
+	computeMoveBoards();
 	
 	do {
 		std::string input = {};
