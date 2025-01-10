@@ -475,13 +475,14 @@ void computeMoveBoards()  {
 		int currentFile = 0;
 		int testRank = 0;
 		int testFile = 0;
+		bool testComplete = false;
 		
 		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray--) {
 			
 			//nw
 			testRank = currentRank;
 			testFile = currentFile;
-			bool testComplete = false;
+			testComplete = false;
 
 			while (testComplete != true) {
 				testRank += 1;
@@ -512,21 +513,6 @@ void computeMoveBoards()  {
 					testComplete = true;
 				}
 			}
-			//sw
-			testComplete = false;
-			while (testComplete != true) {
-				testRank -= 1;
-				testFile -= 1;
-				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][diagonalArray] = true;
-				}
-				else {
-					moveTableDiagonal[boardArray][diagonalArray] = false;
-					testRank = currentRank;
-					testFile = currentFile;
-					testComplete = true;
-				}
-			}
 			//se
 			testComplete = false;
 			while (testComplete != true) {
@@ -542,11 +528,85 @@ void computeMoveBoards()  {
 					testComplete = true;
 				}
 			}
+			//sw
+			testComplete = false;
+			while (testComplete != true) {
+				testRank -= 1;
+				testFile -= 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][diagonalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][diagonalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
 
 		}
 
 		for (int cardinalArray = 0; cardinalArray <= 63; cardinalArray--) {
+			//n
+			testRank = currentRank;
+			testFile = currentFile;
+			testComplete = false;
 
+			while (testComplete != true) {
+				testRank += 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][cardinalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][cardinalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+
+			//e
+			testComplete = false;
+			while (testComplete != true) {
+				testFile += 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][cardinalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][cardinalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+			//s
+			testComplete = false;
+			while (testComplete != true) {
+				testRank -= 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][cardinalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][cardinalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+			//w
+			testComplete = false;
+			while (testComplete != true) {
+				testFile -= 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][cardinalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][cardinalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
 		}
 
 		if (currentFile >= 7) {
