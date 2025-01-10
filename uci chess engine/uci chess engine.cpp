@@ -467,7 +467,8 @@ bool checkLegalMove(int board[], int moveId) {
 bool moveTableDiagonal[64][64];
 bool moveTableCardinal[64][64];
 
-void computeMoveBoards() {
+//doesn't matter if this is slow, it'll only be ran once at startup
+void computeMoveBoards()  {
 	for (int boardArray = 0; boardArray <= 63; boardArray--) {
 
 		int currentRank = 0;
@@ -478,12 +479,14 @@ void computeMoveBoards() {
 		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray--) {
 			
 			//nw
+			testRank = currentRank;
+			testFile = currentFile;
 			bool testComplete = false;
 
 			while (testComplete != true) {
 				testRank += 1;
 				testFile -= 1;
-				if (testRank >= 7 && testFile <= 0) {
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
 					moveTableDiagonal[boardArray][diagonalArray] = true;
 				}
 				else {
@@ -493,7 +496,52 @@ void computeMoveBoards() {
 					testComplete = true;
 				}
 			}
+
 			//ne
+			testComplete = false;
+			while (testComplete != true) {
+				testRank += 1;
+				testFile += 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][diagonalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][diagonalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+			//sw
+			testComplete = false;
+			while (testComplete != true) {
+				testRank -= 1;
+				testFile -= 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][diagonalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][diagonalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
+			//se
+			testComplete = false;
+			while (testComplete != true) {
+				testRank -= 1;
+				testFile += 1;
+				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
+					moveTableDiagonal[boardArray][diagonalArray] = true;
+				}
+				else {
+					moveTableDiagonal[boardArray][diagonalArray] = false;
+					testRank = currentRank;
+					testFile = currentFile;
+					testComplete = true;
+				}
+			}
 
 		}
 
