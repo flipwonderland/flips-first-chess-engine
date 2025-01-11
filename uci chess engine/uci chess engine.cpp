@@ -724,47 +724,86 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
 				return false;
 			else {
-
+				if (moveTableDiagonal[from][to])
+					slidingMovePossible;
 			}
 			if (slidingMovePossible) {
 
-				bool pieceInTheWayLeft = false;
-				bool pieceInTheWayRight = false;
-				int storePieceLeft = 0;
-				int storePieceRight = 0;
+				bool pieceInTheWayNW = false;
+				bool pieceInTheWayNE = false;
+				bool pieceInTheWaySW = false;
+				bool pieceInTheWaySE = false;
+				int storePieceNW = 0;
+				int storePieceNE = 0;
+				int storePieceSW = 0;
+				int storePieceSE = 0;
 				bool legalMove = false;
 				int targetSquare = to;
 				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
-				if (to < from) /*basically if the count is positive*/ {
-					while (!pieceInTheWayLeft) {
+				if (from < to) {
+					while (!pieceInTheWayNW) {
 						toGoToTest += 7;
-						if (!currentBoard.square[toGoToTest] == piece::none)
-							pieceInTheWayLeft = false;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								break;
+							}
+						}
 						else {
-							pieceInTheWayLeft = true;
-							storePieceLeft = currentBoard.square[toGoToTest];
+							pieceInTheWayNW = true;
+							storePieceNW = currentBoard.square[toGoToTest];
 						}
 
-						if (toGoToTest > 63)
-							break;
 					}
-					while (!pieceInTheWayRight) {
+					while (!pieceInTheWayNE) {
 						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none)
-							pieceInTheWayRight = false;
+						if (!currentBoard.square[toGoToTest] == piece::none){
+							pieceInTheWayNE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								break;
+							}
+						}
 						else {
-							pieceInTheWayRight = true;
-							storePieceRight = currentBoard.square[toGoToTest];
+							pieceInTheWayNE = true;
+							storePieceNE = currentBoard.square[toGoToTest];
 						}
 
-						if (toGoToTest > 63)
-							break;
 					}
 
-					if (!pieceInTheWayLeft && !pieceInTheWayRight) {
+				}
+				if (from > to) {
+					while (!pieceInTheWaySW) {
+						toGoToTest -= 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								break;
+							}
+						}
+						else {
+							pieceInTheWaySW = true;
+							storePieceSW = currentBoard.square[toGoToTest];
+						}
 
 					}
+					while (!pieceInTheWaySE) {
+						toGoToTest -= 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								break;
+							}
+						}
+						else {
+							pieceInTheWaySE = true;
+							storePieceSE = currentBoard.square[toGoToTest];
+						}
 
+					}
 				}
 			}
 			else {
