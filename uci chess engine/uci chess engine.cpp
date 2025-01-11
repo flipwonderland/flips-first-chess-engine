@@ -817,20 +817,17 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 					default:
 						return false;
 					}
-				}
-				else {
+				} else {
 					return true;
 				}
 			}
 			else {
 				return false;
 			}
-		case 13://white + bishop
+		case 13://white + rook
 			break;
-		case 14://white + rook
-			break;
-		case 15://white + queen
-			break; //this is just bishop + rook
+		case 14://white + queen
+			break;//this is just bishop + rook 
 		}
 
 	}
