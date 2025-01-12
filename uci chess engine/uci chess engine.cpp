@@ -732,10 +732,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				bool pieceInTheWayNE = false;
 				bool pieceInTheWaySW = false;
 				bool pieceInTheWaySE = false;
-				int storePieceNW = 0;
-				int storePieceNE = 0;
-				int storePieceSW = 0;
-				int storePieceSE = 0;
 				bool legalMove = false;
 				int targetSquare = to;
 				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
@@ -751,7 +747,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						}
 						else {
 							pieceInTheWayNW = true;
-							storePieceNW = currentBoard.square[toGoToTest];
 						}
 
 					}
@@ -768,7 +763,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						}
 						else {
 							pieceInTheWayNE = true;
-							storePieceNE = currentBoard.square[toGoToTest];
 						}
 
 					}
@@ -786,7 +780,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						}
 						else {
 							pieceInTheWaySW = true;
-							storePieceSW = currentBoard.square[toGoToTest];
 						}
 
 					}
@@ -801,7 +794,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						}
 						else {
 							pieceInTheWaySE = true;
-							storePieceSE = currentBoard.square[toGoToTest];
 						}
 
 					}
