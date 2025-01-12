@@ -735,14 +735,14 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				bool legalMove = false;
 				int targetSquare = to;
 				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
-				if (from < to) {
+				if (from < to)/*either it'll go to the move that was proposed or there will be a piece in the way*/ {
 					while (!pieceInTheWayNW) {
-						toGoToTest += 7;
+						toGoToTest += 7; 
 						if (!currentBoard.square[toGoToTest] == piece::none) {
 							pieceInTheWayNW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
-								break;
+								return true;
 							}
 						}
 						else {
@@ -758,7 +758,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 							pieceInTheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
-								break;
+								return true;
 							}
 						}
 						else {
@@ -775,7 +775,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 							pieceInTheWaySW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
-								break;
+								return true;
 							}
 						}
 						else {
@@ -789,7 +789,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 							pieceInTheWaySE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
-								break;
+								return true;
 							}
 						}
 						else {
