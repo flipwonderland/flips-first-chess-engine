@@ -695,26 +695,25 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			break; //add en passant and promotions later
 			//actually promotions can be handled elsewhere, but en passant will be handled here I think
 		case 11: //piece::white && piece::knight:
-			switch (currentBoard.square[to]) {
-			case 0:
-			case 18:
-			case 19:
-			case 20:
-			case 21:
-			case 22:
-				switch (from - to) {
-				case -17:
-				case -15:
-				case -10:
-				case -6:
-				case 6:
-				case 10:
-				case 15:
-				case 17:
+			switch (from - to) {
+			case -17:
+			case -15:
+			case -10:
+			case -6:
+			case 6:
+			case 10:
+			case 15:
+			case 17:
+				switch (currentBoard.square[to]) {
+				case 0:
+				case 18:
+				case 19:
+				case 20:
+				case 21:
+				case 22:
 					return true;
 				default:
 					return false;
-
 				}
 			default:
 				return false;
@@ -1127,6 +1126,30 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			}
 			break; // en passant here
 		case 19: //piece::black && piece::knight:
+			switch (from - to) {
+			case -17:
+			case -15:
+			case -10:
+			case -6:
+			case 6:
+			case 10:
+			case 15:
+			case 17:
+				switch (currentBoard.square[to]) {
+				case 0:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+					return true;
+				default:
+					return false;
+				}
+			default:
+				return false;
+			}
 		case 20: //piece::black && piece::bishop:
 			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
 				return false;
