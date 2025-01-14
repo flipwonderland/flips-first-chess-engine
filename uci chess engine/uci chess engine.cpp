@@ -620,7 +620,7 @@ void computeMoveBoards()  {
 
 
 //copied this from my old code I think it works
-bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
+bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 	
 	bool onEvenSquare = from % 2;
 	bool toEvenSquare = to % 2;
@@ -695,14 +695,14 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				case 22:
 					return true;
 				default:
-					return false;
+					if (enPassant[to])
+						return true;
+					else
+						return false;
 				}
-			
 			default:
 				return false;
 			}
-			break; //add en passant and promotions later
-			//actually promotions can be handled elsewhere, but en passant will be handled here I think
 		case 11: //piece::white && piece::knight:
 			switch (from - to) {
 			case -17:
@@ -1139,13 +1139,15 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				case 14:
 					return true;
 				default:
-					return false;
+					if (enPassant[to])
+						return true;
+					else
+						return false;
 				}
 			
 			default:
 				return false;
 			}
-			break; // en passant here
 		case 19: //piece::black && piece::knight:
 			switch (from - to) {
 			case -17:
