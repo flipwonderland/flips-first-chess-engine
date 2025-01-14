@@ -656,39 +656,48 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			}
 
 		case 10: //piece::white && piece::pawn
-			switch (currentBoard.square[to]) {
-			case 0:
-				switch (to - from) {
-				case 8:
-					return true;
-				case 16: // this is the first double move
-					switch (from) { // for the first row of pawns
-					case 8:
-					case 9:
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 14:
-					case 15:
-						return true;
-					default:
-						return false;
-					}
-				}
-			case 17:
-			case 18:
-			case 19:
-			case 20:
-			case 21:
-			case 22:
-				switch (to - from) { //captures here
-				case 7:
-				case 9:
+			switch (to - from) {
+			case 8:
+				switch (currentBoard.square[to]) {
+				case 0:
 					return true;
 				default:
 					return false;
 				}
+			case 16: // this is the first double move
+				switch (from) { // for the first row of pawns
+				case 8:
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+				case 15:
+					switch (currentBoard.square[to]) {
+					case 0:
+						return true;
+					default:
+						return false;
+					}
+				default:
+					return false;
+				}
+				
+			case 7: //captures here
+			case 9:
+				switch (currentBoard.square[to]) {
+				case 17:
+				case 18:
+				case 19:
+				case 20:
+				case 21:
+				case 22:
+					return true;
+				default:
+					return false;
+				}
+			
 			default:
 				return false;
 			}
@@ -1116,20 +1125,23 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 					default:
 						return false;
 					}
-				case -7: //captures here
-				case -9:
-					switch (currentBoard.square[to]) {
-					case 9:
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 14:
-						return true;
-					default:
-						return false;
-					}
+				default:
+					return false;
 				}
+			case -7: //captures here
+			case -9:
+				switch (currentBoard.square[to]) {
+				case 9:
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+					return true;
+				default:
+					return false;
+				}
+			
 			default:
 				return false;
 			}
