@@ -113,10 +113,12 @@ std::string inputParser(std::string input, int desiredToken) {
 	std::string token;
 	size_t stopTokenPlace;
 	int tokenCount = 0;
+	bool secondToken = false;
 	bool stop = false;
+
 	while (!stop) {
 		stopTokenPlace = temp.find(' ');
-		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
+		if (stopTokenPlace == std::string::npos && secondToken) /*end of the input string*/ {
 			stop = true;
 		}
 		else {
@@ -131,6 +133,7 @@ std::string inputParser(std::string input, int desiredToken) {
 				return token;
 			}
 			tokenCount++;
+			secondToken = true;
 		}
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
@@ -463,11 +466,6 @@ int countPieceMaterial() {
 		}
 	}
 	return material;
-}
-
-bool checkLegalMove(int board[], int moveId) {
-	//uuuuuuuuuuuuuuuh idk how to do this
-	return false;
 }
 
 //precomputed move table
@@ -1531,6 +1529,12 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 }
 
+
+bool checkLegalMove(int board[], int moveId) {
+	//uuuuuuuuuuuuuuuh idk how to do this
+	return false;
+}
+
 bool uci = false;
 bool keepRunning = true;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
@@ -1543,6 +1547,8 @@ int main()
 
 	computeMoveBoards();
 	
+	bool boardLoaded = false;
+
 	do {
 		std::string input = {};
 		std::getline(cin >> std::ws, input);
@@ -1570,10 +1576,12 @@ int main()
 		}
 		else if (command == "ucinewgame") {
 			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
+			boardLoaded = false;
 		}
-		else if (command == "position") /*position[fen | startpos]  moves  ....*/ {
+		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
 				fenToGamestate(startingFenString);
+				boardLoaded = true;
 			}
 			else {
 				fenToGamestate(input); 
@@ -1582,10 +1590,10 @@ int main()
 
 				for (int i = 0; i <= currentBoard.movesPassed; i++) {
 					currentBoard.move(currentBoard.moves[i]);
-				}  
-
+				}
+				boardLoaded = true;
 			}  
-		} //what am I doing :sob:
+		} 
 		else if (command == "go") {
 
 		}
@@ -1597,8 +1605,17 @@ int main()
 		}
 		else if (command == "quit")
 			keepRunning = false;
+		else if (command == "legalCheck") {
+			if (boardLoaded) {
+				std::string fromString = inputParser(input, 1);
+				std::string toString = inputParser(input, 2);
+				int from = std::stoi(fromString);
+				int to = std::stoi(toString);
+				cout << pseudoLegalChecker(from, to, currentBoard.whiteToMove, currentBoard.enPassant);
+			}
+		}
 		else
-			cout << "unknown command, try again" << "\n";
+			cout << "unknown command, try again. command: " << command << "\n";
 	} while (keepRunning);
 	return 0;
 }
