@@ -751,7 +751,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 
 					}
 					//later I'll optimize this, it'll run the second branch even if the solution was on the first branch
-					//this function important to be optimal because it'll be run for every piece on every board
+					//this function is important to be optimal because it'll be run for every piece on every board
 					while (!pieceInTheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none){
@@ -781,7 +781,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						else {
 							pieceInTheWaySW = true;
 						}
-
 					}
 					while (!pieceInTheWaySE) {
 						toGoToTest -= 7;
@@ -817,7 +816,96 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 13://white + rook
-			break;
+			if (moveTableCardinal[from][to])
+				slidingMovePossible;
+
+			if (slidingMovePossible) {
+				bool pieceInTheWayN = false;
+				bool pieceInTheWayE = false;
+				bool pieceInTheWayS = false;
+				bool pieceInTheWayW = false;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from; 
+				if (from < to) {
+					while (!pieceInTheWayN) {
+						toGoToTest += 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayN = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayN = true;
+						}
+
+					}
+					while (!pieceInTheWayE) {
+						toGoToTest += 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayE = true;
+						}
+
+					}
+
+				}
+				if (from > to) {
+					while (!pieceInTheWayS) {
+						toGoToTest -= 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayS = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayS = true;
+						}
+					}
+					while (!pieceInTheWayW) {
+						toGoToTest -= 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayW = true;
+						}
+
+					}
+				}
+				if (!legalMove) /*captures*/ {
+					switch (currentBoard.square[to]) {
+					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
+					case 19:
+					case 20:
+					case 21:
+					case 22:
+						return true;
+					default:
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return false;
+			}
 		case 14://white + queen
 			break;//this is just bishop + rook 
 		}
