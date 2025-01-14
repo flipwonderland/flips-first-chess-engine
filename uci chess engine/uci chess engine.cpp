@@ -706,6 +706,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			case 17:
 				switch (currentBoard.square[to]) {
 				case 0:
+				case 17:
 				case 18:
 				case 19:
 				case 20:
@@ -798,6 +799,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				}
 				if (!legalMove) /*captures*/ {
 					switch (currentBoard.square[to]) {
+					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 19:
 					case 20:
@@ -888,6 +890,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				}
 				if (!legalMove) /*captures*/ {
 					switch (currentBoard.square[to]) {
+					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 19:
 					case 20:
@@ -1039,6 +1042,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				}
 				if (!legalMove) /*captures*/ {
 					switch (currentBoard.square[to]) {
+					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 19:
 					case 20:
@@ -1088,7 +1092,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 18: //piece::black && piece::pawn:
-			switch (currentBoard.square[to]) {
+			switch (currentBoard.square[to]) { //switch this the other way around so it's faster
 			case 0:
 				switch (to - from) {
 				case -8:
@@ -1108,15 +1112,15 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 						return false;
 					}
 				}
-			case 17:
-			case 18:
-			case 19:
-			case 20:
-			case 21:
-			case 22:
+			case 9:
+			case 10:
+			case 11:
+			case 12:
+			case 13:
+			case 14:
 				switch (to - from) { //captures here
-				case 7:
-				case 9:
+				case -7:
+				case -9:
 					return true;
 				default:
 					return false;
