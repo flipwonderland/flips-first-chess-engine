@@ -1092,38 +1092,43 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 18: //piece::black && piece::pawn:
-			switch (currentBoard.square[to]) { //switch this the other way around so it's faster
-			case 0:
-				switch (to - from) {
-				case -8:
+			switch (to - from) {
+			case -8:
+				switch (currentBoard.square[to]) {
+				case 0:
 					return true;
-				case -16: // this is the first double move
-					switch (from) { // for the first row of pawns
-					case 48:
-					case 49:
-					case 50:
-					case 51:
-					case 52:
-					case 53:
-					case 54:
-					case 55:
+				default:
+					return false;
+				}
+			case -16: // this is the first double move
+				switch (from) { // for the first row of pawns
+				case 48:
+				case 49:
+				case 50:
+				case 51:
+				case 52:
+				case 53:
+				case 54:
+				case 55:
+					switch (currentBoard.square[to]) {
+					case 0:
 						return true;
 					default:
 						return false;
 					}
-				}
-			case 9:
-			case 10:
-			case 11:
-			case 12:
-			case 13:
-			case 14:
-				switch (to - from) { //captures here
-				case -7:
+				case -7: //captures here
 				case -9:
-					return true;
-				default:
-					return false;
+					switch (currentBoard.square[to]) {
+					case 9:
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 14:
+						return true;
+					default:
+						return false;
+					}
 				}
 			default:
 				return false;
