@@ -1128,12 +1128,344 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 			break; // en passant here
 		case 19: //piece::black && piece::knight:
 		case 20: //piece::black && piece::bishop:
-		case 21: //piece::black && piece::rook:
-		case 22: //piece::black && piece::queen:
+			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
+				return false;
+			else {
+				if (moveTableDiagonal[from][to])
+					slidingMovePossible;
+			}
+			if (slidingMovePossible) {
+				bool pieceInTheWayNW = false;
+				bool pieceInTheWayNE = false;
+				bool pieceInTheWaySW = false;
+				bool pieceInTheWaySE = false;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from;
+				if (from < to) {
+					while (!pieceInTheWayNW) {
+						toGoToTest += 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNW = true;
+						}
 
-			return true;
-		default:
-			return false;
+					}
+					while (!pieceInTheWayNE) {
+						toGoToTest += 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNE = true;
+						}
+
+					}
+
+				}
+				if (from > to) {
+					while (!pieceInTheWaySW) {
+						toGoToTest -= 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySW = true;
+						}
+					}
+					while (!pieceInTheWaySE) {
+						toGoToTest -= 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySE = true;
+						}
+
+					}
+				}
+				if (!legalMove) /*captures*/ {
+					switch (currentBoard.square[to]) {
+					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 14:
+						return true;
+					default:
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return false;
+			}
+		case 21: //piece::black && piece::rook:
+			if (moveTableCardinal[from][to])
+				slidingMovePossible;
+
+			if (slidingMovePossible) {
+				bool pieceInTheWayN = false;
+				bool pieceInTheWayE = false;
+				bool pieceInTheWayS = false;
+				bool pieceInTheWayW = false;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from;
+				if (from < to) {
+					while (!pieceInTheWayN) {
+						toGoToTest += 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayN = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayN = true;
+						}
+
+					}
+					while (!pieceInTheWayE) {
+						toGoToTest += 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayE = true;
+						}
+
+					}
+
+				}
+				if (from > to) {
+					while (!pieceInTheWayS) {
+						toGoToTest -= 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayS = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayS = true;
+						}
+					}
+					while (!pieceInTheWayW) {
+						toGoToTest -= 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayW = true;
+						}
+
+					}
+				}
+				if (!legalMove) /*captures*/ {
+					switch (currentBoard.square[to]) {
+					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 14:
+						return true;
+					default:
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return false;
+			}
+		case 22: //piece::black && piece::queen:
+			if (moveTableCardinal[from][to] || moveTableDiagonal) //this is just bishop + rook 
+				slidingMovePossible;
+
+			if (slidingMovePossible) {
+				bool pieceInTheWayN = false;
+				bool pieceInTheWayE = false;
+				bool pieceInTheWayS = false;
+				bool pieceInTheWayW = false;
+				bool pieceInTheWayNW = false;
+				bool pieceInTheWayNE = false;
+				bool pieceInTheWaySW = false;
+				bool pieceInTheWaySE = false;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from;
+				if (from < to) {
+					while (!pieceInTheWayE) {
+						toGoToTest += 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayE = true;
+						}
+
+					}
+					while (!pieceInTheWayNW) {
+						toGoToTest += 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNW = true;
+						}
+
+					}
+					while (!pieceInTheWayN) {
+						toGoToTest += 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayN = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayN = true;
+						}
+
+					}
+					while (!pieceInTheWayNE) {
+						toGoToTest += 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNE = true;
+						}
+
+					}
+
+
+				}
+				if (from > to) {
+					while (!pieceInTheWayW) {
+						toGoToTest -= 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayW = true;
+						}
+
+					}
+					while (!pieceInTheWaySE) {
+						toGoToTest -= 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySE = true;
+						}
+
+					}
+					while (!pieceInTheWayS) {
+						toGoToTest -= 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayS = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayS = true;
+						}
+					}
+					while (!pieceInTheWaySW) {
+						toGoToTest -= 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySW = true;
+						}
+					}
+				}
+				if (!legalMove) /*captures*/ {
+					switch (currentBoard.square[to]) {
+					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
+					case 10:
+					case 11:
+					case 12:
+					case 13:
+					case 14:
+						return true;
+					default:
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return false;
+			}
 		}
 
 
