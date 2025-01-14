@@ -143,11 +143,15 @@ std::string inputParser(std::string input, int desiredToken) {
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
 	int position;
+	bool boardSet = false;
 	int rank = 0;
 	int file = 7;
 	int piecesLeftInRank = 8;
 	int skips = 0;
-	while (rank != 8) {
+	std::string boardPieces = inputParser(fenString, 0);
+	int piecesToSet = boardPieces.length();
+
+	while (!boardSet) {
 		position = (file * 8) + rank;
 		char fenPart = fenString[stringPlace];
 		switch (fenPart) {
@@ -159,7 +163,7 @@ void fenToGamestate(std::string fenString) {
 		case('6'):
 		case('7'):
 		case('8'): //this is to rectify the char int being the same value as an int
-			switch (fenPart) {
+			switch (fenPart)/*gonna change this to stoi when I figure out how that works*/ {
 			case('1'):
 				skips = 1;
 				break;
@@ -185,12 +189,10 @@ void fenToGamestate(std::string fenString) {
 				skips = 8;
 				break;
 			}
-			for (; skips != 0; skips--) {
+			for (; skips >= 0; skips--) {
 				currentBoard.square[position] = piece::none;
-				rank--;
-				position++;
+				rank++;
 			}
-			skips = 0;
 			break;
 		case('/'):
 			rank = 0;
@@ -245,14 +247,20 @@ void fenToGamestate(std::string fenString) {
 			rank++;
 			break;
 		default:
-			rank++;
 			break;
 		}
+		piecesToSet--;
+		if (piecesToSet == 0)
+			boardSet = true;
 		stringPlace++;
 	}
+	std::cout << "board set!" << "\n";
 
 	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
 	stringPlace++;
+
+	std::cout << "color to move set!" << "\n";
+
 
 	std::string castles = inputParser(fenString, 2);
 	int castlesLength = castles.length();
@@ -274,6 +282,9 @@ void fenToGamestate(std::string fenString) {
 		stringPlace++;
 	}
 	
+	std::cout << "castling set!" << "\n";
+
+
 	stringPlace++;
 	if (fenString[stringPlace] != '-') {
 		int fileLetterAdd = 0;
@@ -334,9 +345,8 @@ void fenToGamestate(std::string fenString) {
 
 		int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
 		//this is slow so I'll change this as well when I get the clear board function
-		for (int i = 0; i <= 63; i++) {
-			enPassantSquare == i ? currentBoard.enPassant[i] = true : currentBoard.enPassant[i] = false; //this could be wrong make sure to test it when you get the interface working
-		}
+		currentBoard.enPassant[enPassantSquare] = true;
+		std::cout << "ready to go!!!" << "\n";
 
 	}
 	
@@ -1577,6 +1587,7 @@ int main()
 		else if (command == "ucinewgame") {
 			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
 			boardLoaded = false;
+			cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
@@ -1592,7 +1603,10 @@ int main()
 					currentBoard.move(currentBoard.moves[i]);
 				}
 				boardLoaded = true;
-			}  
+			}
+			if (boardLoaded) {
+				cout << "board loaded!" << "\n";
+			}
 		} 
 		else if (command == "go") {
 
@@ -1612,6 +1626,9 @@ int main()
 				int from = std::stoi(fromString);
 				int to = std::stoi(toString);
 				cout << pseudoLegalChecker(from, to, currentBoard.whiteToMove, currentBoard.enPassant);
+			}
+			else {
+				cout << "board is not loaded!" << "\n";
 			}
 		}
 		else
