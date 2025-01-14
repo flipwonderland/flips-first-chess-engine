@@ -108,6 +108,34 @@ void clearGameState() {
 	currentBoard = clearBoard;
 }
 
+std::string inputParser(std::string input, int desiredToken) {
+	std::string temp = input;
+	std::string token;
+	size_t stopTokenPlace;
+	int tokenCount = 0;
+	bool stop = false;
+	while (!stop) {
+		stopTokenPlace = temp.find(' ');
+		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
+			stop = true;
+		}
+		else {
+			//might be able to change this to !=
+			if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
+				temp.erase(0, stopTokenPlace);
+			}
+			else {
+				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
+				if (deleteAllAfterDesiredToken != std::string::npos) temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
+				token = temp;
+				return token;
+			}
+			tokenCount++;
+		}
+	}
+	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
+}
+
 //this is incredibly inefficient (I think), but I can optimize it when I have the skillz to do so
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
@@ -221,9 +249,13 @@ void fenToGamestate(std::string fenString) {
 	}
 
 	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
+	stringPlace++;
+
+	std::string castles = inputParser(fenString, 2);
+	int castlesLength = castles.length();
 
 	stringPlace++;
-	for (int x = 0; x != 4; x++) {
+	for (; castlesLength != 0; castlesLength--) {
 		switch (fenString[stringPlace]) {
 		case 'K':
 			currentBoard.whiteShortCastle = true;
@@ -233,6 +265,8 @@ void fenToGamestate(std::string fenString) {
 			currentBoard.blackShortCastle = true;
 		case 'q':
 			currentBoard.blackLongCastle = true;
+		case '-':
+			break;
 		}
 		stringPlace++;
 	}
@@ -243,6 +277,7 @@ void fenToGamestate(std::string fenString) {
 		int rankNumberMultiply = 0;
 		switch (fenString[stringPlace]) {
 		case 'a':
+			fileLetterAdd = 0;
 			break;
 		case 'b':
 			fileLetterAdd = 1;
@@ -305,33 +340,7 @@ void fenToGamestate(std::string fenString) {
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
 
-std::string inputParser(std::string input, int desiredToken) {
-	std::string temp = input;
-	std::string token;
-	size_t stopTokenPlace;
-	int tokenCount = 0;
-	bool stop = false;
-	while (!stop) {
-		stopTokenPlace = temp.find(' ');
-		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
-			stop = true;
-		}
-		else {
-			//might be able to change this to !=
-			if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
-				temp.erase(0, stopTokenPlace);
-			}
-			else {
-				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
-				if (deleteAllAfterDesiredToken != std::string::npos) temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
-				token = temp;
-				return token;
-			}
-			tokenCount++;
-		}
-	}  
-	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
-}
+
 
 void moveCollector(std::string input, int movePlace) {
 
