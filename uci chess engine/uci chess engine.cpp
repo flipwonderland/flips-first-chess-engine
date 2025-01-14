@@ -907,9 +907,159 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn) {
 				return false;
 			}
 		case 14://white + queen
-			break;//this is just bishop + rook 
-		}
+			if (moveTableCardinal[from][to] || moveTableDiagonal) //this is just bishop + rook 
+				slidingMovePossible;
 
+			if (slidingMovePossible) {
+				bool pieceInTheWayN = false;
+				bool pieceInTheWayE = false;
+				bool pieceInTheWayS = false;
+				bool pieceInTheWayW = false;
+				bool pieceInTheWayNW = false;
+				bool pieceInTheWayNE = false;
+				bool pieceInTheWaySW = false;
+				bool pieceInTheWaySE = false;
+				bool legalMove = false;
+				int targetSquare = to;
+				int toGoToTest = from;
+				if (from < to) {
+					while (!pieceInTheWayE) {
+						toGoToTest += 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayE = true;
+						}
+
+					}
+					while (!pieceInTheWayNW) {
+						toGoToTest += 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNW = true;
+						}
+
+					}
+					while (!pieceInTheWayN) {
+						toGoToTest += 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayN = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayN = true;
+						}
+
+					}
+					while (!pieceInTheWayNE) {
+						toGoToTest += 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayNE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayNE = true;
+						}
+
+					}
+					
+
+				}
+				if (from > to) {
+					while (!pieceInTheWayW) {
+						toGoToTest -= 1;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayW = true;
+						}
+
+					}
+					while (!pieceInTheWaySE) {
+						toGoToTest -= 7;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySE = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySE = true;
+						}
+
+					}
+					while (!pieceInTheWayS) {
+						toGoToTest -= 8;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWayS = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWayS = true;
+						}
+					}
+					while (!pieceInTheWaySW) {
+						toGoToTest -= 9;
+						if (!currentBoard.square[toGoToTest] == piece::none) {
+							pieceInTheWaySW = false;
+							if (toGoToTest == to) {
+								legalMove = true;
+								return true;
+							}
+						}
+						else {
+							pieceInTheWaySW = true;
+						}
+					}
+				}
+				if (!legalMove) /*captures*/ {
+					switch (currentBoard.square[to]) {
+					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
+					case 19:
+					case 20:
+					case 21:
+					case 22:
+						return true;
+					default:
+						return false;
+					}
+				}
+				else {
+					return true;
+				}
+			}
+			else {
+				return false;
+			}
+		default:
+			return false;
+		}
 	}
 	else {
 		switch (currentBoard.square[from]) {
