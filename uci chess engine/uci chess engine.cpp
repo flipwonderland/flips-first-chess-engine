@@ -139,7 +139,7 @@ std::string inputParser(std::string input, int desiredToken) {
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
 
-//this is incredibly inefficient (I think), but I can optimize it when I have the skillz to do so
+//this creates an infinite loop for some reason
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
 	int position;
@@ -285,10 +285,11 @@ void fenToGamestate(std::string fenString) {
 	std::cout << "castling set!" << "\n";
 
 
+	int fileLetterAdd = 0;
+	int rankNumberMultiply = 0;
+
 	stringPlace++;
 	if (fenString[stringPlace] != '-') {
-		int fileLetterAdd = 0;
-		int rankNumberMultiply = 0;
 		switch (fenString[stringPlace]) {
 		case 'a':
 			fileLetterAdd = 0;
@@ -343,13 +344,13 @@ void fenToGamestate(std::string fenString) {
 			break;
 		}
 
-		int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
-		//this is slow so I'll change this as well when I get the clear board function
-		currentBoard.enPassant[enPassantSquare] = true;
-		std::cout << "ready to go!!!" << "\n";
+		
 
 	}
-	
+
+	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
+	currentBoard.enPassant[enPassantSquare] = true;
+	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
 
@@ -1547,6 +1548,7 @@ bool checkLegalMove(int board[], int moveId) {
 
 bool uci = false;
 bool keepRunning = true;
+bool boardLoaded = false;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
 //I think I could just do that by making a nn that changes the move order possibly, because with ab pruning if the best move is first the search will be extremely fast
 int main()
@@ -1556,8 +1558,6 @@ int main()
 	cout << "gamer engine made by flipwonderland" << "\n";
 
 	computeMoveBoards();
-	
-	bool boardLoaded = false;
 
 	do {
 		std::string input = {};
@@ -1592,9 +1592,9 @@ int main()
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
 				fenToGamestate(startingFenString);
+				cout << "board loaded!" << "\n";
 				boardLoaded = true;
-			}
-			else {
+			} else {
 				fenToGamestate(input); 
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
