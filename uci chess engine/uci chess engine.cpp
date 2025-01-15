@@ -128,7 +128,8 @@ std::string inputParser(std::string input, int desiredToken) {
 			}
 			else {
 				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
-				if (deleteAllAfterDesiredToken != std::string::npos) temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
+				if (deleteAllAfterDesiredToken != std::string::npos)
+					temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
 				token = temp;
 				return token;
 			}
@@ -149,7 +150,7 @@ void fenToGamestate(std::string fenString) {
 	int piecesLeftInRank = 8;
 	int skips = 0;
 	std::string boardPieces = inputParser(fenString, 0);
-	int piecesToSet = boardPieces.length();
+	int charactersToGoThrough = boardPieces.length();
 
 	while (!boardSet) {
 		position = (file * 8) + rank;
@@ -249,8 +250,8 @@ void fenToGamestate(std::string fenString) {
 		default:
 			break;
 		}
-		piecesToSet--;
-		if (piecesToSet == 0)
+		charactersToGoThrough--;
+		if (charactersToGoThrough == 0)
 			boardSet = true;
 		stringPlace++;
 	}
