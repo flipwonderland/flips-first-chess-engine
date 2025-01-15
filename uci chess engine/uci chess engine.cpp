@@ -494,7 +494,7 @@ void computeMoveBoards()  {
 		int testFile = 0;
 		bool testComplete = false;
 		
-		for (int diagonalArray = 0; diagonalArray <= 63; diagonalArray++) {
+		for (int diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
 			
 			//nw
 			testRank = currentRank;
@@ -755,6 +755,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					slidingMovePossible;
 			}
 			if (slidingMovePossible) {
+				char direction;
 				bool pieceInTheWayNW = false;
 				bool pieceInTheWayNE = false;
 				bool pieceInTheWaySW = false;
@@ -762,7 +763,44 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				bool legalMove = false;
 				int targetSquare = to;
 				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
-				if (from < to)/*either it'll go to the move that was proposed or there will be a piece in the way*/ {
+				
+				bool directionFound = false;
+				int direction = 0; //nw will be 1, ne 2, sw 3, and se 4
+				int infiniteLoopBreaker = 10000;
+				while (!directionFound) {
+					int NWtest = from;
+					int NEtest = from;
+					int SWtest = from;
+					int SEtest = from;
+					NWtest += 7;
+					NEtest += 9;
+					SWtest -= 9;
+					SEtest -= 7;
+					infiniteLoopBreaker--;
+
+					if (NWtest == to) {
+						directionFound = true;
+						direction = 1;
+					}
+					if (NEtest == to) {
+						directionFound = true;
+						direction = 2;
+					}
+					if (SWtest == to) {
+						directionFound = true;
+						direction = 3;
+					}
+					if (SEtest == to) {
+						directionFound = true;
+						direction = 4;
+					}
+					if (infiniteLoopBreaker == 0) {
+						std::cout << "oops, something caused an infinite loop in the bishop legal move checker :P" << "\n";
+					}
+				}
+				//later I'll optimize this, it'll run the second branch even if the solution was on the first branch
+				//this function is important to be optimal because it'll be run for every piece on every board
+				if (direction == 1) {
 					while (!pieceInTheWayNW) {
 						toGoToTest += 7; 
 						if (!currentBoard.square[toGoToTest] == piece::none) {
@@ -777,8 +815,8 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 						}
 
 					}
-					//later I'll optimize this, it'll run the second branch even if the solution was on the first branch
-					//this function is important to be optimal because it'll be run for every piece on every board
+				}
+				if (direction == 2) {
 					while (!pieceInTheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none){
@@ -793,9 +831,8 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 						}
 
 					}
-
 				}
-				if (from > to) {
+				if (direction == 3) {
 					while (!pieceInTheWaySW) {
 						toGoToTest -= 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
@@ -809,6 +846,8 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 							pieceInTheWaySW = true;
 						}
 					}
+				}
+				if (direction == 4) {
 					while (!pieceInTheWaySE) {
 						toGoToTest -= 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
