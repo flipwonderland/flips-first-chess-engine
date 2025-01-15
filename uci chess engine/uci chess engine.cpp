@@ -755,7 +755,6 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					slidingMovePossible;
 			}
 			if (slidingMovePossible) {
-				char direction;
 				bool pieceInTheWayNW = false;
 				bool pieceInTheWayNE = false;
 				bool pieceInTheWaySW = false;
