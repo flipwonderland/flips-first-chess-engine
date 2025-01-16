@@ -1,6 +1,3 @@
-// uci chess engine.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <string>
 
@@ -88,8 +85,6 @@ public:
 gameState clearBoard;
 gameState currentBoard;
 
-std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; 
-std::string inputFenString{};
 
 void clearGameState() {
 	for (int i = 0; i <= 63; i++) {
@@ -115,30 +110,42 @@ std::string inputParser(std::string input, int desiredToken) {
 	int tokenCount = 0;
 	bool secondToken = false;
 	bool stop = false;
+	int loopBreaker = 10000;
+	int allowedTokensWithoutInfo = 10;
 
 	while (!stop) {
 		stopTokenPlace = temp.find(' ');
 		if (stopTokenPlace == std::string::npos && secondToken) /*end of the input string*/ {
 			stop = true;
 		}
-		else {
-			//might be able to change this to !=
-			if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
-				temp.erase(0, stopTokenPlace);
-			}
-			else {
-				int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
-				if (deleteAllAfterDesiredToken != std::string::npos)
-					temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
-				token = temp;
-				return token;
-			}
-			tokenCount++;
-			secondToken = true;
+		if (loopBreaker == 0) {
+			std::cout << "infinite loop caused in input parser! input: " << input << " token: " << desiredToken << "\n";
+			break;
 		}
+		if (allowedTokensWithoutInfo == 0)
+			break;
+		//might be able to change this to !=
+		if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
+			temp.erase(0, stopTokenPlace);
+		}
+		else {
+			int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
+			if (deleteAllAfterDesiredToken != std::string::npos)
+				temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
+			token = temp;
+			return token;
+		}
+		tokenCount++;
+		secondToken = true;
+		loopBreaker--;
+		allowedTokensWithoutInfo--;
+	
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
+
+std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+std::string inputFenString{};
 
 //this creates an infinite loop for some reason
 void fenToGamestate(std::string fenString) {
@@ -358,9 +365,10 @@ void fenToGamestate(std::string fenString) {
 
 
 void moveCollector(std::string input, int movePlace) {
-
-	std::string moveString = inputParser(input, movePlace);
-	while (moveString != "endOfTheLinePal.") {
+	std::string moveString;
+	
+	do {
+		moveString = inputParser(input, movePlace);
 		//have to take the moves, decode the string, and encode them into an int that are in an array 
 		//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
 		int readLength = moveString.length() - 1;
@@ -437,9 +445,8 @@ void moveCollector(std::string input, int movePlace) {
 			readNumber++;
 		}
 		movePlace++;
-		std::string moveString = inputParser(input, movePlace); //this is super clunky
 		currentBoard.movesPassed++;
-	}
+	} while (moveString != "endOfTheLinePal.");
 
 }
 
@@ -1633,8 +1640,9 @@ int main()
 				fenToGamestate(startingFenString);
 				cout << "board loaded!" << "\n";
 				boardLoaded = true;
-			} else {
-				fenToGamestate(input); 
+			}
+			else {
+				fenToGamestate(input);
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
 
