@@ -644,6 +644,34 @@ void computeMoveBoards()  {
 	}
 }
 
+void testMoveBoard(int moveTable, int boardArray) {
+	int place = 0;
+	if (moveTable == 0) {
+		for (int rank = 0; rank <= 7; rank++) {
+			for (int file = 0; file <= 7; file++) {
+				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
+				if (moveTableDiagonal[boardArray][place])
+					std::cout << "1";
+				else
+					std::cout << "0";
+			}
+			std::cout << "\n";
+		}
+	}
+	else if (moveTable == 1) {
+		for (int rank = 0; rank <= 7; rank++) {
+			for (int file = 0; file <= 7; file++) {
+				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
+				if (moveTableCardinal[boardArray][place])
+					std::cout << "1";
+				else
+					std::cout << "0";
+			}
+			std::cout << "\n";
+		}
+	}
+
+}
 
 //copied this from my old code I think it works
 bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
@@ -1638,7 +1666,6 @@ int main()
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
 				fenToGamestate(startingFenString);
-				cout << "board loaded!" << "\n";
 				boardLoaded = true;
 			}
 			else {
