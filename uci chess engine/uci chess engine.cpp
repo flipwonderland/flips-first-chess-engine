@@ -494,29 +494,34 @@ bool moveTableCardinal[64][64];
 
 //doesn't matter if this is slow, it'll only be ran once at startup
 void computeMoveBoards()  {
+	int currentRank = 0;
+	int currentFile = 0;
+	int testRank = 0;
+	int testFile = 0;
+	int testPosition = 0;
+	bool testComplete = false;
+
 	for (int boardArray = 0; boardArray <= 63; boardArray++) {
 
-		int currentRank = 0;
-		int currentFile = 0;
-		int testRank = 0;
-		int testFile = 0;
-		bool testComplete = false;
+			
 		
 		for (int diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
 			
 			//nw
 			testRank = currentRank;
 			testFile = currentFile;
+			testPosition = 0;
 			testComplete = false;
 
 			while (testComplete != true) {
 				testRank += 1;
 				testFile -= 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][diagonalArray] = true;
+					moveTableDiagonal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][diagonalArray] = false;
+					moveTableDiagonal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -528,11 +533,12 @@ void computeMoveBoards()  {
 			while (testComplete != true) {
 				testRank += 1;
 				testFile += 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][diagonalArray] = true;
+					moveTableDiagonal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][diagonalArray] = false;
+					moveTableDiagonal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -543,11 +549,12 @@ void computeMoveBoards()  {
 			while (testComplete != true) {
 				testRank -= 1;
 				testFile += 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][diagonalArray] = true;
+					moveTableDiagonal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][diagonalArray] = false;
+					moveTableDiagonal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -558,11 +565,12 @@ void computeMoveBoards()  {
 			while (testComplete != true) {
 				testRank -= 1;
 				testFile -= 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][diagonalArray] = true;
+					moveTableDiagonal[boardArray][testFile] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][diagonalArray] = false;
+					moveTableDiagonal[boardArray][testFile] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -571,7 +579,7 @@ void computeMoveBoards()  {
 
 		}
 
-		for (int cardinalArray = 0; cardinalArray <= 63; cardinalArray++) {
+		for (int cardinalArray = 0; cardinalArray <= 7; cardinalArray++) {
 			//n
 			testRank = currentRank;
 			testFile = currentFile;
@@ -579,11 +587,12 @@ void computeMoveBoards()  {
 
 			while (testComplete != true) {
 				testRank += 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][cardinalArray] = true;
+					moveTableCardinal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][cardinalArray] = false;
+					moveTableCardinal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -594,11 +603,12 @@ void computeMoveBoards()  {
 			testComplete = false;
 			while (testComplete != true) {
 				testFile += 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][cardinalArray] = true;
+					moveTableCardinal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][cardinalArray] = false;
+					moveTableCardinal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -608,11 +618,12 @@ void computeMoveBoards()  {
 			testComplete = false;
 			while (testComplete != true) {
 				testRank -= 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][cardinalArray] = true;
+					moveTableCardinal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][cardinalArray] = false;
+					moveTableCardinal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -622,11 +633,12 @@ void computeMoveBoards()  {
 			testComplete = false;
 			while (testComplete != true) {
 				testFile -= 1;
+				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][cardinalArray] = true;
+					moveTableCardinal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][cardinalArray] = false;
+					moveTableCardinal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -634,7 +646,7 @@ void computeMoveBoards()  {
 			}
 		}
 
-		if (currentFile >= 7) {
+		if (currentFile <= 7) {
 			currentFile++;
 		}
 		else {
@@ -661,7 +673,7 @@ void testMoveBoard(int moveTable, int boardArray) {
 	else if (moveTable == 1) {
 		for (int rank = 0; rank <= 7; rank++) {
 			for (int file = 0; file <= 7; file++) {
-				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
+				place = (rank * 8) + file; 
 				if (moveTableCardinal[boardArray][place])
 					std::cout << "1";
 				else
@@ -1646,7 +1658,13 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			// put all the test info here, I have a feeling I'm gonna use this a lot p
+			int moveTable;
+			cout << "what move table do you want to look at ";
+			cin >> moveTable;
+			int boardArray;
+			cout << "what array do you want to look at ";
+			cin >> boardArray;
+			testMoveBoard(moveTable, boardArray);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
