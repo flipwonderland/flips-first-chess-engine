@@ -502,17 +502,16 @@ void computeMoveBoards()  {
 	bool testComplete = false;
 
 	for (int boardArray = 0; boardArray <= 63; boardArray++) {
-
+			
+		testRank = currentRank;
+		testFile = currentFile;
+		testPosition = 0;
+		testComplete = false;
 			
 		
 		for (int diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
 			
 			//nw
-			testRank = currentRank;
-			testFile = currentFile;
-			testPosition = 0;
-			testComplete = false;
-
 			while (testComplete != true) {
 				testRank += 1;
 				testFile -= 1;
@@ -567,10 +566,10 @@ void computeMoveBoards()  {
 				testFile -= 1;
 				testPosition = (testRank * 8) + testFile;
 				if (testRank <= 7 && testRank >= 0 && testFile <= 7 && testFile >= 0) {
-					moveTableDiagonal[boardArray][testFile] = true;
+					moveTableDiagonal[boardArray][testPosition] = true;
 				}
 				else {
-					moveTableDiagonal[boardArray][testFile] = false;
+					moveTableDiagonal[boardArray][testPosition] = false;
 					testRank = currentRank;
 					testFile = currentFile;
 					testComplete = true;
@@ -659,8 +658,8 @@ void computeMoveBoards()  {
 void testMoveBoard(int moveTable, int boardArray) {
 	int place = 0;
 	if (moveTable == 0) {
-		for (int rank = 0; rank <= 7; rank++) {
-			for (int file = 0; file <= 7; file++) {
+		for (int rank = 7; rank >= 0; rank--) {
+			for (int file = 7; file >= 0; file--) {
 				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
 				if (moveTableDiagonal[boardArray][place])
 					std::cout << "1";
@@ -671,8 +670,8 @@ void testMoveBoard(int moveTable, int boardArray) {
 		}
 	}
 	else if (moveTable == 1) {
-		for (int rank = 0; rank <= 7; rank++) {
-			for (int file = 0; file <= 7; file++) {
+		for (int rank = 7; rank >= 0; rank--) {
+			for (int file = 7; file >= 0; file--) {
 				place = (rank * 8) + file; 
 				if (moveTableCardinal[boardArray][place])
 					std::cout << "1";
