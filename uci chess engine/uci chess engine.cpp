@@ -286,6 +286,8 @@ void fenToGamestate(std::string fenString) {
 			currentBoard.blackLongCastle = true;
 		case '-':
 			break;
+		default:
+			break;
 		}
 		stringPlace++;
 	}
@@ -1631,6 +1633,21 @@ bool checkLegalMove(int board[], int moveId) {
 	return false;
 }
 
+//here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
+void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
+	int place = 0;
+	for (int rank = 7; rank >= 0; rank--) {
+		for (int file = 7; file >= 0; file--) {
+			place = (rank * 8) + file;
+			if (pseudoLegalChecker(from, place, whitesTurn, enPassant))
+				std::cout << "1";
+			else
+				std::cout << "0";
+		}
+		std::cout << "\n";
+	}
+}
+
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
@@ -1712,11 +1729,10 @@ int main()
 			keepRunning = false;
 		else if (command == "legalCheck") {
 			if (boardLoaded) {
-				std::string fromString = inputParser(input, 1);
-				std::string toString = inputParser(input, 2);
-				int from = std::stoi(fromString);
-				int to = std::stoi(toString);
-				cout << pseudoLegalChecker(from, to, currentBoard.whiteToMove, currentBoard.enPassant);
+				int pieceToTest;
+				cout << "what piece do you want to see the moves for ";
+				cin >> pieceToTest;
+				printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 			}
 			else {
 				cout << "board is not loaded!" << "\n";
