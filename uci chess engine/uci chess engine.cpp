@@ -686,7 +686,16 @@ void testMoveBoard(int moveTable, int boardArray) {
 
 }
 
-//copied this from my old code I think it works
+/*
+int moveTable;
+cout << "what move table do you want to look at ";
+cin >> moveTable;
+int boardArray;
+cout << "what array do you want to look at ";
+cin >> boardArray;
+testMoveBoard(moveTable, boardArray);
+*/
+
 bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 	
 	bool onEvenSquare = from % 2;
@@ -1648,6 +1657,12 @@ void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 	}
 }
 
+/*	int pieceToTest;
+cout << "what piece do you want to see the moves for ";
+cin >> pieceToTest;
+printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);			
+*/
+
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
@@ -1674,13 +1689,7 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			int moveTable;
-			cout << "what move table do you want to look at ";
-			cin >> moveTable;
-			int boardArray;
-			cout << "what array do you want to look at ";
-			cin >> boardArray;
-			testMoveBoard(moveTable, boardArray);
+			
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
@@ -1729,10 +1738,6 @@ int main()
 			keepRunning = false;
 		else if (command == "legalCheck") {
 			if (boardLoaded) {
-				int pieceToTest;
-				cout << "what piece do you want to see the moves for ";
-				cin >> pieceToTest;
-				printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 			}
 			else {
 				cout << "board is not loaded!" << "\n";
