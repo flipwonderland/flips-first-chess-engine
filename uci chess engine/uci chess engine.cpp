@@ -68,13 +68,13 @@ public:
 		int toSquare = (toRank * 8) + toFile;
 
 		if (promotion == 0) {
-		square[toSquare] = square[fromSquare];
+			square[toSquare] = square[fromSquare];
 		}
 		else {
 			//I'm sorta proud of this one, I was thinking how to get the side then I realized I store the side in the piece data, why not just use that
 			//I was thinking about including another variable in the func that tracks the side to move but that would've been a lot more clunky and redundant
 			int pieceSide;
-			pieceSide = square[fromSquare] & 0b11000; 
+			pieceSide = square[fromSquare] & 0b11000;
 			int newPromotionPiece = pieceSide | promotion;
 			square[toSquare] = newPromotionPiece;
 		}
@@ -84,10 +84,9 @@ public:
 
 gameState clearBoard;
 gameState currentBoard;
-gameState fenBoard;
 
 
-void makeClearBoard() {
+void clearGameState() {
 	for (int i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
 		clearBoard.enPassant[i] = false;
@@ -101,6 +100,7 @@ void makeClearBoard() {
 	for (int i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
+	currentBoard = clearBoard;
 }
 
 std::string inputParser(std::string input, int desiredToken) {
@@ -139,7 +139,7 @@ std::string inputParser(std::string input, int desiredToken) {
 		secondToken = true;
 		loopBreaker--;
 		allowedTokensWithoutInfo--;
-	
+
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
@@ -198,7 +198,7 @@ void fenToGamestate(std::string fenString) {
 				break;
 			}
 			for (; skips >= 0; skips--) {
-				fenBoard.square[position] = piece::none;
+				currentBoard.square[position] = piece::none;
 				rank++;
 			}
 			break;
@@ -207,51 +207,51 @@ void fenToGamestate(std::string fenString) {
 			file--;
 			break;
 		case('K'):
-			fenBoard.square[position] = piece::white | piece::king;
+			currentBoard.square[position] = piece::white | piece::king;
 			rank++;
 			break;
 		case('P'):
-			fenBoard.square[position] = piece::white | piece::pawn;
+			currentBoard.square[position] = piece::white | piece::pawn;
 			rank++;
 			break;
 		case('N'):
-			fenBoard.square[position] = piece::white | piece::knight;
+			currentBoard.square[position] = piece::white | piece::knight;
 			rank++;
 			break;
 		case('B'):
-			fenBoard.square[position] = piece::white | piece::bishop;
+			currentBoard.square[position] = piece::white | piece::bishop;
 			rank++;
 			break;
 		case('R'):
-			fenBoard.square[position] = piece::white | piece::rook;
+			currentBoard.square[position] = piece::white | piece::rook;
 			rank++;
 			break;
 		case('Q'):
-			fenBoard.square[position] = piece::white | piece::queen;
+			currentBoard.square[position] = piece::white | piece::queen;
 			rank++;
 			break;
 		case('k'):
-			fenBoard.square[position] = piece::black | piece::king;
+			currentBoard.square[position] = piece::black | piece::king;
 			rank++;
 			break;
 		case('p'):
-			fenBoard.square[position] = piece::black | piece::pawn;
+			currentBoard.square[position] = piece::black | piece::pawn;
 			rank++;
 			break;
 		case('n'):
-			fenBoard.square[position] = piece::black | piece::knight;
+			currentBoard.square[position] = piece::black | piece::knight;
 			rank++;
 			break;
 		case('b'):
-			fenBoard.square[position] = piece::black | piece::bishop;
+			currentBoard.square[position] = piece::black | piece::bishop;
 			rank++;
 			break;
 		case('r'):
-			fenBoard.square[position] = piece::black | piece::rook;
+			currentBoard.square[position] = piece::black | piece::rook;
 			rank++;
 			break;
 		case('q'):
-			fenBoard.square[position] = piece::black | piece::queen;
+			currentBoard.square[position] = piece::black | piece::queen;
 			rank++;
 			break;
 		default:
@@ -264,7 +264,7 @@ void fenToGamestate(std::string fenString) {
 	}
 	std::cout << "board set!" << "\n";
 
-	fenString[stringPlace] == 'w' ? fenBoard.whiteToMove = true : fenBoard.whiteToMove = false;
+	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
 	stringPlace++;
 
 	std::cout << "color to move set!" << "\n";
@@ -277,13 +277,13 @@ void fenToGamestate(std::string fenString) {
 	for (; castlesLength != 0; castlesLength--) {
 		switch (fenString[stringPlace]) {
 		case 'K':
-			fenBoard.whiteShortCastle = true;
+			currentBoard.whiteShortCastle = true;
 		case 'Q':
-			fenBoard.whiteShortCastle = true;
+			currentBoard.whiteShortCastle = true;
 		case 'k':
-			fenBoard.blackShortCastle = true;
+			currentBoard.blackShortCastle = true;
 		case 'q':
-			fenBoard.blackLongCastle = true;
+			currentBoard.blackLongCastle = true;
 		case '-':
 			break;
 		default:
@@ -291,7 +291,7 @@ void fenToGamestate(std::string fenString) {
 		}
 		stringPlace++;
 	}
-	
+
 	std::cout << "castling set!" << "\n";
 
 
@@ -354,12 +354,12 @@ void fenToGamestate(std::string fenString) {
 			break;
 		}
 
-		
+
 
 	}
 
 	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
-	fenBoard.enPassant[enPassantSquare] = true;
+	currentBoard.enPassant[enPassantSquare] = true;
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
@@ -368,7 +368,7 @@ void fenToGamestate(std::string fenString) {
 
 void moveCollector(std::string input, int movePlace) {
 	std::string moveString;
-	
+
 	do {
 		moveString = inputParser(input, movePlace);
 		//have to take the moves, decode the string, and encode them into an int that are in an array 
@@ -428,7 +428,8 @@ void moveCollector(std::string input, int movePlace) {
 					readNumber <= 1 ? currentBoard.moves[currentBoard.movesPassed] += 0b000000000111000 : currentBoard.moves[currentBoard.movesPassed] += 0b000111000000000;
 					break;
 				}
-			} else {
+			}
+			else {
 				switch (toRead) /*this will just be promotions*/ {
 				case 'q':
 					currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
@@ -495,7 +496,7 @@ bool moveTableDiagonal[64][64];
 bool moveTableCardinal[64][64];
 
 //doesn't matter if this is slow, it'll only be ran once at startup
-void computeMoveBoards()  {
+void computeMoveBoards() {
 	int currentRank = 0;
 	int currentFile = 0;
 	int testRank = 0;
@@ -504,15 +505,15 @@ void computeMoveBoards()  {
 	bool testComplete = false;
 
 	for (int boardArray = 0; boardArray <= 63; boardArray++) {
-			
+
 		testRank = currentRank;
 		testFile = currentFile;
 		testPosition = 0;
 		testComplete = false;
-			
-		
+
+
 		for (int diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
-			
+
 			//nw
 			while (testComplete != true) {
 				testRank += 1;
@@ -674,7 +675,7 @@ void testMoveBoard(int moveTable, int boardArray) {
 	else if (moveTable == 1) {
 		for (int rank = 7; rank >= 0; rank--) {
 			for (int file = 7; file >= 0; file--) {
-				place = (rank * 8) + file; 
+				place = (rank * 8) + file;
 				if (moveTableCardinal[boardArray][place])
 					std::cout << "1";
 				else
@@ -697,7 +698,7 @@ testMoveBoard(moveTable, boardArray);
 */
 
 bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
-	
+
 	bool onEvenSquare = from % 2;
 	bool toEvenSquare = to % 2;
 	bool slidingMovePossible = false;
@@ -759,7 +760,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				default:
 					return false;
 				}
-				
+
 			case 7: //captures here
 			case 9:
 				switch (currentBoard.square[to]) {
@@ -805,7 +806,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				return false;
 			}
 		case 12://piece::white && piece::bishop:
-			
+
 			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
 				return false;
 			else {
@@ -820,7 +821,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				bool legalMove = false;
 				int targetSquare = to;
 				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
-				
+
 				bool directionFound = false;
 				int direction = 0; //nw will be 1, ne 2, sw 3, and se 4
 				int infiniteLoopBreaker = 10000;
@@ -859,7 +860,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				//this function is important to be optimal because it'll be run for every piece on every board
 				if (direction == 1) {
 					while (!pieceInTheWayNW) {
-						toGoToTest += 7; 
+						toGoToTest += 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
 							pieceInTheWayNW = false;
 							if (toGoToTest == to) {
@@ -876,7 +877,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				if (direction == 2) {
 					while (!pieceInTheWayNE) {
 						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none){
+						if (!currentBoard.square[toGoToTest] == piece::none) {
 							pieceInTheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
@@ -932,7 +933,8 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					default:
 						return false;
 					}
-				} else {
+				}
+				else {
 					return true;
 				}
 			}
@@ -950,7 +952,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				bool pieceInTheWayW = false;
 				bool legalMove = false;
 				int targetSquare = to;
-				int toGoToTest = from; 
+				int toGoToTest = from;
 				if (from < to) {
 					while (!pieceInTheWayN) {
 						toGoToTest += 8;
@@ -1104,7 +1106,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 						}
 
 					}
-					
+
 
 				}
 				if (from > to) {
@@ -1258,7 +1260,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					else
 						return false;
 				}
-			
+
 			default:
 				return false;
 			}
@@ -1657,11 +1659,10 @@ void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 	}
 }
 
-/*	
-int pieceToTest;
+/*	int pieceToTest;
 cout << "what piece do you want to see the moves for ";
 cin >> pieceToTest;
-printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);			
+printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 */
 
 bool uci = false;
@@ -1676,7 +1677,6 @@ int main()
 	cout << "gamer engine made by flipwonderland" << "\n";
 
 	computeMoveBoards();
-	makeClearBoard();
 
 	do {
 		std::string input = {};
@@ -1685,16 +1685,13 @@ int main()
 
 		if (command == "uci")/*should turn this into a switch*/ {
 			uci = true;
-			currentBoard = clearBoard;
+			clearGameState();
 			cout << "id name flipgine" << "\n";
 			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			int pieceToTest;
-			cout << "what square do you want to see which piece is on it ";
-			cin >> pieceToTest;
-			cout << currentBoard.square[pieceToTest] << "\n";
+
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
@@ -1707,19 +1704,17 @@ int main()
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-			currentBoard = clearBoard; //this might create unexpected behavior if the gui does not send this every time
+			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
 			boardLoaded = false;
 			cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
 				fenToGamestate(startingFenString);
-				currentBoard = fenBoard;
 				boardLoaded = true;
 			}
 			else {
 				fenToGamestate(input);
-				currentBoard = fenBoard;
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
 
@@ -1731,7 +1726,7 @@ int main()
 			if (boardLoaded) {
 				cout << "board loaded!" << "\n";
 			}
-		} 
+		}
 		else if (command == "go") {
 
 		}
