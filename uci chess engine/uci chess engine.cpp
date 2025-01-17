@@ -84,9 +84,10 @@ public:
 
 gameState clearBoard;
 gameState currentBoard;
+gameState fenBoard;
 
 
-void clearGameState() {
+void makeClearBoard() {
 	for (int i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
 		clearBoard.enPassant[i] = false;
@@ -100,7 +101,6 @@ void clearGameState() {
 	for (int i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
-	currentBoard = clearBoard;
 }
 
 std::string inputParser(std::string input, int desiredToken) {
@@ -198,7 +198,7 @@ void fenToGamestate(std::string fenString) {
 				break;
 			}
 			for (; skips >= 0; skips--) {
-				currentBoard.square[position] = piece::none;
+				fenBoard.square[position] = piece::none;
 				rank++;
 			}
 			break;
@@ -207,51 +207,51 @@ void fenToGamestate(std::string fenString) {
 			file--;
 			break;
 		case('K'):
-			currentBoard.square[position] = piece::white | piece::king;
+			fenBoard.square[position] = piece::white | piece::king;
 			rank++;
 			break;
 		case('P'):
-			currentBoard.square[position] = piece::white | piece::pawn;
+			fenBoard.square[position] = piece::white | piece::pawn;
 			rank++;
 			break;
 		case('N'):
-			currentBoard.square[position] = piece::white | piece::knight;
+			fenBoard.square[position] = piece::white | piece::knight;
 			rank++;
 			break;
 		case('B'):
-			currentBoard.square[position] = piece::white | piece::bishop;
+			fenBoard.square[position] = piece::white | piece::bishop;
 			rank++;
 			break;
 		case('R'):
-			currentBoard.square[position] = piece::white | piece::rook;
+			fenBoard.square[position] = piece::white | piece::rook;
 			rank++;
 			break;
 		case('Q'):
-			currentBoard.square[position] = piece::white | piece::queen;
+			fenBoard.square[position] = piece::white | piece::queen;
 			rank++;
 			break;
 		case('k'):
-			currentBoard.square[position] = piece::black | piece::king;
+			fenBoard.square[position] = piece::black | piece::king;
 			rank++;
 			break;
 		case('p'):
-			currentBoard.square[position] = piece::black | piece::pawn;
+			fenBoard.square[position] = piece::black | piece::pawn;
 			rank++;
 			break;
 		case('n'):
-			currentBoard.square[position] = piece::black | piece::knight;
+			fenBoard.square[position] = piece::black | piece::knight;
 			rank++;
 			break;
 		case('b'):
-			currentBoard.square[position] = piece::black | piece::bishop;
+			fenBoard.square[position] = piece::black | piece::bishop;
 			rank++;
 			break;
 		case('r'):
-			currentBoard.square[position] = piece::black | piece::rook;
+			fenBoard.square[position] = piece::black | piece::rook;
 			rank++;
 			break;
 		case('q'):
-			currentBoard.square[position] = piece::black | piece::queen;
+			fenBoard.square[position] = piece::black | piece::queen;
 			rank++;
 			break;
 		default:
@@ -264,7 +264,7 @@ void fenToGamestate(std::string fenString) {
 	}
 	std::cout << "board set!" << "\n";
 
-	fenString[stringPlace] == 'w' ? currentBoard.whiteToMove = true : currentBoard.whiteToMove = false;
+	fenString[stringPlace] == 'w' ? fenBoard.whiteToMove = true : fenBoard.whiteToMove = false;
 	stringPlace++;
 
 	std::cout << "color to move set!" << "\n";
@@ -277,13 +277,13 @@ void fenToGamestate(std::string fenString) {
 	for (; castlesLength != 0; castlesLength--) {
 		switch (fenString[stringPlace]) {
 		case 'K':
-			currentBoard.whiteShortCastle = true;
+			fenBoard.whiteShortCastle = true;
 		case 'Q':
-			currentBoard.whiteShortCastle = true;
+			fenBoard.whiteShortCastle = true;
 		case 'k':
-			currentBoard.blackShortCastle = true;
+			fenBoard.blackShortCastle = true;
 		case 'q':
-			currentBoard.blackLongCastle = true;
+			fenBoard.blackLongCastle = true;
 		case '-':
 			break;
 		default:
@@ -359,7 +359,7 @@ void fenToGamestate(std::string fenString) {
 	}
 
 	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
-	currentBoard.enPassant[enPassantSquare] = true;
+	fenBoard.enPassant[enPassantSquare] = true;
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
@@ -1657,7 +1657,8 @@ void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 	}
 }
 
-/*	int pieceToTest;
+/*	
+int pieceToTest;
 cout << "what piece do you want to see the moves for ";
 cin >> pieceToTest;
 printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);			
@@ -1675,6 +1676,7 @@ int main()
 	cout << "gamer engine made by flipwonderland" << "\n";
 
 	computeMoveBoards();
+	makeClearBoard();
 
 	do {
 		std::string input = {};
@@ -1683,13 +1685,16 @@ int main()
 
 		if (command == "uci")/*should turn this into a switch*/ {
 			uci = true;
-			clearGameState();
+			currentBoard = clearBoard;
 			cout << "id name flipgine" << "\n";
 			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			
+			int pieceToTest;
+			cout << "what square do you want to see which piece is on it ";
+			cin >> pieceToTest;
+			cout << currentBoard.square[pieceToTest] << "\n";
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
@@ -1702,17 +1707,19 @@ int main()
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
+			currentBoard = clearBoard; //this might create unexpected behavior if the gui does not send this every time
 			boardLoaded = false;
 			cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
 				fenToGamestate(startingFenString);
+				currentBoard = fenBoard;
 				boardLoaded = true;
 			}
 			else {
 				fenToGamestate(input);
+				currentBoard = fenBoard;
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
 
