@@ -34,6 +34,20 @@ public:
 	int halfmoveClock;
 	int fullmoveNumber;
 	*/
+	u64 whiteKingBitBoard;
+	u64 whitePawnBitBoard;
+	u64 whiteKnightBitBoard;
+	u64 whiteBishopBitBoard;
+	u64 whiteRookBitBoard;
+	u64 whiteQueenBitBoard;
+	u64 blackKingBitBoard;
+	u64 blackPawnBitBoard;
+	u64 blackKnightitBoard;
+	u64 blackBishopBitBoard;
+	u64 blackRookBitBoard;
+	u64 blackQueenBitBoard;
+	u64 allBitBoard;
+
 	void move(int moveId) {
 		int temp1 = moveId;
 		int temp2 = moveId;
@@ -207,51 +221,51 @@ void fenToGamestate(std::string fenString) {
 			file--;
 			break;
 		case('K'):
-			currentBoard.square[position] = piece::white | piece::king;
+			currentBoard.square[position] |= piece::white | piece::king;
 			rank++;
 			break;
 		case('P'):
-			currentBoard.square[position] = piece::white | piece::pawn;
+			currentBoard.square[position] |= piece::white | piece::pawn;
 			rank++;
 			break;
 		case('N'):
-			currentBoard.square[position] = piece::white | piece::knight;
+			currentBoard.square[position] |= piece::white | piece::knight;
 			rank++;
 			break;
 		case('B'):
-			currentBoard.square[position] = piece::white | piece::bishop;
+			currentBoard.square[position] |= piece::white | piece::bishop;
 			rank++;
 			break;
 		case('R'):
-			currentBoard.square[position] = piece::white | piece::rook;
+			currentBoard.square[position] |= piece::white | piece::rook;
 			rank++;
 			break;
 		case('Q'):
-			currentBoard.square[position] = piece::white | piece::queen;
+			currentBoard.square[position] |= piece::white | piece::queen;
 			rank++;
 			break;
 		case('k'):
-			currentBoard.square[position] = piece::black | piece::king;
+			currentBoard.square[position] |= piece::black | piece::king;
 			rank++;
 			break;
 		case('p'):
-			currentBoard.square[position] = piece::black | piece::pawn;
+			currentBoard.square[position] |= piece::black | piece::pawn;
 			rank++;
 			break;
 		case('n'):
-			currentBoard.square[position] = piece::black | piece::knight;
+			currentBoard.square[position] |= piece::black | piece::knight;
 			rank++;
 			break;
 		case('b'):
-			currentBoard.square[position] = piece::black | piece::bishop;
+			currentBoard.square[position] |= piece::black | piece::bishop;
 			rank++;
 			break;
 		case('r'):
-			currentBoard.square[position] = piece::black | piece::rook;
+			currentBoard.square[position] |= piece::black | piece::rook;
 			rank++;
 			break;
 		case('q'):
-			currentBoard.square[position] = piece::black | piece::queen;
+			currentBoard.square[position] |= piece::black | piece::queen;
 			rank++;
 			break;
 		default:
@@ -1665,6 +1679,30 @@ cin >> pieceToTest;
 printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 */
 
+void printBitBoard(u64 bitBoardToPrint) {
+
+	u64 shift = 1ULL;
+
+	int rank;
+	int file;
+	int square = 0;
+
+	std::cout << "\n";
+	for (rank = 7; rank >= 0; rank--) {
+		for (file = 0; file <= 7; file++) {
+			square = (rank * 8) + file;
+
+			if ((shift << square) & bitBoardToPrint) {
+				std::cout << "X";
+			} else {
+				std::cout << "-";
+			}
+		}
+		std::cout << "\n";
+	}
+
+}
+
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
@@ -1691,6 +1729,17 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
+			u64 testBB = 0ULL;
+			cout << "first test\n";
+			printBitBoard(testBB);
+
+			testBB |= (1ULL << 11);
+			cout << "d2 added\n";
+			printBitBoard(testBB);
+
+			testBB |= (1ULL << 14);
+			cout << "g2 added\n";
+			printBitBoard(testBB);
 
 		}
 		else if (command == "isready") {
