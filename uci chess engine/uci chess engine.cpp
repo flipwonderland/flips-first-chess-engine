@@ -42,7 +42,7 @@ public:
 	u64 whiteQueenBitBoard;
 	u64 blackKingBitBoard;
 	u64 blackPawnBitBoard;
-	u64 blackKnightitBoard;
+	u64 blackKnightBitBoard;
 	u64 blackBishopBitBoard;
 	u64 blackRookBitBoard;
 	u64 blackQueenBitBoard;
@@ -111,6 +111,22 @@ void clearGameState() {
 	clearBoard.blackLongCastle = false;
 	clearBoard.blackShortCastle = false;
 	clearBoard.movesPassed = 0;
+
+	clearBoard.allBitBoard = 0ULL;
+	clearBoard.whiteKingBitBoard = clearBoard.allBitBoard;
+	clearBoard.whitePawnBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteKnightBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteBishopBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteRookBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteQueenBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackKingBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackPawnBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackKnightBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackBishopBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackRookBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackQueenBitBoard = clearBoard.allBitBoard;
+	
+
 	for (int i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
@@ -221,51 +237,63 @@ void fenToGamestate(std::string fenString) {
 			file--;
 			break;
 		case('K'):
-			currentBoard.square[position] |= piece::white | piece::king;
+			currentBoard.whiteKingBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::king;
 			rank++;
 			break;
 		case('P'):
-			currentBoard.square[position] |= piece::white | piece::pawn;
+			currentBoard.whitePawnBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::pawn;
 			rank++;
 			break;
 		case('N'):
-			currentBoard.square[position] |= piece::white | piece::knight;
+			currentBoard.whiteKnightBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::knight;
 			rank++;
 			break;
 		case('B'):
-			currentBoard.square[position] |= piece::white | piece::bishop;
+			currentBoard.whiteBishopBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::bishop;
 			rank++;
 			break;
 		case('R'):
-			currentBoard.square[position] |= piece::white | piece::rook;
+			currentBoard.whiteRookBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::rook;
 			rank++;
 			break;
 		case('Q'):
-			currentBoard.square[position] |= piece::white | piece::queen;
+			currentBoard.whiteQueenBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::queen;
 			rank++;
 			break;
 		case('k'):
-			currentBoard.square[position] |= piece::black | piece::king;
+			currentBoard.blackKingBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::king;
 			rank++;
 			break;
 		case('p'):
-			currentBoard.square[position] |= piece::black | piece::pawn;
+			currentBoard.blackPawnBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::pawn;
 			rank++;
 			break;
 		case('n'):
-			currentBoard.square[position] |= piece::black | piece::knight;
+			currentBoard.blackKnightBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::knight;
 			rank++;
 			break;
 		case('b'):
-			currentBoard.square[position] |= piece::black | piece::bishop;
+			currentBoard.blackBishopBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::bishop;
 			rank++;
 			break;
 		case('r'):
-			currentBoard.square[position] |= piece::black | piece::rook;
+			currentBoard.blackRookBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::rook;
 			rank++;
 			break;
 		case('q'):
-			currentBoard.square[position] |= piece::black | piece::queen;
+			currentBoard.blackQueenBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::queen;
 			rank++;
 			break;
 		default:
