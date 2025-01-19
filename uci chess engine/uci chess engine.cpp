@@ -1757,17 +1757,8 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			u64 testBB = 0ULL;
-			cout << "first test\n";
-			printBitBoard(testBB);
-
-			testBB |= (1ULL << 11);
-			cout << "d2 added\n";
-			printBitBoard(testBB);
-
-			testBB |= (1ULL << 14);
-			cout << "g2 added\n";
-			printBitBoard(testBB);
+			cout << "pawns:\n";
+			printBitBoard(currentBoard.whitePawnBitBoard & currentBoard.blackPawnBitBoard);
 
 		}
 		else if (command == "isready") {
