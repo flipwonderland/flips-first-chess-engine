@@ -1757,8 +1757,25 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			cout << "pawns:\n";
-			printBitBoard(currentBoard.whitePawnBitBoard & currentBoard.blackPawnBitBoard);
+			cout << "pawns (bb):\n";
+			printBitBoard(currentBoard.whitePawnBitBoard);
+			cout << "pawns (sq):\n";
+			int rank;
+			int file;
+			int square;
+			for (rank = 7; rank >= 0; rank--) {
+				for (file = 0; file <= 7; file++) {
+					square = (rank * 8) + file;
+
+					if (currentBoard.square[square] == 10) {
+						std::cout << "X";
+					}
+					else {
+						std::cout << "-";
+					}
+				}
+				std::cout << "\n";
+			}
 
 		}
 		else if (command == "isready") {
