@@ -1,10 +1,18 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #include "util.h"
 
-enum piece {
+#define RAND_64 (	(u64)rand() + \
+					(u64)rand() << 15 + \
+					(u64)rand() << 30 + \
+					(u64)rand() << 45 + \
+					((u64)rand() & 0xf) << 60	)
 
+#define BRD_SQ_NUM 64
+
+enum piece {
 	none = 0b00000,
 	king = 0b00001,
 	pawn = 0b00010,
@@ -12,16 +20,64 @@ enum piece {
 	bishop = 0b00100,
 	rook = 0b00101,
 	queen = 0b00110,
-	white = 0b01000,
-	black = 0b10000,
+
+	black = 0b01000,
+	white = 0b10000
+};
+
+enum {
+	empty, wK, wP, wK, wB, wR, wQ, bK, bP, bK, bB, bR, bQ
+};
+
+enum {
+	fileA, fileB, fileC, fileD, fileE, fileF, fileG, fileH, fileNone
+};
+
+enum {
+	rank1, rank2, rank3, rank4, rank5, rank6, rank7, rank8, rankNone
+};
+
+enum {
+	white, black, none
+};
+
+enum {
+	a1, b1, c1, d1, e1, f1, g1, h1,
+	a2, b2, c2, d2, e2, f2, g2, h2,
+	a3, b3, c3, d3, e3, f3, g3, h3,
+	a4, b4, c4, d4, e4, f4, g4, h4,
+	a5, b5, c5, d5, e5, f5, g5, h5,
+	a6, b6, c6, d6, e6, f6, g6, h6,
+	a7, b7, c7, d7, e7, f7, g7, h7,
+	a8, b8, c8, d8, e8, f8, g8, h8,
 
 };
+
+//gonna try his struct before I move to classes again so I can get an idea of how this works
+typedef struct {
+
+	int pieces[BRD_SQ_NUM];
+	u64 kings[3];
+	u64 pawns[3];
+	u64 knights[3];
+	u64 bishops[3];
+	u64 rooks[3];
+	u64 queens[3];
+
+	int side;
+	int enPassant;
+	int fiftyMove;
+
+	int ply;
+	int historyPly;
+
+} boardStructure;
 
 
 class gameState {
 public:
 	char square[64];
-	bool enPassant[64];
+	u64 enPassant;
 	bool whiteToMove;
 	bool whiteShortCastle;
 	bool whiteLongCastle;
@@ -96,6 +152,23 @@ public:
 	}
 };
 
+u64 positionKey;
+u64 pieceKeys[13][64];
+u64 sideKey;
+u64 castleKeys[16];
+
+void initializeHashKeys() {
+	for (int i = 0; i < 14; i++) {
+		for (int i2 = 0; i2 < 64; i2++) {
+			pieceKeys[i][i2] = RAND_64;
+		}
+	}
+	sideKey = RAND_64;
+	for (int i = 0; i < 16; i++) {
+		castleKeys[i] = RAND_64;
+	}
+}
+
 u64 setMask[64];
 u64 clearMask[64];
 
@@ -109,6 +182,7 @@ void initializeBitMasks() {
 		clearMask[i] = ~setMask[i];
 	}
 }
+
 
 //got these from bluefever softwares series
 //it is also here https://www.chessprogramming.org/Looking_for_Magics
@@ -130,6 +204,10 @@ int countBits(u64 b) {
 	return r;
 }
 
+u64 generatePositionKey(const  *pos)
+
+
+
 gameState clearBoard;
 gameState currentBoard;
 
@@ -137,8 +215,9 @@ gameState currentBoard;
 void clearGameState() {
 	for (int i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
-		clearBoard.enPassant[i] = false;
 	}
+	clearBoard.enPassant = 0ULL;
+
 	clearBoard.whiteToMove = true;
 	clearBoard.whiteShortCastle = false;
 	clearBoard.whiteLongCastle = false;
@@ -279,7 +358,7 @@ void fenToGamestate(std::string fenString) {
 			rank++;
 			break;
 		case('P'):
-			currentBoard.whitePawnBitBoard |= (1ULL << position);
+			SETBIT(currentBoard.whitePawnBitBoard, position);
 			currentBoard.square[position] = piece::white + piece::pawn;
 			rank++;
 			break;
@@ -438,7 +517,7 @@ void fenToGamestate(std::string fenString) {
 	}
 
 	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
-	currentBoard.enPassant[enPassantSquare] = true;
+	currentBoard.enPassant |= (1ULL << enPassantSquare);
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
@@ -1771,6 +1850,7 @@ void printBitBoard(u64 bitBoardToPrint) {
 void initializeAll() {
 	computeMoveBoards();
 	initializeBitMasks();
+	initializeHashKeys();
 }
 
 bool uci = false;
