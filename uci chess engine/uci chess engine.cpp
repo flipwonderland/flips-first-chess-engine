@@ -4,14 +4,6 @@
 
 #include "util.h"
 
-#define RAND_64 (	(u64)rand() + \
-					(u64)rand() << 15 + \
-					(u64)rand() << 30 + \
-					(u64)rand() << 45 + \
-					((u64)rand() & 0xf) << 60	)
-
-#define BRD_SQ_NUM 64
-#define MAX_GAME_MOVES 17697
 
 
 enum piece {
@@ -40,18 +32,18 @@ enum {
 };
 
 enum {
-	white, black, none
+	white1, black1, none1
 };
 
 enum {
-	a1, b1, c1, d1, e1, f1, g1, h1,
-	a2, b2, c2, d2, e2, f2, g2, h2,
-	a3, b3, c3, d3, e3, f3, g3, h3,
-	a4, b4, c4, d4, e4, f4, g4, h4,
-	a5, b5, c5, d5, e5, f5, g5, h5,
-	a6, b6, c6, d6, e6, f6, g6, h6,
-	a7, b7, c7, d7, e7, f7, g7, h7,
-	a8, b8, c8, d8, e8, f8, g8, h8, noSquare
+	a1 = 21, b1, c1, d1, e1, f1, g1, h1,
+	a2 = 31, b2, c2, d2, e2, f2, g2, h2,
+	a3 = 41, b3, c3, d3, e3, f3, g3, h3,
+	a4 = 51, b4, c4, d4, e4, f4, g4, h4,
+	a5 = 61, b5, c5, d5, e5, f5, g5, h5,
+	a6 = 71, b6, c6, d6, e6, f6, g6, h6,
+	a7 = 81, b7, c7, d7, e7, f7, g7, h7,
+	a8 = 91, b8, c8, d8, e8, f8, g8, h8, noSquare
 
 };
 
@@ -94,7 +86,7 @@ typedef struct {
 	u64 posKey;
 
 	int pieceNumber[13];
-	int pieces[3]; //not pawns
+	int nonPawnPieces[3];
 	int majorPieces[3];
 	int minorPieces[3];
 	int nonPieces[3]; //pawns
@@ -182,13 +174,39 @@ public:
 	}
 };
 
+
+
+void initializeSquare120ToSquare64() {
+	int i;
+	int file;
+	int rank;
+	int square = a1;
+	int square64 = 0;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		square120ToSquare64[i] = 65;
+	}
+	for (i = 0; i < 64; i++) {
+		square64ToSquare120[i] = 120;
+	}
+
+	for (rank = rank1; rank <= rank8; rank++) {
+		for (file = fileA; file <= fileH; file++) {
+			square = FR2SQ(file, rank);
+			square64ToSquare120[square64] = square; //I've typed square so many times it really doesn't seem like it's spelled that way
+			square120ToSquare64[square] = square64;
+			square64++;
+		}
+	}
+}
+
 u64 positionKey;
 u64 pieceKeys[13][64];
 u64 sideKey;
 u64 castleKeys[16];
 
 void initializeHashKeys() {
-	for (int i = 0; i < 14; i++) {
+	for (int i = 0; i < 13; i++) {
 		for (int i2 = 0; i2 < 64; i2++) {
 			pieceKeys[i][i2] = RAND_64;
 		}
@@ -374,7 +392,7 @@ void fenToGamestate(std::string fenString) {
 
 	while (!boardSet) {
 		position = (file * 8) + rank;
-		char fenPart = fenString[stringPlace];
+		int fenPart = fenString[stringPlace];
 		switch (fenPart) {
 		case('1'):
 		case('2'):
@@ -413,6 +431,7 @@ void fenToGamestate(std::string fenString) {
 			for (; skips >= 0; skips--) {
 				currentBoard.square[position] = piece::none;
 				rank++;
+				std::cout << "piece skipped\n";
 			}
 			break;
 		case('/'):
@@ -1916,6 +1935,7 @@ void printBitBoard(u64 bitBoardToPrint) {
 
 void initializeAll() {
 	computeMoveBoards();
+	initializeSquare120ToSquare64();
 	initializeBitMasks();
 	initializeHashKeys();
 }
@@ -1946,8 +1966,16 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			cout << "pawns (bb):\n";
-			printBitBoard(currentBoard.whitePawnBitBoard);
+			int i = 0;
+			for (; i < BRD_SQ_NUM; i++) {
+				if (i % 10 == 0) cout << "\n";
+				cout << " " << square120ToSquare64[i];
+			}
+			cout << "\n";
+			for (i = 0; i < 64; i++) {
+				if (i % 8 == 0) cout << "\n";
+				cout << " " << square64ToSquare120[i];
+			}
 
 		}
 		else if (command == "isready") {
