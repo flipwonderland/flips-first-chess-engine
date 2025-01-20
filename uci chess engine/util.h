@@ -10,6 +10,12 @@ typedef unsigned long long u64;
 #define global_variable static
 #define internal static
 
+//these are from the bluefever software series
+#define POP(b) popBit(b)
+#define CNT(b) countBits(b)
+#define CLRBIT(bb,sq) ((bb) &= clearMask[(sq)])
+#define SETBIT(bb,sq) ((bb) != setMask[(sq)])
+
 inline int
 clamp(int min, int val, int max) {
     if (val < min) return min;
