@@ -331,30 +331,33 @@ void clearGameState() {
 	currentBoard = clearBoard;
 }
 
-std::string inputParser(std::string input, int desiredToken) {
+std::string inputParser(std::string input, const int desiredToken) {
 	std::string temp = input;
 	std::string token;
 	size_t stopTokenPlace;
 	int tokenCount = 0;
-	bool secondToken = false;
 	bool stop = false;
 	int loopBreaker = 10000;
 	int allowedTokensWithoutInfo = 10;
 
 	while (!stop) {
-		stopTokenPlace = temp.find(' ');
-		if (stopTokenPlace == std::string::npos && secondToken) /*end of the input string*/ {
+		if (desiredToken != 0) stopTokenPlace = temp.find(' ');
+		else stopTokenPlace = 0;
+
+		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
 			stop = true;
 		}
 		if (loopBreaker == 0) {
-			std::cout << "infinite loop caused in input parser! input: " << input << " token: " << desiredToken << "\n";
+			std::cout << "infinite loop caused in input parser! input: " << input << "\ntoken: " << desiredToken << "\n";
 			break;
 		}
 		if (allowedTokensWithoutInfo == 0)
 			break;
 		//might be able to change this to !=
 		if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
-			temp.erase(0, stopTokenPlace);
+			temp.erase(0, stopTokenPlace + 1); //+1 because it's the array version that starts with 0, and this needs it to start with 1
+			tokenCount++;
+			allowedTokensWithoutInfo++;
 		}
 		else {
 			int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
@@ -363,8 +366,6 @@ std::string inputParser(std::string input, int desiredToken) {
 			token = temp;
 			return token;
 		}
-		tokenCount++;
-		secondToken = true;
 		loopBreaker--;
 		allowedTokensWithoutInfo--;
 
@@ -388,6 +389,7 @@ void fenToGamestate(std::string fenString) {
 	int piecesLeftInRank = 8;
 	int skips = 0;
 	std::string boardPieces = inputParser(fenString, 0);
+	std::cout << "board pieces: " << boardPieces << "\n";
 	int charactersToGoThrough = boardPieces.length();
 
 	while (!boardSet) {
@@ -1954,8 +1956,9 @@ int main()
 	initializeAll();
 
 	do {
-		std::string input = {};
-		std::getline(cin >> std::ws, input);
+		std::string input;
+		std::getline(cin, input);
+		//std::getline(cin >> std::ws, input);
 		std::string command = inputParser(input, 0);
 
 		if (command == "uci")/*should turn this into a switch*/ {
@@ -1966,20 +1969,11 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			int i = 0;
-			for (; i < BRD_SQ_NUM; i++) {
-				if (i % 10 == 0) cout << "\n";
-				cout << " " << square120ToSquare64[i];
-			}
-			cout << "\n";
-			for (i = 0; i < 64; i++) {
-				if (i % 8 == 0) cout << "\n";
-				cout << " " << square64ToSquare120[i];
-			}
 
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
+			if (inputParser(input, 1) == "hi") cout << "I see you! \n";
 			cout << "readyok" << "\n";
 		}
 		else if (command == "setoption name") /*gotta fix this, this is 2 tokens in one*/ {
@@ -1995,10 +1989,13 @@ int main()
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
+				cout << "startpos chosen \n";
 				fenToGamestate(startingFenString);
 				boardLoaded = true;
 			}
 			else {
+				std::string positionChosen = inputParser(input, 1);
+				cout << "custom FEN chosen, FEN is: " << positionChosen << "\n";
 				fenToGamestate(input);
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
@@ -2030,8 +2027,11 @@ int main()
 				cout << "board is not loaded!" << "\n";
 			}
 		}
-		else
+		else {
 			cout << "unknown command, try again. command: " << command << "\n";
+			cout << "second command: " << inputParser(input, 1) << "\n";
+			cout << "full input: " << input << "\n";
+		}
 	} while (keepRunning);
 	return 0;
 }
