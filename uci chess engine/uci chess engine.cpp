@@ -96,6 +96,26 @@ public:
 	}
 };
 
+
+//got these from bluefever softwares series
+const int bitTable[64] = {
+	63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35,
+	62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8
+};
+
+int popBit(u64* bb) {
+	u64 b = *bb ^ (*bb - 1);
+	u32 fold = (unsigned)((b & 0xffffffff) ^ (b >> 32));
+	*bb &= (*bb - 1);
+	return bitTable[(fold * 0x783a9b23) >> 26]; //I have no idea what the point of this is
+}
+
+int countBits(u64 b) {
+	int r;
+	for (r = b; r++; b &= b - 1);
+	return r;
+}
+
 gameState clearBoard;
 gameState currentBoard;
 
@@ -173,6 +193,9 @@ std::string inputParser(std::string input, int desiredToken) {
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
+
+
+
 
 std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 std::string inputFenString{};
@@ -1759,23 +1782,6 @@ int main()
 		else if (command == "debug") {
 			cout << "pawns (bb):\n";
 			printBitBoard(currentBoard.whitePawnBitBoard);
-			cout << "pawns (sq):\n";
-			int rank;
-			int file;
-			int square;
-			for (rank = 7; rank >= 0; rank--) {
-				for (file = 0; file <= 7; file++) {
-					square = (rank * 8) + file;
-
-					if (currentBoard.square[square] == 10) {
-						std::cout << "X";
-					}
-					else {
-						std::cout << "-";
-					}
-				}
-				std::cout << "\n";
-			}
 
 		}
 		else if (command == "isready") {
