@@ -11,6 +11,8 @@
 					((u64)rand() & 0xf) << 60	)
 
 #define BRD_SQ_NUM 64
+#define MAX_GAME_MOVES 17697
+
 
 enum piece {
 	none = 0b00000,
@@ -26,7 +28,7 @@ enum piece {
 };
 
 enum {
-	empty, wK, wP, wK, wB, wR, wQ, bK, bP, bK, bB, bR, bQ
+	empty, wK, wP, wN, wB, wR, wQ, bK, bP, bN, bB, bR, bQ
 };
 
 enum {
@@ -49,9 +51,25 @@ enum {
 	a5, b5, c5, d5, e5, f5, g5, h5,
 	a6, b6, c6, d6, e6, f6, g6, h6,
 	a7, b7, c7, d7, e7, f7, g7, h7,
-	a8, b8, c8, d8, e8, f8, g8, h8,
+	a8, b8, c8, d8, e8, f8, g8, h8, noSquare
 
 };
+
+enum {
+	whiteKingCastle = 0b0001,
+	whiteQueenCastle = 0b0010,
+	blackKingCastle = 0b0100,
+	blackQueenCastle = 0b1000
+};
+typedef struct {
+
+	int move;
+	int castlePerm;
+	int enPassant;
+	int fiftyMove;
+	u64 positionKey;
+
+} undoStructure;
 
 //gonna try his struct before I move to classes again so I can get an idea of how this works
 typedef struct {
@@ -70,6 +88,18 @@ typedef struct {
 
 	int ply;
 	int historyPly;
+
+	int castlePerm;
+
+	u64 posKey;
+
+	int pieceNumber[13];
+	int pieces[3]; //not pawns
+	int majorPieces[3];
+	int minorPieces[3];
+	int nonPieces[3]; //pawns
+
+	undoStructure history[MAX_GAME_MOVES];
 
 } boardStructure;
 
@@ -204,7 +234,44 @@ int countBits(u64 b) {
 	return r;
 }
 
-u64 generatePositionKey(const  *pos)
+u64 generatePositionKey(const boardStructure* pos) {
+
+	int square = 0;
+	u64 finalKey = 0ULL;
+	int piece = empty;
+
+	//pieces
+	for (; square < BRD_SQ_NUM; square++) {
+		piece = pos->pieces[square];
+		if (piece != noSquare && piece != empty) {
+			if (piece >= wK && piece <= bQ) {
+				finalKey ^= pieceKeys[piece][square];
+			}
+			else {
+				std::cout << "error, invalid piece in the position key generator \n";
+			}
+		}
+	}
+
+	if (pos->side == white) {
+		finalKey ^= sideKey;
+	}
+
+	if (pos->enPassant != noSquare) {
+		if (pos->enPassant >= 0 && pos->enPassant < BRD_SQ_NUM) {
+			finalKey ^= pieceKeys[empty][pos->enPassant];
+		}
+	}
+
+	if (pos->castlePerm >= 0 && pos->castlePerm <= 15) {
+		finalKey ^= castleKeys[pos->castlePerm];
+	}
+	else {
+		std::cout << "error, invalid castling permissions given to the position key generator \n";
+	}
+
+	return finalKey;
+}
 
 
 
