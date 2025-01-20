@@ -96,6 +96,19 @@ public:
 	}
 };
 
+u64 setMask[64];
+u64 clearMask[64];
+
+void initializeBitMasks() {
+	for (int i = 0; i < 64; i++) {
+		setMask[i] = 0ULL;
+		clearMask[i] = 0ULL;
+	}
+	for (int i = 0; i < 64; i++) {
+		setMask[i] |= (1ULL << i);
+		clearMask[i] = ~setMask[i];
+	}
+}
 
 //got these from bluefever softwares series
 //it is also here https://www.chessprogramming.org/Looking_for_Magics
@@ -111,7 +124,7 @@ int popFirstBit(u64* bb) {
 	return bitTable[(fold * 0x783a9b23) >> 26]; //I have no idea what the point of this is
 }
 
-int count_1s(u64 b) {
+int countBits(u64 b) {
 	int r;
 	for (r = 0; b; r++, b &= b - 1);
 	return r;
@@ -1755,6 +1768,11 @@ void printBitBoard(u64 bitBoardToPrint) {
 
 }
 
+void initializeAll() {
+	computeMoveBoards();
+	initializeBitMasks();
+}
+
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
@@ -1766,7 +1784,7 @@ int main()
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
 
-	computeMoveBoards();
+	initializeAll();
 
 	do {
 		std::string input = {};
