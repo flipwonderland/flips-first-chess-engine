@@ -2,7 +2,9 @@
 #include <string>
 #include <cstdlib>
 
+#include "stdlib.h"
 #include "util.h"
+
 
 
 /*
@@ -67,6 +69,8 @@ typedef struct {
 typedef struct {
 
 	int pieces[BRD_SQ_NUM];
+
+	int kingSquare[2];
 	u64 kings[3];
 	u64 pawns[3];
 	u64 knights[3];
@@ -81,18 +85,19 @@ typedef struct {
 	int ply;
 	int historyPly;
 
-	int castlePerm;
+	int castlePermission;
 
-	u64 posKey;
+	u64 positionKey;
 
 	int pieceNumber[13];
-	int nonPawnPieces[3];
+	int pieces[3]; //not pawns
 	int majorPieces[3];
 	int minorPieces[3];
 	int nonPieces[3]; //pawns
 
 	undoStructure history[MAX_GAME_MOVES];
 
+	int pieceList[13][10];
 } boardStructure;
 
 /*
@@ -282,8 +287,8 @@ u64 generatePositionKey(const boardStructure* pos) {
 		}
 	}
 
-	if (pos->castlePerm >= 0 && pos->castlePerm <= 15) {
-		finalKey ^= castleKeys[pos->castlePerm];
+	if (pos->castlePermission >= 0 && pos->castlePermission <= 15) {
+		finalKey ^= castleKeys[pos->castlePermission];
 	}
 	else {
 		std::cout << "error, invalid castling permissions given to the position key generator \n";
@@ -332,15 +337,62 @@ void clearGameState() {
 	}
 	currentBoard = clearBoard;
 }
+*/
 
-void resetBoard(boardStructure* pos) {
+void resetBoard(boardStructure* position) {
 	int i;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
-		pos->pieces[i] = noSquare;
+		position->pieces[i] = noSquare;
 	}
+
+	for (i = 0; i < 64; i++) {
+		position->pieces[SQ120(i)] = empty; // this converts the index into the actual play board, so the play board is reset to empty
+	}
+
+	for (i = 0; i < 3; i++) {
+		position->pieces[i] = 0;
+		position->majorPieces[i] = 0;
+		position->minorPieces[i] = 0;
+		position->nonPieces[i] = 0;
+
+		position->kings[i] = 0ULL;
+		position->pawns[i] = 0ULL;
+		position->bishops[i] = 0ULL;
+		position->knights[i] = 0ULL;
+		position->rooks[i] = 0ULL;
+		position->queens[i] = 0ULL;
+
+	}
+
+	for (i = 0; i < 13; i++) {
+		position->pieceNumber[i] = 0;
+	}
+
+	position->kingSquare[white] = noSquare;
+	position->kingSquare[black] = noSquare;
+
+	position->side = none;
+	position->enPassant = noSquare;
+	position->fiftyMove = 0;
+
+	position->ply = 0;
+	position->historyPly = 0;
+
+	position->castlePermission = 0;
+
+	position->positionKey = 0ULL;
+	
+	
+
 }
-*/
+
+void setToStartingposition(boardStructure* position) {
+	int i;
+
+
+}
+
 
 std::string inputParser(std::string input, const int desiredToken) {
 	std::string temp = input;
@@ -714,7 +766,7 @@ void moveCollector(std::string input, int movePlace) {
 
 }
 */
-
+/*
 //got these from sebastian lagues vid :D
 int pawnValue = 100;
 int bishopValue = 300;
@@ -722,7 +774,7 @@ int knightValue = 300;
 int rookValue = 500;
 int queenValue = 900;
 
-/*
+
 int countPieceMaterial() {
 	int material = 0;
 	int	piece = 0;
@@ -1991,6 +2043,7 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
+
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
