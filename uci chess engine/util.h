@@ -22,8 +22,8 @@ typedef unsigned long long u64;
 
 #define POP(b) popBit(b)
 #define CNT(b) countBits(b)
-#define CLRBIT(bb,sq) ((bb) &= clearMask[(sq)])
-#define SETBIT(bb,sq) ((bb) != setMask[(sq)])
+#define CLRBIT(bb,sq) ((bb) &= clearMask(sq))
+#define SETBIT(bb,sq) ((bb) |= setMask(sq))
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10))
 
 internal int square120ToSquare64[BRD_SQ_NUM];

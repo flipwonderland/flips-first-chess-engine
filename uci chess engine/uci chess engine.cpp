@@ -388,6 +388,7 @@ void fenToGamestate(std::string fenString) {
 	int file = 7;
 	int piecesLeftInRank = 8;
 	int skips = 0;
+	int piecesSkipped = 0;
 	std::string boardPieces = inputParser(fenString, 0);
 	std::cout << "board pieces: " << boardPieces << "\n";
 	int charactersToGoThrough = boardPieces.length();
@@ -433,7 +434,8 @@ void fenToGamestate(std::string fenString) {
 			for (; skips >= 0; skips--) {
 				currentBoard.square[position] = piece::none;
 				rank++;
-				std::cout << "piece skipped\n";
+				piecesSkipped++;
+				std::cout << piecesSkipped << " pieces skipped\n";
 			}
 			break;
 		case('/'):
@@ -446,9 +448,10 @@ void fenToGamestate(std::string fenString) {
 			rank++;
 			break;
 		case('P'):
-			SETBIT(currentBoard.whitePawnBitBoard, position);
+			currentBoard.whitePawnBitBoard |= (1ULL << position);
 			currentBoard.square[position] = piece::white + piece::pawn;
 			rank++;
+			std::cout << "white pawn added on position " << position << "\n";
 			break;
 		case('N'):
 			currentBoard.whiteKnightBitBoard |= (1ULL << position);
@@ -1969,7 +1972,7 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-
+			printBitBoard(currentBoard.whitePawnBitBoard);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
