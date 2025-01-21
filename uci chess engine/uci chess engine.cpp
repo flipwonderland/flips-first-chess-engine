@@ -5,7 +5,7 @@
 #include "util.h"
 
 
-
+/*
 enum piece {
 	none = 0b00000,
 	king = 0b00001,
@@ -18,7 +18,7 @@ enum piece {
 	black = 0b01000,
 	white = 0b10000
 };
-
+*/
 enum {
 	empty, wK, wP, wN, wB, wR, wQ, bK, bP, bN, bB, bR, bQ
 };
@@ -32,7 +32,7 @@ enum {
 };
 
 enum {
-	white1, black1, none1
+	white, black, none
 };
 
 enum {
@@ -95,7 +95,7 @@ typedef struct {
 
 } boardStructure;
 
-
+/*
 class gameState {
 public:
 	char square[64];
@@ -107,11 +107,11 @@ public:
 	bool blackLongCastle;
 	int movesPassed;
 	int moves[17697]; //longest possible chess game, will never need to store more moves than that
-	/*
-	* might need these might not
-	int halfmoveClock;
-	int fullmoveNumber;
-	*/
+	
+	//might need these might not
+	//int halfmoveClock;
+	//int fullmoveNumber;
+	
 	u64 whiteKingBitBoard;
 	u64 whitePawnBitBoard;
 	u64 whiteKnightBitBoard;
@@ -173,6 +173,7 @@ public:
 		square[fromSquare] = piece::none;
 	}
 };
+*/
 
 
 
@@ -292,11 +293,12 @@ u64 generatePositionKey(const boardStructure* pos) {
 }
 
 
-
+/*
 gameState clearBoard;
 gameState currentBoard;
+*/
 
-
+/*
 void clearGameState() {
 	for (int i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
@@ -331,6 +333,15 @@ void clearGameState() {
 	currentBoard = clearBoard;
 }
 
+void resetBoard(boardStructure* pos) {
+	int i;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		pos->pieces[i] = noSquare;
+	}
+}
+*/
+
 std::string inputParser(std::string input, const int desiredToken) {
 	std::string temp = input;
 	std::string token;
@@ -344,7 +355,7 @@ std::string inputParser(std::string input, const int desiredToken) {
 		if (desiredToken != 0) stopTokenPlace = temp.find(' ');
 		else stopTokenPlace = 0;
 
-		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
+		if (stopTokenPlace == std::string::npos)/* end of the input string*/ {
 			stop = true;
 		}
 		if (loopBreaker == 0) {
@@ -354,7 +365,7 @@ std::string inputParser(std::string input, const int desiredToken) {
 		if (allowedTokensWithoutInfo == 0)
 			break;
 		//might be able to change this to !=
-		if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
+		if (tokenCount < desiredToken) /*if it's less than the desired token, we don't care what it is, just delete it*/{
 			temp.erase(0, stopTokenPlace + 1); //+1 because it's the array version that starts with 0, and this needs it to start with 1
 			tokenCount++;
 			allowedTokensWithoutInfo++;
@@ -376,10 +387,11 @@ std::string inputParser(std::string input, const int desiredToken) {
 
 
 
+
 std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 std::string inputFenString{};
 
-//this creates an infinite loop for some reason
+/*
 void fenToGamestate(std::string fenString) {
 	int stringPlace = 0;
 	int position;
@@ -405,7 +417,7 @@ void fenToGamestate(std::string fenString) {
 		case('6'):
 		case('7'):
 		case('8'): //this is to rectify the char int being the same value as an int
-			switch (fenPart)/*gonna change this to stoi when I figure out how that works*/ {
+			switch (fenPart)gonna change this to stoi when I figure out how that works {
 			case('1'):
 				skips = 1;
 				break;
@@ -576,7 +588,7 @@ void fenToGamestate(std::string fenString) {
 			break;
 		}
 		stringPlace++;
-		switch (fenString[stringPlace]) /*again the char ints aren't the same as *int* ints */ {
+		switch (fenString[stringPlace]) again the char ints aren't the same as *int* ints  {
 		case('1'):
 			rankNumberMultiply = 0;
 			break;
@@ -612,9 +624,9 @@ void fenToGamestate(std::string fenString) {
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
+*/
 
-
-
+/*
 void moveCollector(std::string input, int movePlace) {
 	std::string moveString;
 
@@ -679,7 +691,7 @@ void moveCollector(std::string input, int movePlace) {
 				}
 			}
 			else {
-				switch (toRead) /*this will just be promotions*/ {
+				switch (toRead) this will just be promotions {
 				case 'q':
 					currentBoard.moves[currentBoard.movesPassed] += 0b110000000000000;
 					break;
@@ -701,6 +713,7 @@ void moveCollector(std::string input, int movePlace) {
 	} while (moveString != "endOfTheLinePal.");
 
 }
+*/
 
 //got these from sebastian lagues vid :D
 int pawnValue = 100;
@@ -709,6 +722,7 @@ int knightValue = 300;
 int rookValue = 500;
 int queenValue = 900;
 
+/*
 int countPieceMaterial() {
 	int material = 0;
 	int	piece = 0;
@@ -738,6 +752,7 @@ int countPieceMaterial() {
 	}
 	return material;
 }
+*/
 
 //precomputed move table
 //got this idea from sebastian lauges vid cause I had no idea what to do
@@ -946,6 +961,7 @@ cin >> boardArray;
 testMoveBoard(moveTable, boardArray);
 */
 
+/*
 bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 	bool onEvenSquare = from % 2;
@@ -1170,7 +1186,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
@@ -1262,7 +1278,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
@@ -1414,7 +1430,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 						}
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 17:
 					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
@@ -1613,7 +1629,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 10:
@@ -1705,7 +1721,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 10:
@@ -1857,7 +1873,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 						}
 					}
 				}
-				if (!legalMove) /*captures*/ {
+				if (!legalMove) captures {
 					switch (currentBoard.square[to]) {
 					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
 					case 10:
@@ -1886,7 +1902,7 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 
 }
-
+*/
 
 bool checkLegalMove(int board[], int moveId) {
 	//uuuuuuuuuuuuuuuh idk how to do this
@@ -1894,6 +1910,7 @@ bool checkLegalMove(int board[], int moveId) {
 }
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
+/*
 void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 	int place = 0;
 	for (int rank = 7; rank >= 0; rank--) {
@@ -1907,6 +1924,7 @@ void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 		std::cout << "\n";
 	}
 }
+*/
 
 /*	int pieceToTest;
 cout << "what piece do you want to see the moves for ";
@@ -1966,13 +1984,13 @@ int main()
 
 		if (command == "uci")/*should turn this into a switch*/ {
 			uci = true;
-			clearGameState();
+			//clearGameState();
 			cout << "id name flipgine" << "\n";
 			cout << "id author flip! (duh)" << "\n";
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			printBitBoard(currentBoard.whitePawnBitBoard);
+			//printBitBoard(currentBoard.whitePawnBitBoard);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
@@ -1986,12 +2004,12 @@ int main()
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-			clearGameState(); //this might create unexpected behavior if the gui does not send this every time
-			boardLoaded = false;
-			cout << "new game ready to be loaded!" << "\n";
+			//clearGameState(); //this might create unexpected behavior if the gui does not send this every time
+			//boardLoaded = false;
+			//cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
-			if (inputParser(input, 1) == "startpos") {
+			/*if (inputParser(input, 1) == "startpos") {
 				cout << "startpos chosen \n";
 				fenToGamestate(startingFenString);
 				boardLoaded = true;
@@ -2011,6 +2029,7 @@ int main()
 			if (boardLoaded) {
 				cout << "board loaded!" << "\n";
 			}
+			*/
 		}
 		else if (command == "go") {
 

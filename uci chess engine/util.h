@@ -1,3 +1,5 @@
+#include "stdlib.h"
+
 typedef char s8;
 typedef unsigned char u8;
 typedef short s16;
@@ -13,6 +15,7 @@ typedef unsigned long long u64;
 #define BRD_SQ_NUM 120
 #define MAX_GAME_MOVES 17697
 
+
 //these are from the bluefever software series
 #define RAND_64 (	(u64)rand() + \
 					(u64)rand() << 15 + \
@@ -25,6 +28,8 @@ typedef unsigned long long u64;
 #define CLRBIT(bb,sq) ((bb) &= clearMask(sq))
 #define SETBIT(bb,sq) ((bb) |= setMask(sq))
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10))
+#define SQ64 (sq120) (square120ToSquare64[(sq120)])
+#define SQ120(sq64) (square64ToSquare120[(sq64)])
 
 internal int square120ToSquare64[BRD_SQ_NUM];
 internal int square64ToSquare120[64];
