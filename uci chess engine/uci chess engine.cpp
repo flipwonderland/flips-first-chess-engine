@@ -1,10 +1,12 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #include "util.h"
 
-enum piece {
 
+
+enum piece {
 	none = 0b00000,
 	king = 0b00001,
 	pawn = 0b00010,
@@ -12,16 +14,92 @@ enum piece {
 	bishop = 0b00100,
 	rook = 0b00101,
 	queen = 0b00110,
-	white = 0b01000,
-	black = 0b10000,
+
+	black = 0b01000,
+	white = 0b10000
+};
+
+enum {
+	empty, wK, wP, wN, wB, wR, wQ, bK, bP, bN, bB, bR, bQ
+};
+
+enum {
+	fileA, fileB, fileC, fileD, fileE, fileF, fileG, fileH, fileNone
+};
+
+enum {
+	rank1, rank2, rank3, rank4, rank5, rank6, rank7, rank8, rankNone
+};
+
+enum {
+	white1, black1, none1
+};
+
+enum {
+	a1 = 21, b1, c1, d1, e1, f1, g1, h1,
+	a2 = 31, b2, c2, d2, e2, f2, g2, h2,
+	a3 = 41, b3, c3, d3, e3, f3, g3, h3,
+	a4 = 51, b4, c4, d4, e4, f4, g4, h4,
+	a5 = 61, b5, c5, d5, e5, f5, g5, h5,
+	a6 = 71, b6, c6, d6, e6, f6, g6, h6,
+	a7 = 81, b7, c7, d7, e7, f7, g7, h7,
+	a8 = 91, b8, c8, d8, e8, f8, g8, h8, noSquare
 
 };
+
+enum {
+	whiteKingCastle = 0b0001,
+	whiteQueenCastle = 0b0010,
+	blackKingCastle = 0b0100,
+	blackQueenCastle = 0b1000
+};
+typedef struct {
+
+	int move;
+	int castlePerm;
+	int enPassant;
+	int fiftyMove;
+	u64 positionKey;
+
+} undoStructure;
+
+//gonna try his struct before I move to classes again so I can get an idea of how this works
+typedef struct {
+
+	int pieces[BRD_SQ_NUM];
+	u64 kings[3];
+	u64 pawns[3];
+	u64 knights[3];
+	u64 bishops[3];
+	u64 rooks[3];
+	u64 queens[3];
+
+	int side;
+	int enPassant;
+	int fiftyMove;
+
+	int ply;
+	int historyPly;
+
+	int castlePerm;
+
+	u64 posKey;
+
+	int pieceNumber[13];
+	int nonPawnPieces[3];
+	int majorPieces[3];
+	int minorPieces[3];
+	int nonPieces[3]; //pawns
+
+	undoStructure history[MAX_GAME_MOVES];
+
+} boardStructure;
 
 
 class gameState {
 public:
 	char square[64];
-	bool enPassant[64];
+	u64 enPassant;
 	bool whiteToMove;
 	bool whiteShortCastle;
 	bool whiteLongCastle;
@@ -34,6 +112,20 @@ public:
 	int halfmoveClock;
 	int fullmoveNumber;
 	*/
+	u64 whiteKingBitBoard;
+	u64 whitePawnBitBoard;
+	u64 whiteKnightBitBoard;
+	u64 whiteBishopBitBoard;
+	u64 whiteRookBitBoard;
+	u64 whiteQueenBitBoard;
+	u64 blackKingBitBoard;
+	u64 blackPawnBitBoard;
+	u64 blackKnightBitBoard;
+	u64 blackBishopBitBoard;
+	u64 blackRookBitBoard;
+	u64 blackQueenBitBoard;
+	u64 allBitBoard;
+
 	void move(int moveId) {
 		int temp1 = moveId;
 		int temp2 = moveId;
@@ -82,6 +174,125 @@ public:
 	}
 };
 
+
+
+void initializeSquare120ToSquare64() {
+	int i;
+	int file;
+	int rank;
+	int square = a1;
+	int square64 = 0;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		square120ToSquare64[i] = 65;
+	}
+	for (i = 0; i < 64; i++) {
+		square64ToSquare120[i] = 120;
+	}
+
+	for (rank = rank1; rank <= rank8; rank++) {
+		for (file = fileA; file <= fileH; file++) {
+			square = FR2SQ(file, rank);
+			square64ToSquare120[square64] = square; //I've typed square so many times it really doesn't seem like it's spelled that way
+			square120ToSquare64[square] = square64;
+			square64++;
+		}
+	}
+}
+
+u64 positionKey;
+u64 pieceKeys[13][64];
+u64 sideKey;
+u64 castleKeys[16];
+
+void initializeHashKeys() {
+	for (int i = 0; i < 13; i++) {
+		for (int i2 = 0; i2 < 64; i2++) {
+			pieceKeys[i][i2] = RAND_64;
+		}
+	}
+	sideKey = RAND_64;
+	for (int i = 0; i < 16; i++) {
+		castleKeys[i] = RAND_64;
+	}
+}
+
+u64 setMask[64];
+u64 clearMask[64];
+
+void initializeBitMasks() {
+	for (int i = 0; i < 64; i++) {
+		setMask[i] = 0ULL;
+		clearMask[i] = 0ULL;
+	}
+	for (int i = 0; i < 64; i++) {
+		setMask[i] |= (1ULL << i);
+		clearMask[i] = ~setMask[i];
+	}
+}
+
+
+//got these from bluefever softwares series
+//it is also here https://www.chessprogramming.org/Looking_for_Magics
+const int bitTable[64] = {
+	63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35,
+	62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8
+};
+
+int popFirstBit(u64* bb) {
+	u64 b = *bb ^ (*bb - 1);
+	u32 fold = (unsigned)((b & 0xffffffff) ^ (b >> 32));
+	*bb &= (*bb - 1);
+	return bitTable[(fold * 0x783a9b23) >> 26]; //I have no idea what the point of this is
+}
+
+int countBits(u64 b) {
+	int r;
+	for (r = 0; b; r++, b &= b - 1);
+	return r;
+}
+
+u64 generatePositionKey(const boardStructure* pos) {
+
+	int square = 0;
+	u64 finalKey = 0ULL;
+	int piece = empty;
+
+	//pieces
+	for (; square < BRD_SQ_NUM; square++) {
+		piece = pos->pieces[square];
+		if (piece != noSquare && piece != empty) {
+			if (piece >= wK && piece <= bQ) {
+				finalKey ^= pieceKeys[piece][square];
+			}
+			else {
+				std::cout << "error, invalid piece in the position key generator \n";
+			}
+		}
+	}
+
+	if (pos->side == white) {
+		finalKey ^= sideKey;
+	}
+
+	if (pos->enPassant != noSquare) {
+		if (pos->enPassant >= 0 && pos->enPassant < BRD_SQ_NUM) {
+			finalKey ^= pieceKeys[empty][pos->enPassant];
+		}
+	}
+
+	if (pos->castlePerm >= 0 && pos->castlePerm <= 15) {
+		finalKey ^= castleKeys[pos->castlePerm];
+	}
+	else {
+		std::cout << "error, invalid castling permissions given to the position key generator \n";
+	}
+
+	return finalKey;
+}
+
+
+
 gameState clearBoard;
 gameState currentBoard;
 
@@ -89,44 +300,64 @@ gameState currentBoard;
 void clearGameState() {
 	for (int i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
-		clearBoard.enPassant[i] = false;
 	}
+	clearBoard.enPassant = 0ULL;
+
 	clearBoard.whiteToMove = true;
 	clearBoard.whiteShortCastle = false;
 	clearBoard.whiteLongCastle = false;
 	clearBoard.blackLongCastle = false;
 	clearBoard.blackShortCastle = false;
 	clearBoard.movesPassed = 0;
+
+	clearBoard.allBitBoard = 0ULL;
+	clearBoard.whiteKingBitBoard = clearBoard.allBitBoard;
+	clearBoard.whitePawnBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteKnightBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteBishopBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteRookBitBoard = clearBoard.allBitBoard;
+	clearBoard.whiteQueenBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackKingBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackPawnBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackKnightBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackBishopBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackRookBitBoard = clearBoard.allBitBoard;
+	clearBoard.blackQueenBitBoard = clearBoard.allBitBoard;
+	
+
 	for (int i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
 	currentBoard = clearBoard;
 }
 
-std::string inputParser(std::string input, int desiredToken) {
+std::string inputParser(std::string input, const int desiredToken) {
 	std::string temp = input;
 	std::string token;
 	size_t stopTokenPlace;
 	int tokenCount = 0;
-	bool secondToken = false;
 	bool stop = false;
 	int loopBreaker = 10000;
 	int allowedTokensWithoutInfo = 10;
 
 	while (!stop) {
-		stopTokenPlace = temp.find(' ');
-		if (stopTokenPlace == std::string::npos && secondToken) /*end of the input string*/ {
+		if (desiredToken != 0) stopTokenPlace = temp.find(' ');
+		else stopTokenPlace = 0;
+
+		if (stopTokenPlace == std::string::npos) /*end of the input string*/ {
 			stop = true;
 		}
 		if (loopBreaker == 0) {
-			std::cout << "infinite loop caused in input parser! input: " << input << " token: " << desiredToken << "\n";
+			std::cout << "infinite loop caused in input parser! input: " << input << "\ntoken: " << desiredToken << "\n";
 			break;
 		}
 		if (allowedTokensWithoutInfo == 0)
 			break;
 		//might be able to change this to !=
 		if (tokenCount < desiredToken)/*if it's less than the desired token, we don't care what it is, just delete it*/ {
-			temp.erase(0, stopTokenPlace);
+			temp.erase(0, stopTokenPlace + 1); //+1 because it's the array version that starts with 0, and this needs it to start with 1
+			tokenCount++;
+			allowedTokensWithoutInfo++;
 		}
 		else {
 			int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
@@ -135,14 +366,15 @@ std::string inputParser(std::string input, int desiredToken) {
 			token = temp;
 			return token;
 		}
-		tokenCount++;
-		secondToken = true;
 		loopBreaker--;
 		allowedTokensWithoutInfo--;
 
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
+
+
+
 
 std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 std::string inputFenString{};
@@ -156,12 +388,14 @@ void fenToGamestate(std::string fenString) {
 	int file = 7;
 	int piecesLeftInRank = 8;
 	int skips = 0;
+	int piecesSkipped = 0;
 	std::string boardPieces = inputParser(fenString, 0);
+	std::cout << "board pieces: " << boardPieces << "\n";
 	int charactersToGoThrough = boardPieces.length();
 
 	while (!boardSet) {
 		position = (file * 8) + rank;
-		char fenPart = fenString[stringPlace];
+		int fenPart = fenString[stringPlace];
 		switch (fenPart) {
 		case('1'):
 		case('2'):
@@ -200,6 +434,8 @@ void fenToGamestate(std::string fenString) {
 			for (; skips >= 0; skips--) {
 				currentBoard.square[position] = piece::none;
 				rank++;
+				piecesSkipped++;
+				std::cout << piecesSkipped << " pieces skipped\n";
 			}
 			break;
 		case('/'):
@@ -207,51 +443,64 @@ void fenToGamestate(std::string fenString) {
 			file--;
 			break;
 		case('K'):
-			currentBoard.square[position] = piece::white | piece::king;
+			currentBoard.whiteKingBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::king;
 			rank++;
 			break;
 		case('P'):
-			currentBoard.square[position] = piece::white | piece::pawn;
+			currentBoard.whitePawnBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::pawn;
 			rank++;
+			std::cout << "white pawn added on position " << position << "\n";
 			break;
 		case('N'):
-			currentBoard.square[position] = piece::white | piece::knight;
+			currentBoard.whiteKnightBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::knight;
 			rank++;
 			break;
 		case('B'):
-			currentBoard.square[position] = piece::white | piece::bishop;
+			currentBoard.whiteBishopBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::bishop;
 			rank++;
 			break;
 		case('R'):
-			currentBoard.square[position] = piece::white | piece::rook;
+			currentBoard.whiteRookBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::rook;
 			rank++;
 			break;
 		case('Q'):
-			currentBoard.square[position] = piece::white | piece::queen;
+			currentBoard.whiteQueenBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::white + piece::queen;
 			rank++;
 			break;
 		case('k'):
-			currentBoard.square[position] = piece::black | piece::king;
+			currentBoard.blackKingBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::king;
 			rank++;
 			break;
 		case('p'):
-			currentBoard.square[position] = piece::black | piece::pawn;
+			currentBoard.blackPawnBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::pawn;
 			rank++;
 			break;
 		case('n'):
-			currentBoard.square[position] = piece::black | piece::knight;
+			currentBoard.blackKnightBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::knight;
 			rank++;
 			break;
 		case('b'):
-			currentBoard.square[position] = piece::black | piece::bishop;
+			currentBoard.blackBishopBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::bishop;
 			rank++;
 			break;
 		case('r'):
-			currentBoard.square[position] = piece::black | piece::rook;
+			currentBoard.blackRookBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::rook;
 			rank++;
 			break;
 		case('q'):
-			currentBoard.square[position] = piece::black | piece::queen;
+			currentBoard.blackQueenBitBoard |= (1ULL << position);
+			currentBoard.square[position] = piece::black + piece::queen;
 			rank++;
 			break;
 		default:
@@ -359,7 +608,7 @@ void fenToGamestate(std::string fenString) {
 	}
 
 	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
-	currentBoard.enPassant[enPassantSquare] = true;
+	currentBoard.enPassant |= (1ULL << enPassantSquare);
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
 }
@@ -1665,6 +1914,37 @@ cin >> pieceToTest;
 printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 */
 
+void printBitBoard(u64 bitBoardToPrint) {
+
+	u64 shift = 1ULL;
+
+	int rank;
+	int file;
+	int square = 0;
+
+	std::cout << "\n";
+	for (rank = 7; rank >= 0; rank--) {
+		for (file = 0; file <= 7; file++) {
+			square = (rank * 8) + file;
+
+			if ((shift << square) & bitBoardToPrint) {
+				std::cout << "X";
+			} else {
+				std::cout << "-";
+			}
+		}
+		std::cout << "\n";
+	}
+
+}
+
+void initializeAll() {
+	computeMoveBoards();
+	initializeSquare120ToSquare64();
+	initializeBitMasks();
+	initializeHashKeys();
+}
+
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
@@ -1676,11 +1956,12 @@ int main()
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
 
-	computeMoveBoards();
+	initializeAll();
 
 	do {
-		std::string input = {};
-		std::getline(cin >> std::ws, input);
+		std::string input;
+		std::getline(cin, input);
+		//std::getline(cin >> std::ws, input);
 		std::string command = inputParser(input, 0);
 
 		if (command == "uci")/*should turn this into a switch*/ {
@@ -1691,10 +1972,11 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-
+			printBitBoard(currentBoard.whitePawnBitBoard);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
+			if (inputParser(input, 1) == "hi") cout << "I see you! \n";
 			cout << "readyok" << "\n";
 		}
 		else if (command == "setoption name") /*gotta fix this, this is 2 tokens in one*/ {
@@ -1710,10 +1992,13 @@ int main()
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
 			if (inputParser(input, 1) == "startpos") {
+				cout << "startpos chosen \n";
 				fenToGamestate(startingFenString);
 				boardLoaded = true;
 			}
 			else {
+				std::string positionChosen = inputParser(input, 1);
+				cout << "custom FEN chosen, FEN is: " << positionChosen << "\n";
 				fenToGamestate(input);
 				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
@@ -1745,8 +2030,11 @@ int main()
 				cout << "board is not loaded!" << "\n";
 			}
 		}
-		else
+		else {
 			cout << "unknown command, try again. command: " << command << "\n";
+			cout << "second command: " << inputParser(input, 1) << "\n";
+			cout << "full input: " << input << "\n";
+		}
 	} while (keepRunning);
 	return 0;
 }
