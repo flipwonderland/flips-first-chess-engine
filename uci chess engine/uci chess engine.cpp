@@ -387,9 +387,18 @@ void resetBoard(boardStructure* position) {
 
 }
 
-void setToStartingposition(boardStructure* position) {
+void parseFen(char *fen, boardStructure* position) {
 	int i;
 
+	if (fen == NULL) {
+		std::cout << "no pointer given to fen parser\n";
+	}
+	else if (position == NULL) {
+		std::cout << "no pointer given to fen parser\n";
+	}
+	else {
+
+	}
 
 }
 
@@ -401,7 +410,7 @@ std::string inputParser(std::string input, const int desiredToken) {
 	int tokenCount = 0;
 	bool stop = false;
 	int loopBreaker = 10000;
-	int allowedTokensWithoutInfo = 10;
+	int allowedTokensWithoutInfo = 2;
 
 	while (!stop) {
 		if (desiredToken != 0) stopTokenPlace = temp.find(' ');
