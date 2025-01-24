@@ -396,6 +396,8 @@ void parseFen(char *fen, boardStructure* position) {
 	int sq64 = 0;
 	int sq120 = 0;
 
+	resetBoard(position);
+
 	if (fen == NULL) {
 		std::cout << "no pointer given to fen parser\n";
 	}
@@ -403,6 +405,105 @@ void parseFen(char *fen, boardStructure* position) {
 		std::cout << "no pointer given to fen parser\n";
 	}
 	else {
+		//this was basically my solution as well that's cool to see my idea had merit
+		while ((rank >= rank1) && fen) {
+			count = 1;
+			switch (*fen) {
+			case 'p': piece = bP; break;
+			case 'r': piece = bR; break;
+			case 'n': piece = bN; break;
+			case 'b': piece = bB; break;
+			case 'k': piece = bK; break;
+			case 'q': piece = bQ; break;
+			case 'P': piece = wP; break;
+			case 'R': piece = wR; break;
+			case 'N': piece = wN; break;
+			case 'B': piece = wB; break;
+			case 'K': piece = wK; break;
+			case 'Q': piece = wQ; break;
+
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+				piece = empty;
+				count = *fen - '0'; //this is super cool, the ascii numbers are inline so when you do this, it gives you the number :D
+				break;
+
+			case '/':
+			case ' ':
+				rank--;
+				file = fileA;
+				fen++;
+				continue; //I didn't know this existed but it is super useful and I will be using it a lot in the future
+
+			default:
+				std::cout << "fen pieces error\n";
+				break;
+			}
+
+			for (i = 0; i < count; i++) {
+				sq64 = (rank * 8) + file;
+				sq120 = SQ120(sq64);
+				if (piece != empty) {
+					position->pieces[sq120] = piece;
+				}
+				file++;
+			}
+			fen++;
+		}
+
+		if (*fen == 'w' || *fen == 'b') {
+			position->side = (*fen == 'w') ? white : black;
+			fen += 2; //lmao he's really doing exactly what I did, I thought mine was bad design
+		}
+		else {
+			std::cout << "error, side to move invalid\n";
+		}
+
+		for (i = 0; i < 4; i++) {
+			if (*fen == ' ') {
+				break;
+			}
+			switch (*fen) {
+			case 'K': position->castlePermission |= whiteKingCastle;
+				break;
+			case 'Q': position->castlePermission |= whiteQueenCastle;
+				break;
+			case 'k': position->castlePermission |= blackKingCastle;
+				break;
+			case 'q': position->castlePermission |= blackQueenCastle;
+				break;
+			default:
+				break;
+			}
+			fen++;
+		}
+		if (position->castlePermission <= 0 && position->castlePermission >= 15) {
+			std::cout << "error, castle permission out of range in fen\n";
+		}
+		
+		fen++;
+		if (*fen != '-') {
+			file = fen[0] - 'a';
+			rank = fen[1] - '1';
+
+			if (file <= fileA || file >= fileH) {
+				std::cout << "incorrect en passant square given\n";
+			}
+			if (rank <= rank1 || rank >= rank8) {
+				std::cout << "incorrect en passant square given\n";
+			}
+
+			position->enPassant = FR2SQ(file, rank);
+
+		}
+
+		position->positionKey = generatePositionKey(position);
 
 	}
 
