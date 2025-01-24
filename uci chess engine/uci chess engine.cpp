@@ -75,19 +75,23 @@ typedef struct {
 	int pieces[BRD_SQ_NUM];
 
 	int kingSquare[2];
+	
 	u64 bitBoardKings[3];
-	u64 pawns[3];
+	u64 bitBoardpawns[3];
 	u64 bitBoardKnights[3];
 	u64 bitBoardBishops[3];
 	u64 bitBoardRooks[3];
 	u64 bitBoardQueens[3];
 
 	//adding these now but will remove them after the move gen is created, I'll just use the bitboards after I figure out how that works
+	int pawns[3];
 	int kings[3];
 	int knights[3];
 	int bishops[3];
 	int rooks[3];
 	int queens[3];
+
+	int material[3];
 
 	int side;
 	int enPassant;
@@ -100,15 +104,16 @@ typedef struct {
 
 	u64 positionKey;
 
-	int pieceNumber[13];
 	int normalPieces[3]; //not pawns
 	int majorPieces[3];
 	int minorPieces[3];
 	int nonPieces[3]; //pawns
 
 	undoStructure history[MAX_GAME_MOVES];
-
+	
+	int pieceNumber[13];
 	int pieceList[13][10];
+
 } boardStructure;
 
 /*
@@ -351,206 +356,7 @@ void clearGameState() {
 }
 */
 
-void resetBoard(boardStructure* position) {
-	int i;
 
-	for (i = 0; i < BRD_SQ_NUM; i++) {
-		position->pieces[i] = noSquare;
-	}
-
-	for (i = 0; i < 64; i++) {
-		position->pieces[SQ120(i)] = empty; // this converts the index into the actual play board, so the play board is reset to empty
-	}
-
-	for (i = 0; i < 3; i++) {
-		position->pieces[i] = 0;
-		position->majorPieces[i] = 0;
-		position->minorPieces[i] = 0;
-		position->nonPieces[i] = 0;
-
-		position->kings[i] = 0ULL;
-		position->pawns[i] = 0ULL;
-		position->bishops[i] = 0ULL;
-		position->knights[i] = 0ULL;
-		position->rooks[i] = 0ULL;
-		position->queens[i] = 0ULL;
-
-		position->kings[i] = 0;
-		position->bishops[i] = 0;
-		position->knights[i] = 0;
-		position->rooks[i] = 0;
-		position->queens[i] = 0;
-
-
-	}
-
-	for (i = 0; i < 13; i++) {
-		position->pieceNumber[i] = 0;
-	}
-
-	position->kingSquare[white] = noSquare;
-	position->kingSquare[black] = noSquare;
-
-	position->side = none;
-	position->enPassant = noSquare;
-	position->fiftyMove = 0;
-
-	position->ply = 0;
-	position->historyPly = 0;
-
-	position->castlePermission = 0;
-
-	position->positionKey = 0ULL;
-	
-	
-
-}
-
-void parseFen(const char *fen, boardStructure* position) {
-	int i;
-	int rank = rank8;
-	int file = fileA;
-	int piece = 0;
-	int count = 0;
-	int sq64 = 0;
-	int sq120 = 0;
-
-	resetBoard(position);
-
-	if (fen == NULL) {
-		std::cout << "no pointer given to fen parser\n";
-	}
-	else if (position == NULL) {
-		std::cout << "no pointer given to fen parser\n";
-	}
-	else {
-		//this was basically my solution as well that's cool to see my idea had merit
-		while ((rank >= rank1) && fen) {
-			count = 1;
-			switch (*fen) {
-			case 'p': 
-				piece = bP; 
-				break;
-			case 'r': 
-				piece = bR; 
-				break;
-			case 'n': 
-				piece = bN; 
-				break;
-			case 'b': 
-				piece = bB; 
-				break;
-			case 'k': 
-				piece = bK; 
-				break;
-			case 'q': 
-				piece = bQ; 
-				break;
-			case 'P': 
-				piece = wP; 
-				break;
-			case 'R': 
-				piece = wR; 
-				break;
-			case 'N': 
-				piece = wN; 
-				break;
-			case 'B': 
-				piece = wB; 
-				break;
-			case 'K': 
-				piece = wK; 
-				break;
-			case 'Q': 
-				piece = wQ; 
-				break;
-
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-				piece = empty;
-				count = *fen - '0'; //this is super cool, the ascii numbers are inline so when you do this, it gives you the number :D
-				break;
-
-			case '/':
-			case ' ':
-				rank--;
-				file = fileA;
-				fen++;
-				continue; //I didn't know this existed but it is super useful and I will be using it a lot in the future
-
-			default:
-				std::cout << "fen pieces error\n";
-				break;
-			}
-
-			for (i = 0; i < count; i++) { //here I need a switch to change the correct bitboard, and shift it to the position
-				sq64 = (rank * 8) + file;
-				sq120 = SQ120(sq64);
-				if (piece != empty) {
-					position->pieces[sq120] = piece;
-				}
-				file++;
-			}
-			fen++;
-		}
-
-		if (*fen == 'w' || *fen == 'b') {
-			position->side = (*fen == 'w') ? white : black;
-			fen += 2; //lmao he's really doing exactly what I did, I thought mine was bad design
-		}
-		else {
-			std::cout << "error, side to move invalid\n";
-		}
-
-		for (i = 0; i < 4; i++) {
-			if (*fen == ' ') {
-				break;
-			}
-			switch (*fen) {
-			case 'K': position->castlePermission |= whiteKingCastle;
-				break;
-			case 'Q': position->castlePermission |= whiteQueenCastle;
-				break;
-			case 'k': position->castlePermission |= blackKingCastle;
-				break;
-			case 'q': position->castlePermission |= blackQueenCastle;
-				break;
-			default:
-				break;
-			}
-			fen++;
-		}
-		if (position->castlePermission <= 0 && position->castlePermission >= 15) {
-			std::cout << "error, castle permission out of range in fen\n";
-		}
-		
-		fen++;
-		if (*fen != '-') {
-			file = fen[0] - 'a';
-			rank = fen[1] - '1';
-
-			if (file <= fileA || file >= fileH) {
-				std::cout << "incorrect en passant square given\n";
-			}
-			if (rank <= rank1 || rank >= rank8) {
-				std::cout << "incorrect en passant square given\n";
-			}
-
-			position->enPassant = FR2SQ(file, rank);
-
-		}
-
-		position->positionKey = generatePositionKey(position);
-
-	}
-
-}
 
 
 std::string inputParser(std::string input, const int desiredToken) {
@@ -594,7 +400,6 @@ std::string inputParser(std::string input, const int desiredToken) {
 	}
 	return "endOfTheLinePal."; //as long as the input is never this it shouldn't be an issue
 }
-
 
 
 
@@ -925,6 +730,47 @@ void moveCollector(std::string input, int movePlace) {
 
 }
 */
+
+bool normalPiece[13] = { false, true, false, true, true, true, true, true, false, true, true, true, true };
+bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
+bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
+int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
+int pieceValue[13] = { 0, 2147483648, 100, 300, 315, 500, 900, 2147483648, 100, 300, 315, 500, 900 };
+
+void updateListsMaterial(boardStructure* position) {
+	int piece;
+	int square;
+	int color;
+	int i;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		square = i;
+		piece = position->pieces[i];
+		if (piece != noSquare && piece != empty) {
+			
+			color = pieceColor[piece];
+			if (normalPiece[piece])
+				position->normalPieces[color]++;
+			if (minorPiece[piece])
+				position->minorPieces[color]++;
+			if (majorPiece[piece])
+				position->majorPieces[color]++;
+
+			position->material[color] += pieceValue[piece];
+
+
+			position->pieceList[piece][position->pieceNumber[piece]] = square;
+			position->pieceNumber[piece]++;
+
+			if (piece == wK) //redundant apparently
+				position->kingSquare[color] = square;
+			if (piece == bK)
+				position->kingSquare[color] = square;
+		
+		}
+	}
+}
+
 /*
 //got these from sebastian lagues vid :D
 int pawnValue = 100;
@@ -964,6 +810,204 @@ int countPieceMaterial() {
 	return material;
 }
 */
+
+
+
+void resetBoard(boardStructure* position) {
+	int i;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		position->pieces[i] = noSquare;
+	}
+
+	for (i = 0; i < 64; i++) {
+		position->pieces[SQ120(i)] = empty; // this converts the index into the actual play board, so the play board is reset to empty
+	}
+
+	for (i = 0; i < 3; i++) {
+		position->pieces[i] = 0;
+		position->majorPieces[i] = 0;
+		position->minorPieces[i] = 0;
+		position->nonPieces[i] = 0;
+
+		position->kings[i] = 0ULL;
+		position->pawns[i] = 0ULL;
+		position->bishops[i] = 0ULL;
+		position->knights[i] = 0ULL;
+		position->rooks[i] = 0ULL;
+		position->queens[i] = 0ULL;
+
+		position->kings[i] = 0;
+		position->bishops[i] = 0;
+		position->knights[i] = 0;
+		position->rooks[i] = 0;
+		position->queens[i] = 0;
+
+
+	}
+
+	for (i = 0; i < 13; i++) {
+		position->pieceNumber[i] = 0;
+	}
+
+	position->kingSquare[white] = noSquare;
+	position->kingSquare[black] = noSquare;
+
+	position->side = none;
+	position->enPassant = noSquare;
+	position->fiftyMove = 0;
+
+	position->ply = 0;
+	position->historyPly = 0;
+
+	position->castlePermission = 0;
+
+	position->positionKey = 0ULL;
+
+
+
+}
+
+void parseFen(const char* fen, boardStructure* position) {
+	int i;
+	int rank = rank8;
+	int file = fileA;
+	int piece = 0;
+	int count = 0;
+	int sq64 = 0;
+	int sq120 = 0;
+
+	resetBoard(position);
+
+	if (fen == NULL) {
+		std::cout << "no pointer given to fen parser\n";
+	}
+	else if (position == NULL) {
+		std::cout << "no pointer given to fen parser\n";
+	}
+	else {
+		//this was basically my solution as well that's cool to see my idea had merit
+		while ((rank >= rank1) && fen) {
+			count = 1;
+			switch (*fen) {
+			case 'p':
+				piece = bP;
+				break;
+			case 'r':
+				piece = bR;
+				break;
+			case 'n':
+				piece = bN;
+				break;
+			case 'b':
+				piece = bB;
+				break;
+			case 'k':
+				piece = bK;
+				break;
+			case 'q':
+				piece = bQ;
+				break;
+			case 'P':
+				piece = wP;
+				break;
+			case 'R':
+				piece = wR;
+				break;
+			case 'N':
+				piece = wN;
+				break;
+			case 'B':
+				piece = wB;
+				break;
+			case 'K':
+				piece = wK;
+				break;
+			case 'Q':
+				piece = wQ;
+				break;
+
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+				piece = empty;
+				count = *fen - '0'; //this is super cool, the ascii numbers are inline so when you do this, it gives you the number :D
+				break;
+
+			case '/':
+			case ' ':
+				rank--;
+				file = fileA;
+				fen++;
+				continue; //I didn't know this existed but it is super useful and I will be using it a lot in the future
+
+			default:
+				std::cout << "fen pieces error\n";
+				break;
+			}
+
+			for (i = 0; i < count; i++) { //here I need a switch to change the correct bitboard, and shift it to the position
+				sq64 = (rank * 8) + file;
+				sq120 = SQ120(sq64);
+				if (piece != empty) {
+					position->pieces[sq120] = piece;
+				}
+				file++;
+			}
+			fen++;
+		}
+
+		if (*fen == 'w' || *fen == 'b') {
+			position->side = (*fen == 'w') ? white : black;
+			fen += 2; //lmao he's really doing exactly what I did, I thought mine was bad design
+		}
+		else {
+			std::cout << "error, side to move invalid\n";
+		}
+
+		for (i = 0; i < 4; i++) {
+			if (*fen == ' ') {
+				break;
+			}
+			switch (*fen) {
+			case 'K': position->castlePermission |= whiteKingCastle;
+				break;
+			case 'Q': position->castlePermission |= whiteQueenCastle;
+				break;
+			case 'k': position->castlePermission |= blackKingCastle;
+				break;
+			case 'q': position->castlePermission |= blackQueenCastle;
+				break;
+			default:
+				break;
+			}
+			fen++;
+		}
+		if (position->castlePermission <= 0 && position->castlePermission >= 15) {
+			std::cout << "error, castle permission out of range in fen\n";
+		}
+
+		fen++;
+		if (*fen != '-') {
+			file = fen[0] - 'a';
+			rank = fen[1] - '1';
+
+			position->enPassant = FR2SQ(file, rank);
+
+		}
+
+		position->positionKey = generatePositionKey(position);
+
+	}
+
+	updateListsMaterial(position);
+
+}
 
 //precomputed move table
 //got this idea from sebastian lauges vid cause I had no idea what to do
