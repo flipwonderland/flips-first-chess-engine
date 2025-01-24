@@ -71,12 +71,19 @@ typedef struct {
 	int pieces[BRD_SQ_NUM];
 
 	int kingSquare[2];
-	u64 kings[3];
+	u64 bitBoardKings[3];
 	u64 pawns[3];
-	u64 knights[3];
-	u64 bishops[3];
-	u64 rooks[3];
-	u64 queens[3];
+	u64 bitBoardKnights[3];
+	u64 bitBoardBishops[3];
+	u64 bitBoardRooks[3];
+	u64 bitBoardQueens[3];
+
+	//adding these now but will remove them after the move gen is created, I'll just use the bitboards after I figure out how that works
+	int kings[3];
+	int knights[3];
+	int bishops[3];
+	int rooks[3];
+	int queens[3];
 
 	int side;
 	int enPassant;
@@ -90,7 +97,7 @@ typedef struct {
 	u64 positionKey;
 
 	int pieceNumber[13];
-	int pieces[3]; //not pawns
+	int normalPieces[3]; //not pawns
 	int majorPieces[3];
 	int minorPieces[3];
 	int nonPieces[3]; //pawns
@@ -363,6 +370,13 @@ void resetBoard(boardStructure* position) {
 		position->rooks[i] = 0ULL;
 		position->queens[i] = 0ULL;
 
+		position->kings[i] = 0;
+		position->bishops[i] = 0;
+		position->knights[i] = 0;
+		position->rooks[i] = 0;
+		position->queens[i] = 0;
+
+
 	}
 
 	for (i = 0; i < 13; i++) {
@@ -409,18 +423,42 @@ void parseFen(char *fen, boardStructure* position) {
 		while ((rank >= rank1) && fen) {
 			count = 1;
 			switch (*fen) {
-			case 'p': piece = bP; break;
-			case 'r': piece = bR; break;
-			case 'n': piece = bN; break;
-			case 'b': piece = bB; break;
-			case 'k': piece = bK; break;
-			case 'q': piece = bQ; break;
-			case 'P': piece = wP; break;
-			case 'R': piece = wR; break;
-			case 'N': piece = wN; break;
-			case 'B': piece = wB; break;
-			case 'K': piece = wK; break;
-			case 'Q': piece = wQ; break;
+			case 'p': 
+				piece = bP; 
+				break;
+			case 'r': 
+				piece = bR; 
+				break;
+			case 'n': 
+				piece = bN; 
+				break;
+			case 'b': 
+				piece = bB; 
+				break;
+			case 'k': 
+				piece = bK; 
+				break;
+			case 'q': 
+				piece = bQ; 
+				break;
+			case 'P': 
+				piece = wP; 
+				break;
+			case 'R': 
+				piece = wR; 
+				break;
+			case 'N': 
+				piece = wN; 
+				break;
+			case 'B': 
+				piece = wB; 
+				break;
+			case 'K': 
+				piece = wK; 
+				break;
+			case 'Q': 
+				piece = wQ; 
+				break;
 
 			case '1':
 			case '2':
@@ -446,7 +484,7 @@ void parseFen(char *fen, boardStructure* position) {
 				break;
 			}
 
-			for (i = 0; i < count; i++) {
+			for (i = 0; i < count; i++) { //here I need a switch to change the correct bitboard, and shift it to the position
 				sq64 = (rank * 8) + file;
 				sq120 = SQ120(sq64);
 				if (piece != empty) {
