@@ -21,6 +21,10 @@ enum piece {
 	white = 0b10000
 };
 */
+
+
+
+
 enum {
 	empty, wK, wP, wN, wB, wR, wQ, bK, bP, bN, bB, bR, bQ
 };
@@ -218,6 +222,7 @@ u64 pieceKeys[13][64];
 u64 sideKey;
 u64 castleKeys[16];
 
+
 void initializeHashKeys() {
 	for (int i = 0; i < 13; i++) {
 		for (int i2 = 0; i2 < 64; i2++) {
@@ -401,7 +406,7 @@ void resetBoard(boardStructure* position) {
 
 }
 
-void parseFen(char *fen, boardStructure* position) {
+void parseFen(const char *fen, boardStructure* position) {
 	int i;
 	int rank = rank8;
 	int file = fileA;
@@ -2162,6 +2167,59 @@ void printBitBoard(u64 bitBoardToPrint) {
 
 }
 
+char pieceCharacter[] = ".KPNBRQkpnbrq";
+char sideCharacter[] = "wb-";
+char rankCharacter[] = "12345678";
+char fileCharacter[] = "abcdefgh";
+char printCastle;
+
+void printSquareBoard(const boardStructure* position) {
+	int sq;
+	int file;
+	int rank;
+	int piece;
+
+	std::cout << "\ngame board: \n" << "-----------------------\n";
+
+	for (rank = rank8; rank >= rank1; rank--) {
+		std::cout << " " << rank + 1 << " ";
+		for (file = fileA; file <= fileH; file++) {
+			sq = FR2SQ(file, rank);
+			piece = position->pieces[sq];
+			std::cout << " " << pieceCharacter[piece];
+		}
+		std::cout << "\n";
+	}
+
+	std::cout << "\n    ";
+	for (file = fileA; file <= fileH; file++) {
+		printf("%c",'a' + file);
+		printf(" ");
+		//std::cout << " " << "a" + file;
+	}
+	std::cout << "\n-----------------------\n";
+	std::cout << "\n";
+
+	std::cout << "side: " << sideCharacter[position->side] << "\n";
+	printf("en Passant:%d\n", position->enPassant);
+	//std::cout << "en Passant: " << position->enPassant << "\n";
+	std::cout << "castle permission:\n";
+	position->castlePermission & whiteKingCastle ? printCastle = 'K' : printCastle = '-';
+	std::cout << "K: " << printCastle << "\n";
+	position->castlePermission & whiteQueenCastle ? printCastle = 'Q' : printCastle = '-';
+	std::cout << "Q: " << printCastle << "\n";
+	position->castlePermission & blackKingCastle ? printCastle = 'k' : printCastle = '-';
+	std::cout << "k: " << printCastle << "\n";
+	position->castlePermission & blackQueenCastle ? printCastle = 'q' : printCastle = '-';
+	std::cout << "q: " << printCastle << "\n"; //this is really ugly
+
+	//this is the only one that I'm gonna do printf because idk how to make character out do hex
+	std::cout << "position key:\n" << std::hex << position->positionKey;
+	
+	
+	std::cout << "\n-----------------------\n";
+}
+
 void initializeAll() {
 	computeMoveBoards();
 	initializeSquare120ToSquare64();
@@ -2181,6 +2239,7 @@ int main()
 	cout << "gamer engine made by flipwonderland" << "\n";
 
 	initializeAll();
+	boardStructure currentBoard[1];
 
 	do {
 		std::string input;
@@ -2197,7 +2256,17 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
+			parseFen(STARTFEN, currentBoard);
+			printSquareBoard(currentBoard);
 
+			parseFen(TESTFEN, currentBoard);
+			printSquareBoard(currentBoard);
+
+			parseFen(TESTFEN2, currentBoard);
+			printSquareBoard(currentBoard);
+
+			parseFen(TESTFEN3, currentBoard);
+			printSquareBoard(currentBoard);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
