@@ -17,10 +17,10 @@ typedef unsigned long long u64;
 
 
 //these are from the bluefever software series
-#define RAND_64 (	(u64)rand() + \
-					(u64)rand() << 15 + \
-					(u64)rand() << 30 + \
-					(u64)rand() << 45 + \
+#define RAND_64 (	(u64)rand() | \
+					(u64)rand() << 15 | \
+					(u64)rand() << 30 | \
+					(u64)rand() << 45 | \
 					((u64)rand() & 0xf) << 60	)
 
 #define POP(b) popBit(b)
