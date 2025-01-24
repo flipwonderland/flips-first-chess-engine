@@ -389,6 +389,12 @@ void resetBoard(boardStructure* position) {
 
 void parseFen(char *fen, boardStructure* position) {
 	int i;
+	int rank = rank8;
+	int file = fileA;
+	int piece = 0;
+	int count = 0;
+	int sq64 = 0;
+	int sq120 = 0;
 
 	if (fen == NULL) {
 		std::cout << "no pointer given to fen parser\n";
