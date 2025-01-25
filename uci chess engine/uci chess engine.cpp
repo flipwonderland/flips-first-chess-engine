@@ -223,11 +223,6 @@ void initializeSquare120ToSquare64() {
 	}
 }
 
-
-int sq120 = 0;
-int sq64 = 0;
-
-
 u64 setMask[64];
 u64 clearMask[64];
 
