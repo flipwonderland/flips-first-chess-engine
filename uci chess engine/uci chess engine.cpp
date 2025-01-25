@@ -801,7 +801,7 @@ void updateListsMaterial(boardStructure* position) {
 				SETBIT(position->bitBoardPawns[color], SQ64(square));
 				SETBIT(position->bitBoardPawns[none], SQ64(square));
 			}
-			if (piece == bP) {
+			else if (piece == bP) {
 				SETBIT(position->bitBoardPawns[color], SQ64(square));
 				SETBIT(position->bitBoardPawns[none], SQ64(square));
 			}
@@ -901,12 +901,12 @@ void resetBoard(boardStructure* position) {
 		position->minorPieces[i] = 0;
 		position->nonPieces[i] = 0;
 
-		position->kings[i] = 0ULL;
-		position->pawns[i] = 0ULL;
-		position->bishops[i] = 0ULL;
-		position->knights[i] = 0ULL;
-		position->rooks[i] = 0ULL;
-		position->queens[i] = 0ULL;
+		position->bitBoardKings[i] = 0ULL;
+		position->bitBoardPawns[i] = 0ULL;
+		position->bitBoardBishops[i] = 0ULL;
+		position->bitBoardKnights[i] = 0ULL;
+		position->bitBoardRooks[i] = 0ULL;
+		position->bitBoardQueens[i] = 0ULL;
 
 		position->material[i] = 0;
 
@@ -1026,7 +1026,7 @@ void parseFen(const char* fen, boardStructure* position) {
 
 			for (i = 0; i < count; i++) { //here I need a switch to change the correct bitboard, and shift it to the position
 				sq64 = (rank * 8) + file;
-				sq120 = sq64ToSq120[sq64];
+				sq120 = SQ120(sq64);
 				if (piece != empty) {
 					position->pieces[sq120] = piece;
 				}
@@ -2374,17 +2374,17 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(STARTFEN, currentBoard);
-			printSquareBoard(currentBoard);
+			parseFen(PERFORMANCETESTFEN, currentBoard);
 
-			parseFen(TESTFEN, currentBoard);
 			printSquareBoard(currentBoard);
+			cout << "\n";
+			cout << "white pawns \n";
+			printBitBoard(currentBoard->bitBoardPawns[white]);
+			cout << "black pawns \n";
+			printBitBoard(currentBoard->bitBoardPawns[black]);
+			cout << "both pawns \n";
+			printBitBoard(currentBoard->bitBoardPawns[none]);
 
-			parseFen(TESTFEN2, currentBoard);
-			printSquareBoard(currentBoard);
-
-			parseFen(TESTFEN3, currentBoard);
-			printSquareBoard(currentBoard);
 		}
 		else if (command == "isready") {
 			//see if it's ready to run and then
