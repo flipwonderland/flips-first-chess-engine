@@ -800,7 +800,7 @@ void updateListsMaterial(boardStructure* position) {
 			if (piece == wP) {
 				position->bitBoardPawns[color] |= setMask[sq120ToSq64[square]];
 				//position->bitBoardPawns[white] |= setMask[SQ64(square)];
-				//SETBIT(position->bitBoardPawns[white], SQ64(square));
+				SETBIT(position->bitBoardPawns[white], SQ64(square));
 			}
 
 		}
