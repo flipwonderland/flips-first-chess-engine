@@ -27,14 +27,12 @@ typedef unsigned long long u64;
 
 #define POP(b) popBit(b)
 #define CNT(b) countBits(b)
-#define CLRBIT(bb,sq) ((bb) &= clearMask(sq))
-#define SETBIT(bb,sq) ((bb) |= setMask(sq))
+#define CLRBIT(bb,sq) ((bb) &= clearMask[(sq)])
+#define SETBIT(bb,sq) ((bb) |= setMask[(sq)])
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10))
-#define SQ64 (sq120) (square120ToSquare64[(sq120)])
-#define SQ120(sq64) (square64ToSquare120[(sq64)])
+#define SQ64 (sq120) (sq120ToSq64[(sq120)])
+#define SQ120 (sq64) (sq64ToSq120[(sq64)])
 
-internal int square120ToSquare64[BRD_SQ_NUM];
-internal int square64ToSquare120[64];
 
 #define STARTFEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 #define TESTFEN "rnbqkbnr/1ppppppp/8/pP6/8/8/P1PPPPPP/RNBQKBNR w KQkq a6 0 1"

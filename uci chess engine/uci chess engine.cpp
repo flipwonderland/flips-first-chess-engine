@@ -77,7 +77,7 @@ typedef struct {
 	int kingSquare[2];
 	
 	u64 bitBoardKings[3];
-	u64 bitBoardpawns[3];
+	u64 bitBoardPawns[3];
 	u64 bitBoardKnights[3];
 	u64 bitBoardBishops[3];
 	u64 bitBoardRooks[3];
@@ -196,7 +196,8 @@ public:
 };
 */
 
-
+int sq120ToSq64[BRD_SQ_NUM];
+int sq64ToSq120[64];
 
 void initializeSquare120ToSquare64() {
 	int i;
@@ -206,19 +207,38 @@ void initializeSquare120ToSquare64() {
 	int square64 = 0;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
-		square120ToSquare64[i] = 65;
+		sq120ToSq64[i] = 65;
 	}
 	for (i = 0; i < 64; i++) {
-		square64ToSquare120[i] = 120;
+		sq64ToSq120[i] = 120;
 	}
 
 	for (rank = rank1; rank <= rank8; rank++) {
 		for (file = fileA; file <= fileH; file++) {
 			square = FR2SQ(file, rank);
-			square64ToSquare120[square64] = square; //I've typed square so many times it really doesn't seem like it's spelled that way
-			square120ToSquare64[square] = square64;
+			sq64ToSq120[square64] = square; //I've typed square so many times it really doesn't seem like it's spelled that way
+			sq120ToSq64[square] = square64;
 			square64++;
 		}
+	}
+}
+
+
+int sq120 = 0;
+int sq64 = 0;
+
+
+u64 setMask[64];
+u64 clearMask[64];
+
+void initializeBitMasks() {
+	for (int i = 0; i < 64; i++) {
+		setMask[i] = 0ULL;
+		clearMask[i] = 0ULL;
+	}
+	for (int i = 0; i < 64; i++) {
+		setMask[i] |= (1ULL << i);
+		clearMask[i] = ~setMask[i];
 	}
 }
 
@@ -240,19 +260,7 @@ void initializeHashKeys() {
 	}
 }
 
-u64 setMask[64];
-u64 clearMask[64];
 
-void initializeBitMasks() {
-	for (int i = 0; i < 64; i++) {
-		setMask[i] = 0ULL;
-		clearMask[i] = 0ULL;
-	}
-	for (int i = 0; i < 64; i++) {
-		setMask[i] |= (1ULL << i);
-		clearMask[i] = ~setMask[i];
-	}
-}
 
 
 //got these from bluefever softwares series
@@ -273,6 +281,32 @@ int countBits(u64 b) {
 	int r;
 	for (r = 0; b; r++, b &= b - 1);
 	return r;
+}
+
+
+int filesBoard[BRD_SQ_NUM];
+int ranksBoard[BRD_SQ_NUM];
+
+void initializeFilesAndRanksBoard() {
+
+	int i;
+	int file;
+	int rank;
+	int square = a1;
+	int square64 = 0;
+
+	for (i = 0; i < BRD_SQ_NUM; i++) {
+		filesBoard[i] = noSquare;
+		ranksBoard[i] = noSquare;
+	}
+
+	for (rank = rank1; rank <= rank8; rank++) {
+		for (file = fileA; file <= fileH; file++) {
+			square = FR2SQ(file, rank);
+			filesBoard[square] = file;
+			ranksBoard[square] = rank;
+		}
+	}
 }
 
 u64 generatePositionKey(const boardStructure* pos) {
@@ -388,7 +422,7 @@ std::string inputParser(std::string input, const int desiredToken) {
 			allowedTokensWithoutInfo++;
 		}
 		else {
-			int deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
+			size_t deleteAllAfterDesiredToken = temp.find(' '); //also don't care about what's after our token
 			if (deleteAllAfterDesiredToken != std::string::npos)
 				temp.erase(deleteAllAfterDesiredToken, temp.length()); //it would probably not be good if we deleted all after npos
 			token = temp;
@@ -735,7 +769,7 @@ bool normalPiece[13] = { false, true, false, true, true, true, true, true, false
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
-int pieceValue[13] = { 0, 2147483648, 100, 300, 315, 500, 900, 2147483648, 100, 300, 315, 500, 900 };
+int pieceValue[13] = { 0, 2147483647, 100, 300, 315, 500, 900, 2147483647, 100, 300, 315, 500, 900 };
 
 void updateListsMaterial(boardStructure* position) {
 	int piece;
@@ -749,6 +783,7 @@ void updateListsMaterial(boardStructure* position) {
 		if (piece != noSquare && piece != empty) {
 			
 			color = pieceColor[piece];
+
 			if (normalPiece[piece])
 				position->normalPieces[color]++;
 			if (minorPiece[piece])
@@ -766,7 +801,13 @@ void updateListsMaterial(boardStructure* position) {
 				position->kingSquare[color] = square;
 			if (piece == bK)
 				position->kingSquare[color] = square;
-		
+			
+			if (piece == wP) {
+				position->bitBoardPawns[color] |= setMask[sq120ToSq64[square]];
+				//position->bitBoardPawns[white] |= setMask[SQ64(square)];
+				//SETBIT(position->bitBoardPawns[white], SQ64(square));
+			}
+
 		}
 	}
 }
@@ -821,7 +862,7 @@ void resetBoard(boardStructure* position) {
 	}
 
 	for (i = 0; i < 64; i++) {
-		position->pieces[SQ120(i)] = empty; // this converts the index into the actual play board, so the play board is reset to empty
+		position->pieces[sq64ToSq120[i]] = empty; // this converts the index into the actual play board, so the play board is reset to empty
 	}
 
 	for (i = 0; i < 3; i++) {
@@ -836,6 +877,8 @@ void resetBoard(boardStructure* position) {
 		position->knights[i] = 0ULL;
 		position->rooks[i] = 0ULL;
 		position->queens[i] = 0ULL;
+
+		position->material[i] = 0;
 
 		position->kings[i] = 0;
 		position->bishops[i] = 0;
@@ -953,7 +996,7 @@ void parseFen(const char* fen, boardStructure* position) {
 
 			for (i = 0; i < count; i++) { //here I need a switch to change the correct bitboard, and shift it to the position
 				sq64 = (rank * 8) + file;
-				sq120 = SQ120(sq64);
+				sq120 = sq64ToSq120[sq64];
 				if (piece != empty) {
 					position->pieces[sq120] = piece;
 				}
@@ -2266,6 +2309,7 @@ void printSquareBoard(const boardStructure* position) {
 
 void initializeAll() {
 	computeMoveBoards();
+	initializeFilesAndRanksBoard();
 	initializeSquare120ToSquare64();
 	initializeBitMasks();
 	initializeHashKeys();
