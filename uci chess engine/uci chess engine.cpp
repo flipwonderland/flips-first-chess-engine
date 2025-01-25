@@ -798,9 +798,44 @@ void updateListsMaterial(boardStructure* position) {
 				position->kingSquare[color] = square;
 			
 			if (piece == wP) {
-				position->bitBoardPawns[color] |= setMask[sq120ToSq64[square]];
-				//position->bitBoardPawns[white] |= setMask[SQ64(square)];
-				SETBIT(position->bitBoardPawns[white], SQ64(square));
+				SETBIT(position->bitBoardPawns[color], SQ64(square));
+				SETBIT(position->bitBoardPawns[none], SQ64(square));
+			}
+			if (piece == bP) {
+				SETBIT(position->bitBoardPawns[color], SQ64(square));
+				SETBIT(position->bitBoardPawns[none], SQ64(square));
+			}
+			if (piece == wK) {
+				SETBIT(position->bitBoardKnights[color], SQ64(square));
+				SETBIT(position->bitBoardKnights[none], SQ64(square));
+			}
+			if (piece == bK) {
+				SETBIT(position->bitBoardKnights[color], SQ64(square));
+				SETBIT(position->bitBoardKnights[none], SQ64(square));
+			}
+			if (piece == wB) {
+				SETBIT(position->bitBoardBishops[color], SQ64(square));
+				SETBIT(position->bitBoardBishops[none], SQ64(square));
+			}
+			if (piece == bB) {
+				SETBIT(position->bitBoardBishops[color], SQ64(square));
+				SETBIT(position->bitBoardBishops[none], SQ64(square));
+			}
+			if (piece == wR) {
+				SETBIT(position->bitBoardRooks[color], SQ64(square));
+				SETBIT(position->bitBoardRooks[none], SQ64(square));
+			}
+			if (piece == bR) {
+				SETBIT(position->bitBoardRooks[color], SQ64(square));
+				SETBIT(position->bitBoardRooks[none], SQ64(square));
+			}
+			if (piece == wQ) {
+				SETBIT(position->bitBoardQueens[color], SQ64(square));
+				SETBIT(position->bitBoardQueens[none], SQ64(square));
+			}
+			if (piece == bQ) {
+				SETBIT(position->bitBoardQueens[color], SQ64(square));
+				SETBIT(position->bitBoardQueens[none], SQ64(square));
 			}
 
 		}
