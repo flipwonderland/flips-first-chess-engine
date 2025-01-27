@@ -764,7 +764,7 @@ bool normalPiece[13] = { false, true, false, true, true, true, true, true, false
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
-int pieceValue[13] = { 0, 2147483647, 100, 300, 315, 500, 900, 2147483647, 100, 300, 315, 500, 900 };
+int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
 
 /*
 //got these from sebastian lagues vid :D
@@ -888,6 +888,7 @@ bool checkBoard(const boardStructure* position) {
 	int tempNormalPiece[2] = { 0, 0 };
 	int tempMajorPiece[2] = { 0, 0 };
 	int tempMinorPiece[2] = { 0, 0 };
+
 	int tempMaterial[2] = { 0, 0 };
 
 	int tempPiece;
@@ -931,7 +932,8 @@ bool checkBoard(const boardStructure* position) {
 		if (majorPiece[tempPiece])
 			tempMajorPiece[color]++;
 
-		tempMaterial[color] += pieceValue[color];
+		if (color == white || color == black) 
+			tempMaterial[color] += pieceValue[tempPiece];
 	}
 
 
@@ -966,13 +968,13 @@ bool checkBoard(const boardStructure* position) {
 
 	while (tempPawns[black]) {
 		square64 = POP(&tempPawns[black]);
-		if(position->pieces[SQ120(square64)] != bP)
+		if (position->pieces[SQ120(square64)] != bP)
 			std::cout << "bitboard (black) pawn was in the wrong position, or is it vice reversa?\n";
 	}
 
 	while (tempPawns[none]) {
 		square64 = POP(&tempPawns[none]);
-		if ((position->pieces[SQ120(square64)] != wP) || (position->pieces[SQ120(square64)] == bP))
+		if ((position->pieces[SQ120(square64)] != wP) && (position->pieces[SQ120(square64)] != bP))
 			std::cout << "bitboard (none) pawn was in the wrong position, or is it vice reversa?\n";
 	}
 	/*
@@ -982,14 +984,25 @@ bool checkBoard(const boardStructure* position) {
 	...
 	*/
 
-	if (tempMaterial[white] != position->material[white] || tempMaterial[black] != position->material[black])
-		std::cout << "material does not match\n";
-	if (tempMinorPiece[white] != position->minorPieces[white] || tempMinorPiece[black] != position->minorPieces[black])
-		std::cout << "minor pieces do not match\n";
-	if (tempMajorPiece[white] != position->majorPieces[white] || tempMajorPiece[black] != position->majorPieces[black])
-		std::cout << "major pieces do not match\n";
-	if (tempNormalPiece[white] != position->normalPieces[white] || tempNormalPiece[black] != position->normalPieces[black])
-		std::cout << "pieces (not pawns) do not match\n";
+	if (tempMaterial[white] != position->material[white])
+		std::cout << "white material does not match\n" << "white material: " << tempMaterial[white] << "\n";
+	if (tempMaterial[black] != position->material[black])
+		std::cout << "black material does not match\n" << "black material: " << tempMaterial[black] << "\n";
+
+	if (tempMinorPiece[white] != position->minorPieces[white])
+		std::cout << "white minor pieces do not match\n";
+	if (tempMinorPiece[black] != position->minorPieces[black])
+		std::cout << "black minor pieces do not match\n";
+
+	if (tempMajorPiece[white] != position->majorPieces[white])
+		std::cout << "white major pieces do not match\n";
+	if (tempMajorPiece[black] != position->majorPieces[black])
+		std::cout << "black major pieces do not match\n";
+
+	if (tempNormalPiece[white] != position->normalPieces[white])
+		std::cout << "white pieces (not pawns) do not match\n";
+	if (tempNormalPiece[black] != position->normalPieces[black])
+		std::cout << "black pieces (not pawns) do not match\n";
 
 	if (position->side != white && position->side != black)
 		std::cout << "position side is neither white nor black\n";
@@ -1006,7 +1019,7 @@ bool checkBoard(const boardStructure* position) {
 	if (position->pieces[position->kingSquare[black]] != bK)
 		std::cout << "the black 'king square' square does not have the black king on it\n";
 
-	if (position->castlePermission <= 0 || position->castlePermission >= 15)
+	if (position->castlePermission <= 0 || position->castlePermission >= 16)
 		std::cout << "castle permission is invalid\n";
 
 
@@ -1025,7 +1038,7 @@ void resetBoard(boardStructure* position) {
 	}
 
 	for (i = 0; i < 3; i++) {
-		position->pieces[i] = 0;
+		position->normalPieces[i] = 0;
 		position->majorPieces[i] = 0;
 		position->minorPieces[i] = 0;
 		position->nonPieces[i] = 0;
@@ -2505,6 +2518,9 @@ int main()
 			//printBitBoard(currentBoard.whitePawnBitBoard);
 			parseFen(PERFORMANCETESTFEN, currentBoard);
 			int test = checkBoard(currentBoard);
+			cout << "white material: " << currentBoard->material[white] << "\n";
+			cout << "black material: " << currentBoard->material[black] << "\n";
+			cout << "both material: " << currentBoard->material[none] << "\n";
 			printSquareBoard(currentBoard);
 			cout << "\n";
 			cout << "white pawns \n";
