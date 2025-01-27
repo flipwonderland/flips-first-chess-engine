@@ -766,6 +766,46 @@ bool minorPiece[13] = { false, false, false, true, true, false, false, false, fa
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
 int pieceValue[13] = { 0, 2147483647, 100, 300, 315, 500, 900, 2147483647, 100, 300, 315, 500, 900 };
 
+/*
+//got these from sebastian lagues vid :D
+int pawnValue = 100;
+int bishopValue = 300;
+int knightValue = 300;
+int rookValue = 500;
+int queenValue = 900;
+
+
+int countPieceMaterial() {
+	int material = 0;
+	int	piece = 0;
+	int side = 0;
+	for (int i = 0; i <= 63; i++) {
+		piece = currentBoard.square[i] & 0b00111;
+		side = currentBoard.square[i] & 0b11000;
+		switch (piece) {
+		case piece::none:
+			break;
+		case piece::pawn:
+			side == 1 ? material += pawnValue : material += -pawnValue;
+			break;
+		case piece::bishop:
+			side == 1 ? material += bishopValue : material += -bishopValue;
+			break;
+		case piece::knight:
+			side == 1 ? material += knightValue : material += -knightValue;
+			break;
+		case piece::rook:
+			side == 1 ? material += rookValue : material += -rookValue;
+			break;
+		case piece::queen:
+			side == 1 ? material += queenValue : material += -queenValue;
+			break;
+		}
+	}
+	return material;
+}
+*/
+
 void updateListsMaterial(boardStructure* position) {
 	int piece;
 	int square;
@@ -842,47 +882,59 @@ void updateListsMaterial(boardStructure* position) {
 	}
 }
 
-/*
-//got these from sebastian lagues vid :D
-int pawnValue = 100;
-int bishopValue = 300;
-int knightValue = 300;
-int rookValue = 500;
-int queenValue = 900;
+bool checkBoard(const boardStructure* position) {
 
+	int tempPieceNumber[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	int tempNormalPiece[2] = { 0, 0 };
+	int tempMajorPiece[2] = { 0, 0 };
+	int tempMinorPiece[2] = { 0, 0 };
+	int tempMaterial[2] = { 0, 0 };
 
-int countPieceMaterial() {
-	int material = 0;
-	int	piece = 0;
-	int side = 0;
-	for (int i = 0; i <= 63; i++) {
-		piece = currentBoard.square[i] & 0b00111;
-		side = currentBoard.square[i] & 0b11000;
-		switch (piece) {
-		case piece::none:
-			break;
-		case piece::pawn:
-			side == 1 ? material += pawnValue : material += -pawnValue;
-			break;
-		case piece::bishop:
-			side == 1 ? material += bishopValue : material += -bishopValue;
-			break;
-		case piece::knight:
-			side == 1 ? material += knightValue : material += -knightValue;
-			break;
-		case piece::rook:
-			side == 1 ? material += rookValue : material += -rookValue;
-			break;
-		case piece::queen:
-			side == 1 ? material += queenValue : material += -queenValue;
-			break;
+	int tempPiece;
+	int tempPieceCount;
+	int square64;
+	int square120;
+	int tempPieceNumber;
+	int color;
+	int pieceCount;
+
+	u64 tempPawns[3] = { 0ULL, 0ULL, 0ULL };
+
+	tempPawns[white] = position->bitBoardPawns[white];
+	tempPawns[black] = position->bitBoardPawns[black];
+	tempPawns[none] = position->bitBoardPawns[none];
+
+	for (tempPiece = wK; tempPiece <= bQ; tempPiece++) {
+		for (tempPieceCount = 0; tempPieceCount < position->pieceNumber[tempPiece]; tempPieceCount++) {
+			square120 = position->pieceList[tempPiece][tempPieceCount];
+			if (position->pieces[square120] != tempPiece) {
+				std::cout << "error: board incorrect, piece list not aligned with board array\n";
+			}
+			else {
+				continue;
+			}
 		}
 	}
-	return material;
+
+	for (square64 = 0; square64 < 64; square64++) {
+		
+		square120 = SQ120(square64);
+		tempPiece = position->pieces[square120];
+		tempPieceNumber[tempPiece]++;
+		color = pieceColor[tempPiece];
+
+		if (normalPiece[tempPiece])
+			tempNormalPiece[color]++;
+		if (minorPiece[tempPiece])
+			tempMinorPiece[color]++;
+		if (majorPiece[tempPiece])
+			tempMajorPiece[color]++;
+
+		tempMaterial[color] += pieceValue[color];
+	}
+
+
 }
-*/
-
-
 
 void resetBoard(boardStructure* position) {
 	int i;
