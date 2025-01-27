@@ -894,7 +894,6 @@ bool checkBoard(const boardStructure* position) {
 	int tempPieceCount;
 	int square64;
 	int square120;
-	int tempPieceNumber;
 	int color;
 	int pieceCount;
 
@@ -997,8 +996,8 @@ bool checkBoard(const boardStructure* position) {
 	if (generatePositionKey(position) != position->positionKey)
 		std::cout << "position keys do not match\n"; 
 
-	if (position->enPassant != noSquare && (ranksBoard[position->enPassant] != rank6 && position->side == white)
-		|| (ranksBoard[position->enPassant] != rank3 && position->side == black)) //I'm not super confident in this one but looks right
+	if (position->enPassant != noSquare && ((ranksBoard[position->enPassant] != rank6 && position->side == white)
+		|| (ranksBoard[position->enPassant] != rank3 && position->side == black))) //I'm not super confident in this one but looks right
 		std::cout << "en passant square in invalid position\n"; 
 
 
@@ -2505,7 +2504,7 @@ int main()
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
 			parseFen(PERFORMANCETESTFEN, currentBoard);
-
+			int test = checkBoard(currentBoard);
 			printSquareBoard(currentBoard);
 			cout << "\n";
 			cout << "white pawns \n";
