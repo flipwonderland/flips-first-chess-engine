@@ -2409,7 +2409,7 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 
 	for (i = 0; i < 8; i++) {
 		piece = position->pieces[square + knightDirection[i]];
-		if (IsKn(piece) && pieceColor[piece] == side) {
+		if (piece != offBoard && IsKn(piece) && pieceColor[piece] == side) {
 			return true;
 		}
 	}
@@ -2446,7 +2446,6 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 		}
 	}
 
-	// kings
 	for (i = 0; i < 8; i++) {
 		piece = position->pieces[square + kingDirection[i]];
 		if (piece != offBoard && IsKi(piece) && pieceColor[piece] == side) {
