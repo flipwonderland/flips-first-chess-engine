@@ -49,7 +49,7 @@ enum {
 	a5 = 61, b5, c5, d5, e5, f5, g5, h5,
 	a6 = 71, b6, c6, d6, e6, f6, g6, h6,
 	a7 = 81, b7, c7, d7, e7, f7, g7, h7,
-	a8 = 91, b8, c8, d8, e8, f8, g8, h8, noSquare
+	a8 = 91, b8, c8, d8, e8, f8, g8, h8, noSquare, offBoard
 
 };
 
@@ -291,8 +291,8 @@ void initializeFilesAndRanksBoard() {
 	int square64 = 0;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
-		filesBoard[i] = noSquare;
-		ranksBoard[i] = noSquare;
+		filesBoard[i] = offBoard;
+		ranksBoard[i] = offBoard;
 	}
 
 	for (rank = rank1; rank <= rank8; rank++) {
@@ -313,7 +313,7 @@ u64 generatePositionKey(const boardStructure* pos) {
 	//pieces
 	for (; square < BRD_SQ_NUM; square++) {
 		piece = pos->pieces[square];
-		if (piece != noSquare && piece != empty) {
+		if (piece != noSquare && piece != empty && piece != offBoard) {
 			if (piece >= wK && piece <= bQ) {
 				finalKey ^= pieceKeys[piece][square];
 			}
@@ -815,7 +815,7 @@ void updateListsMaterial(boardStructure* position) {
 	for (i = 0; i < BRD_SQ_NUM; i++) {
 		square = i;
 		piece = position->pieces[i];
-		if (piece != noSquare && piece != empty) {
+		if (piece != offBoard && piece != empty) {
 			
 			color = pieceColor[piece];
 
@@ -1032,7 +1032,7 @@ void resetBoard(boardStructure* position) {
 	int i;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
-		position->pieces[i] = noSquare;
+		position->pieces[i] = offBoard;
 	}
 
 	for (i = 0; i < 64; i++) {
@@ -2376,7 +2376,85 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 }
 */
 
-bool squareAttacked() {
+const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
+const int rookDirection[4] = { -1, -10,	1, 10 };
+const int bishopDirection[8] = { -9, -11, 11, 9 };
+const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
+
+bool isPiecePawn[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
+bool isPieceKnight[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
+bool isPieceKing[13] = { false, false, false, false, false, false, true, false, false, false, false, false, true };
+bool isPieceRookQueen[13] = { false, false, false, false, true, true, false, false, false, false, true, true, false };
+bool isPieceBishopQueen[13] = { false, false, false, true, false, true, false, false, false, true, false, true, false };
+bool pieceSlides[13] = { false, false, false, true, true, true, false, false, false, true, true, true, false };
+
+
+bool squareAttacked(const int square, const int side, const boardStructure *position) {
+	
+	int piece;
+	int i;
+	int tempSquare;
+	int direction;
+
+	if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
+		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
+			return true;
+		}
+	} 
+	else {
+		if (position->pieces[square + 11] == bP || position->pieces[square + 9] == bP) {
+			return true;
+		}
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece = position->pieces[square + knightDirection[i]];
+		if (IsKn(piece) && pieceColor[piece] == side) {
+			return true;
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
+		direction = rookDirection[i];
+		tempSquare = square + direction; //this is a lot more elegant than what I was trying
+		piece = position->pieces[tempSquare];
+		while (piece != offBoard) {
+			if (piece != empty) {
+				if (IsRQ(piece) && pieceColor[piece] == side) {
+					return true;
+				}
+				break;
+			}
+			tempSquare += direction;
+			piece = position->pieces[tempSquare];
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
+		direction = bishopDirection[i];
+		tempSquare = square + direction;
+		piece = position->pieces[tempSquare];
+		while (piece != offBoard) {
+			if (piece != empty) {
+				if (IsBQ(piece) && pieceColor[piece] == side) {
+					return true;
+				}
+				break;
+			}
+			tempSquare += direction;
+			piece = position->pieces[tempSquare];
+		}
+	}
+
+	// kings
+	for (i = 0; i < 8; i++) {
+		piece = position->pieces[square + kingDirection[i]];
+		if (piece != offBoard && IsKi(piece) && pieceColor[piece] == side) {
+			return true;
+		}
+	}
+
+	return false;
 
 }
 

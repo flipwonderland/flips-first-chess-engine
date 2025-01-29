@@ -33,7 +33,10 @@ typedef unsigned long long u64;
 #define CLRBIT(bb,sq) ((bb) &= clearMask[(sq)])
 #define SETBIT(bb,sq) ((bb) |= setMask[(sq)])
 
-
+#define IsBQ(p) (isPieceBishopQueen[(p)])
+#define IsRQ(p) (isPieceRookQueen[(p)])
+#define IsKn(p) (isPieceKnight[(p)])
+#define IsKi(p) (isPieceKing[(p)])
 
 
 
