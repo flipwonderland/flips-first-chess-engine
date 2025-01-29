@@ -1022,8 +1022,10 @@ bool checkBoard(const boardStructure* position) {
 	if (position->castlePermission <= 0 || position->castlePermission >= 16)
 		std::cout << "castle permission is invalid\n";
 
-
-	return true;
+	if (!testFailed)
+		return true;
+	else
+		return false;
 }
 
 void resetBoard(boardStructure* position) {
@@ -2374,9 +2376,8 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 }
 */
 
-bool checkLegalMove(int board[], int moveId) {
-	//uuuuuuuuuuuuuuuh idk how to do this
-	return false;
+bool squareAttacked() {
+
 }
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
@@ -2517,10 +2518,6 @@ int main()
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
 			parseFen(PERFORMANCETESTFEN, currentBoard);
-			int test = checkBoard(currentBoard);
-			cout << "white material: " << currentBoard->material[white] << "\n";
-			cout << "black material: " << currentBoard->material[black] << "\n";
-			cout << "both material: " << currentBoard->material[none] << "\n";
 			printSquareBoard(currentBoard);
 			cout << "\n";
 			cout << "white pawns \n";
