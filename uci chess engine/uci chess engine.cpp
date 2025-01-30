@@ -108,8 +108,6 @@ typedef struct {
 	u64 bitBoardRooks[3];
 	u64 bitBoardQueens[3];
 
-	
-
 	int material[2];
 
 	int side;
@@ -303,7 +301,7 @@ int countBits(u64 b) {
 int filesBoard[BRD_SQ_NUM];
 int ranksBoard[BRD_SQ_NUM];
 
-void initializeFilesAndRanksBoard() {
+static void initializeFilesAndRanksBoard() {
 
 	int i;
 	int file;
@@ -827,7 +825,7 @@ int countPieceMaterial() {
 }
 */
 
-void updateListsMaterial(boardStructure* position) {
+static void updateListsMaterial(boardStructure* position) {
 	int piece;
 	int square;
 	int color;
@@ -903,7 +901,7 @@ void updateListsMaterial(boardStructure* position) {
 	}
 }
 
-bool checkBoard(const boardStructure* position) {
+static bool checkBoard(const boardStructure* position) {
 
 	int tempPieceNumber[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	int tempNormalPiece[2] = { 0, 0 };
@@ -1049,7 +1047,7 @@ bool checkBoard(const boardStructure* position) {
 		return false;
 }
 
-void resetBoard(boardStructure* position) {
+static void resetBoard(boardStructure* position) {
 	int i;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
@@ -1103,7 +1101,7 @@ void resetBoard(boardStructure* position) {
 
 }
 
-void parseFen(const char* fen, boardStructure* position) {
+static void parseFen(const char* fen, boardStructure* position) {
 	int i;
 	int rank = rank8;
 	int file = fileA;
@@ -2407,35 +2405,35 @@ const bool isPieceBishopQueen[13] = { false, false, false, false, true, false, t
 const bool pieceSlides[13] =        { false, false, false, false, true, true, true, false, false, false, true, true, true };
 
 
-bool squareIs120(const int square) {
+static bool squareIs120(const int square) {
 	return (square >= 0 && square < 120);
 }
 
-bool squareOnBoard(const int square) {
+static bool squareOnBoard(const int square) {
 	return filesBoard[square] == offBoard ? 0 : 1;
 }
 
-bool sideValid(const int side) {
+static bool sideValid(const int side) {
 	return (side == white || side == black) ? 1 : 0;
 }
 
-bool fileRankValid(const int fromRank) {
+static bool fileRankValid(const int fromRank) {
 	return (fromRank >= 0 && fromRank <= 7) ? 1 : 0;
 }
 
-bool pieceValidEmpty(const int piece) {
+static bool pieceValidEmpty(const int piece) {
 	return (piece >= empty && piece <= bQ) ? 1 : 0;
 }
 
-bool pieceValidEmptyOffboard(const int piece) {
+static bool pieceValidEmptyOffboard(const int piece) {
 	return (pieceValidEmpty(piece) || piece == offBoard);
 }
 
-bool pieceValid(const int piece) {
+static bool pieceValid(const int piece) {
 	return (piece >= wK && piece <= bQ) ? 1 : 0;
 }
 
-bool squareAttacked(const int square, const int side, const boardStructure *position) {
+static bool squareAttacked(const int square, const int side, const boardStructure *position) {
 	
 	int piece;
 	int i;
@@ -2741,7 +2739,7 @@ static void addBlackPawnCaptureMove(const boardStructure* position, const int fr
 
 
 
-void generateAllMoves(const boardStructure* position, moveListStructure* list) {
+static void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 	if (!checkBoard(position)) {
 		std::cout << "board check failed in generate moves function\n";
@@ -2758,8 +2756,6 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 	int direction = 0;
 	int index; //wow I'm actually spelling it out I'm ashamed
 	int pieceIndex;
-
-	printf("\n\nSide:%d\n", side);
 
 	if (side == white) {
 
@@ -2940,6 +2936,9 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 
 }
+
+
+
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
 void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
