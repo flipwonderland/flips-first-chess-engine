@@ -2409,12 +2409,12 @@ const int rookDirection[4] = { -1, -10,	1, 10 };
 const int bishopDirection[8] = { -9, -11, 11, 9 };
 const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
 //                              empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
-bool isPiecePawn[13] =        { false, false, true, false, false, false, false, false, true, false, false, false, false };
-bool isPieceKnight[13] =      { false, false, false, true, false, false, false, false, false, true, false, false, false };
-bool isPieceKing[13] =        { false, true, false, false, false, false, false, true, false, false, false, false, false };
-bool isPieceRookQueen[13] =   { false, false, false, false, false, true, true, false, false, false, false, true, true };
-bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
-bool pieceSlides[13] =        { false, false, false, false, true, true, true, false, false, false, true, true, true };
+const bool isPiecePawn[13] =        { false, false, true, false, false, false, false, false, true, false, false, false, false };
+const bool isPieceKnight[13] =      { false, false, false, true, false, false, false, false, false, true, false, false, false };
+const bool isPieceKing[13] =        { false, true, false, false, false, false, false, true, false, false, false, false, false };
+const bool isPieceRookQueen[13] =   { false, false, false, false, false, true, true, false, false, false, false, true, true };
+const bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
+const bool pieceSlides[13] =        { false, false, false, false, true, true, true, false, false, false, true, true, true };
 
 
 bool squareIs120(const int square) {
@@ -2540,10 +2540,10 @@ char* printSquare(const int square) {
 
 }
 
-char pieceCharacter[] = ".KPNBRQkpnbrq";
-char sideCharacter[] = "wb-";
-char rankCharacter[] = "12345678";
-char fileCharacter[] = "abcdefgh";
+const char pieceCharacter[] = ".KPNBRQkpnbrq";
+const char sideCharacter[] = "wb-";
+const char rankCharacter[] = "12345678";
+const char fileCharacter[] = "abcdefgh";
 char printCastle;
 
 void printSquareBoard(const boardStructure* position) {
@@ -2596,11 +2596,11 @@ void printSquareBoard(const boardStructure* position) {
 
 
 
-int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
-int loopSlidingIndex[2] = { 0, 4 };
+const int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
+const int loopSlidingIndex[2] = { 0, 4 };
 
-int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
-int loopNonSlidingIndex[2] = { 0, 3 };
+const int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
+const int loopNonSlidingIndex[2] = { 0, 3 };
 
 const int pieceDirection[13][8] = {
 	{ 0, 0, 0, 0, 0, 0, 0 }, //empty
@@ -2623,9 +2623,9 @@ const int pieceDirection[13][8] = {
 { -9, -11, 11, 9, 0, 0, 0, 0 } b
 { -1, -10,	1, 10, 0, 0, 0, 0 } r
 */
-int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
+const int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
 
-void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
+static void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
 	
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2633,7 +2633,7 @@ void addQuietMove(const boardStructure* position, int move, moveListStructure* l
 
 }
 
-void addCaptureMove(const boardStructure* position, int move, moveListStructure* list) {
+static void addCaptureMove(const boardStructure* position, int move, moveListStructure* list) {
 
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2641,7 +2641,7 @@ void addCaptureMove(const boardStructure* position, int move, moveListStructure*
 
 }
 
-void addEnPassantMove(const boardStructure* position, int move, moveListStructure* list) {
+static void addEnPassantMove(const boardStructure* position, int move, moveListStructure* list) {
 
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2649,7 +2649,7 @@ void addEnPassantMove(const boardStructure* position, int move, moveListStructur
 
 }
 
-void addWhitePawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
+static void addWhitePawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
 	
 	if (!squareOnBoard(from)) {
@@ -2673,7 +2673,7 @@ void addWhitePawnMove(const boardStructure* position, const int from, const int 
 	}
 }
 
-void addBlackPawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
+static void addBlackPawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
 	if (!squareOnBoard(from)) {
 		std::cout << "pawn from move not on board\n";
@@ -2697,7 +2697,7 @@ void addBlackPawnMove(const boardStructure* position, const int from, const int 
 }
 
 
-void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
+static void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
 	if (!pieceValidEmpty(capture)) {
 		std::cout << "pawn from move not on board\n";
@@ -2723,7 +2723,7 @@ void addWhitePawnCaptureMove(const boardStructure* position, const int from, con
 	}
 }
 
-void addBlackPawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
+static void addBlackPawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
 	if (!pieceValidEmpty(capture)) {
 		std::cout << "pawn from move not on board\n";
