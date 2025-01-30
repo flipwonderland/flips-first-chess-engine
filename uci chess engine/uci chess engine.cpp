@@ -108,15 +108,9 @@ typedef struct {
 	u64 bitBoardRooks[3];
 	u64 bitBoardQueens[3];
 
-	//adding these now but will remove them after the move gen is created, I'll just use the bitboards after I figure out how that works
-	int pawns[3];
-	int kings[3];
-	int knights[3];
-	int bishops[3];
-	int rooks[3];
-	int queens[3];
+	
 
-	int material[3];
+	int material[2];
 
 	int side;
 	int enPassant;
@@ -129,10 +123,10 @@ typedef struct {
 
 	u64 positionKey;
 
-	int normalPieces[3]; //not pawns
-	int majorPieces[3];
-	int minorPieces[3];
-	int nonPieces[3]; //pawns
+	int normalPieces[2]; //not pawns
+	int majorPieces[2];
+	int minorPieces[2];
+	int nonPieces[2]; //pawns
 
 	undoStructure history[MAX_GAME_MOVES];
 	
@@ -1083,11 +1077,7 @@ void resetBoard(boardStructure* position) {
 		position->bitBoardRooks[i] = 0ULL;
 		position->bitBoardQueens[i] = 0ULL;
 
-		position->kings[i] = 0;
-		position->bishops[i] = 0;
-		position->knights[i] = 0;
-		position->rooks[i] = 0;
-		position->queens[i] = 0;
+		
 
 	}
 
