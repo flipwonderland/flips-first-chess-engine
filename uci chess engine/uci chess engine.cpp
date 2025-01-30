@@ -1071,6 +1071,8 @@ void resetBoard(boardStructure* position) {
 		position->majorPieces[i] = 0;
 		position->minorPieces[i] = 0;
 		position->nonPieces[i] = 0;
+		
+		position->material[i] = 0;
 
 		position->bitBoardKings[i] = 0ULL;
 		position->bitBoardPawns[i] = 0ULL;
@@ -1079,7 +1081,6 @@ void resetBoard(boardStructure* position) {
 		position->bitBoardRooks[i] = 0ULL;
 		position->bitBoardQueens[i] = 0ULL;
 
-		position->material[i] = 0;
 
 		position->kings[i] = 0;
 		position->bishops[i] = 0;
@@ -2526,6 +2527,12 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 }
 
 
+int loopSlidePiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
+int loopSlideIndex[2] = { 0, 4 };
+
+int loopNotSlidingPiece[6] = { wN, wK, 0, bN, bK };
+int loopNotSlidingIndex[2] = { 0, 3 };
+
 void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
 	
 	list->moves[list->moveCount].move = move;
@@ -2550,53 +2557,68 @@ void addEnPassantMove(const boardStructure* position, int move, moveListStructur
 
 }
 
-void addWhitePawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
+void addWhitePawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
-	/*
-	ASSERT(SqOnBoard(from));
-	ASSERT(SqOnBoard(to));
-	ASSERT(CheckBoard(pos));
-	*/
+	
+	if (!squareOnBoard(from)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "pawn to move not on board\n";
+	}
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed on pawn move\n";
+	}
 
 	if (ranksBoard[from] == rank7) {
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wQ, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wR, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wB, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wN, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, wQ, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, wR, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, wB, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, wN, 0), list);
 	}
 	else {
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
 	}
 }
 
-void addBlackPawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
+void addBlackPawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
-	/*
-	ASSERT(SqOnBoard(from));
-	ASSERT(SqOnBoard(to));
-	ASSERT(CheckBoard(pos));
-	*/
+	if (!squareOnBoard(from)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "pawn to move not on board\n";
+	}
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed on pawn move\n";
+	}
 
 	if (ranksBoard[from] == rank2) {
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bQ, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bR, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bB, 0), list);
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bN, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, bQ, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, bR, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, bB, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, bN, 0), list);
 	}
 	else {
-		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
+		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
 	}
 }
 
 
 void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
-	/*
-	ASSERT(PieceValidEmpty(cap));
-	ASSERT(SqOnBoard(from));
-	ASSERT(SqOnBoard(to));
-	ASSERT(CheckBoard(pos));
-	*/
+	if (!pieceValidEmpty(capture)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(from)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "pawn to move not on board\n";
+	}
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed on pawn move\n";
+	}
 
 	if (ranksBoard[from] == rank7) {
 		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wQ, 0), list);
@@ -2611,12 +2633,18 @@ void addWhitePawnCaptureMove(const boardStructure* position, const int from, con
 
 void addBlackPawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
-	/*
-	ASSERT(PieceValidEmpty(cap));
-	ASSERT(SqOnBoard(from));
-	ASSERT(SqOnBoard(to));
-	ASSERT(CheckBoard(pos));
-	*/
+	if (!pieceValidEmpty(capture)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(from)) {
+		std::cout << "pawn from move not on board\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "pawn to move not on board\n";
+	}
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed on pawn move\n";
+	}
 
 	if (ranksBoard[from] == rank2) {
 		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bQ, 0), list);
@@ -2710,6 +2738,9 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 			}
 		}
 	}
+
+
+
 
 }
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
