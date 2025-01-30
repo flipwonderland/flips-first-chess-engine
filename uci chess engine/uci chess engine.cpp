@@ -2527,11 +2527,103 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 }
 
 
-int loopSlidePiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
-int loopSlideIndex[2] = { 0, 4 };
+char* printSquare(const int square) {
 
-int loopNotSlidingPiece[6] = { wN, wK, 0, bN, bK };
-int loopNotSlidingIndex[2] = { 0, 3 };
+	static char squareString[3];
+
+	int file = filesBoard[square];
+	int rank = ranksBoard[square];
+
+	sprintf_s(squareString, "%c%c", ('a' + file), ('1' + rank));
+
+	return squareString;
+
+}
+
+char pieceCharacter[] = ".KPNBRQkpnbrq";
+char sideCharacter[] = "wb-";
+char rankCharacter[] = "12345678";
+char fileCharacter[] = "abcdefgh";
+char printCastle;
+
+void printSquareBoard(const boardStructure* position) {
+	int sq;
+	int file;
+	int rank;
+	int piece;
+
+	std::cout << "\ngame board: \n" << "-----------------------\n";
+
+	for (rank = rank8; rank >= rank1; rank--) {
+		std::cout << " " << rank + 1 << " ";
+		for (file = fileA; file <= fileH; file++) {
+			sq = FR2SQ(file, rank);
+			piece = position->pieces[sq];
+			std::cout << " " << pieceCharacter[piece];
+		}
+		std::cout << "\n";
+	}
+
+	std::cout << "\n    ";
+	for (file = fileA; file <= fileH; file++) {
+		printf("%c", 'a' + file);
+		printf(" ");
+		//std::cout << " " << "a" + file;
+	}
+	std::cout << "\n-----------------------\n";
+	std::cout << "\n";
+
+	std::cout << "side: " << sideCharacter[position->side] << "\n";
+	printf("en Passant:%d\n", position->enPassant);
+	//std::cout << "en Passant: " << position->enPassant << "\n";
+	std::cout << "castle permission:\n";
+	position->castlePermission& whiteKingCastle ? printCastle = 'K' : printCastle = '-';
+	std::cout << "K: " << printCastle << "\n";
+	position->castlePermission& whiteQueenCastle ? printCastle = 'Q' : printCastle = '-';
+	std::cout << "Q: " << printCastle << "\n";
+	position->castlePermission& blackKingCastle ? printCastle = 'k' : printCastle = '-';
+	std::cout << "k: " << printCastle << "\n";
+	position->castlePermission& blackQueenCastle ? printCastle = 'q' : printCastle = '-';
+	std::cout << "q: " << printCastle << "\n"; //this is really ugly
+
+	//this is the only one that I'm gonna do printf because idk how to make character out do hex
+	std::cout << "position key:\n" << std::hex << position->positionKey;
+
+
+	std::cout << "\n-----------------------\n";
+}
+
+
+
+
+int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
+int loopSlidingIndex[2] = { 0, 4 };
+
+int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
+int loopNonSlidingIndex[2] = { 0, 3 };
+
+const int pieceDirection[13][8] = {
+	{ 0, 0, 0, 0, 0, 0, 0 }, //empty
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
+	{ 0, 0, 0, 0, 0, 0, 0 } , //wp
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 }, //wn
+	{ -9, -11, 11, 9, 0, 0, 0, 0 } ,//wb
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },//wr
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },//wq
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bk
+	{ 0, 0, 0, 0, 0, 0, 0 },//bp
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 },//bn
+	{ -9, -11, 11, 9, 0, 0, 0, 0 },//bb
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },//br
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }//bq
+};
+
+/*
+{ -8, -19,	-21, -12, 8, 19, 21, 12 } n
+{ -9, -11, 11, 9, 0, 0, 0, 0 } b
+{ -1, -10,	1, 10, 0, 0, 0, 0 } r
+*/
+int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
 
 void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
 	
@@ -2657,6 +2749,8 @@ void addBlackPawnCaptureMove(const boardStructure* position, const int from, con
 	}
 }
 
+
+
 void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 	if (!checkBoard(position)) {
@@ -2668,8 +2762,14 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 	int piece = empty;
 	int side = position->side;
 	int square = 0;
-	int tempSquare = 0;
+	int targetSquare = 0;
 	int pieceNumber = 0;
+
+	int direction = 0;
+	int index; //wow I'm actually spelling it out I'm ashamed
+	int pieceIndex;
+
+	printf("\n\nSide:%d\n", side);
 
 	if (side == white) {
 
@@ -2739,7 +2839,61 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 		}
 	}
 
+	pieceIndex = loopSlidingIndex[side];
+	piece = loopSlidingPiece[pieceIndex];
+	pieceIndex++;
 
+	while (piece != 0) {
+		if (!pieceValid(piece)) {
+			std::cout << "piece invalid on move list generator\n";
+			break;
+		}
+
+		printf("sliding piece index:%d pce:%d\n", pieceIndex, piece);
+		piece = loopSlidingPiece[pieceIndex];
+		pieceIndex++;
+
+	}
+
+	pieceIndex = loopNonSlidingIndex[side];
+	piece = loopNonSlidingPiece[pieceIndex];
+	pieceIndex++;
+
+	while (piece != 0) {
+		if (!pieceValid(piece)) {
+			std::cout << "piece invalid on move list generator\n";
+			break;
+		}
+		printf("non sliding piece index:%d pce:%d\n", pieceIndex, piece);
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
+			square = position->pieceList[piece][pieceNumber];
+			if (!squareOnBoard(square)) {
+				std::cout << "non sliding piece not on board\n";
+			}
+			printf("piece:%c on %s\n", pieceCharacter[piece], printSquare(square));
+
+			for (index = 0; index < numberOfDirections[piece]; index++) {
+				direction = pieceDirection[piece][index];
+				targetSquare = square + direction;
+
+				if (SQOFFBOARD_MOVEGEN(targetSquare))
+					continue;
+
+				if (position->pieces[targetSquare] != empty) {
+					if (pieceColor[position->pieces[targetSquare]] == (side ^ 1)) { // black ^ 1 == white and vice reversa
+						printf("\t\tcapture on %s\n", printSquare(targetSquare));
+					}
+					continue;
+				}
+				printf("\t\tnormal move on %s\n", printSquare(targetSquare));
+			}
+
+		}
+		
+		piece = loopNonSlidingPiece[pieceIndex];
+		pieceIndex++;
+
+	}
 
 
 }
@@ -2790,71 +2944,9 @@ void printBitBoard(u64 bitBoardToPrint) {
 
 }
 
-char pieceCharacter[] = ".KPNBRQkpnbrq";
-char sideCharacter[] = "wb-";
-char rankCharacter[] = "12345678";
-char fileCharacter[] = "abcdefgh";
-char printCastle;
 
-void printSquareBoard(const boardStructure* position) {
-	int sq;
-	int file;
-	int rank;
-	int piece;
 
-	std::cout << "\ngame board: \n" << "-----------------------\n";
 
-	for (rank = rank8; rank >= rank1; rank--) {
-		std::cout << " " << rank + 1 << " ";
-		for (file = fileA; file <= fileH; file++) {
-			sq = FR2SQ(file, rank);
-			piece = position->pieces[sq];
-			std::cout << " " << pieceCharacter[piece];
-		}
-		std::cout << "\n";
-	}
-
-	std::cout << "\n    ";
-	for (file = fileA; file <= fileH; file++) {
-		printf("%c",'a' + file);
-		printf(" ");
-		//std::cout << " " << "a" + file;
-	}
-	std::cout << "\n-----------------------\n";
-	std::cout << "\n";
-
-	std::cout << "side: " << sideCharacter[position->side] << "\n";
-	printf("en Passant:%d\n", position->enPassant);
-	//std::cout << "en Passant: " << position->enPassant << "\n";
-	std::cout << "castle permission:\n";
-	position->castlePermission & whiteKingCastle ? printCastle = 'K' : printCastle = '-';
-	std::cout << "K: " << printCastle << "\n";
-	position->castlePermission & whiteQueenCastle ? printCastle = 'Q' : printCastle = '-';
-	std::cout << "Q: " << printCastle << "\n";
-	position->castlePermission & blackKingCastle ? printCastle = 'k' : printCastle = '-';
-	std::cout << "k: " << printCastle << "\n";
-	position->castlePermission & blackQueenCastle ? printCastle = 'q' : printCastle = '-';
-	std::cout << "q: " << printCastle << "\n"; //this is really ugly
-
-	//this is the only one that I'm gonna do printf because idk how to make character out do hex
-	std::cout << "position key:\n" << std::hex << position->positionKey;
-	
-	
-	std::cout << "\n-----------------------\n";
-}
-
-char* printSquare(const int square) {
-
-	static char squareString[3];
-
-	int file = filesBoard[square];
-	int rank = ranksBoard[square];
-
-	sprintf_s(squareString, "%c%c", ('a' + file), ('1' + rank));
-
-	return squareString;
-
-}
 
 char* printMove(const int move) {
 
@@ -2927,6 +3019,7 @@ int main()
 
 	initializeAll();
 	boardStructure currentBoard[1];
+	moveListStructure list[1];
 
 	do {
 		std::string input;
@@ -2943,15 +3036,13 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(PAWNMOVETESTB, currentBoard);
-			printSquareBoard(currentBoard);
-			cout << "\n";
-
-			moveListStructure list[1];
+			parseFen(KNIGHTSKINGS, currentBoard);
+			//printSquareBoard(currentBoard);
+			//cout << "\n";
 
 			generateAllMoves(currentBoard, list);
 
-			printMoveList(list);
+			//printMoveList(list);
 			
 
 		}
