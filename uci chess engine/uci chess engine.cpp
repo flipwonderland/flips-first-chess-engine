@@ -2550,12 +2550,96 @@ void addEnPassantMove(const boardStructure* position, int move, moveListStructur
 
 }
 
+static void addWhitePawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
+
+	/*
+	ASSERT(SqOnBoard(from));
+	ASSERT(SqOnBoard(to));
+	ASSERT(CheckBoard(pos));
+	*/
+
+	if (ranksBoard[from] == rank7) {
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wQ, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wR, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wB, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, wN, 0), list);
+	}
+	else {
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
+	}
+}
+
+void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
+
+	/*
+	ASSERT(PieceValidEmpty(cap));
+	ASSERT(SqOnBoard(from));
+	ASSERT(SqOnBoard(to));
+	ASSERT(CheckBoard(pos));
+	*/
+
+	if (ranksBoard[from] == rank7) {
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wQ, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wR, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wB, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wN, 0), list);
+	}
+	else {
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, empty, 0), list);
+	}
+}
+
+
 void generateAllMoves(const boardStructure* position, moveListStructure* list) {
+
+	if (!checkBoard(position)) {
+		std::cout << "board check failed in generate moves function\n";
+	}
 
 	list->moveCount = 0;
 
-}
+	int piece = empty;
+	int side = position->side;
+	int square = 0;
+	int tempSquare = 0;
+	int pieceNumber = 0;
 
+	if (side == white) {
+
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[wP]; pieceNumber++) {
+			square = position->pieceList[wP][pieceNumber];
+
+			if (!squareOnBoard(square)) {
+				std::cout << "pawn was off board in generate moves function\n";
+				break;
+			}
+
+			if (position->pieces[square + 10] == empty) {
+				addWhitePawnMove(position, square, square + 10, list);
+				if (ranksBoard[square] == rank2 && position->pieces[square + 20] == empty) {
+					addQuietMove(position, MOVE_MOVEGEN(square, (square + 20), empty, empty, MFLAGPS), list);
+				}
+			}
+
+			if (!SQOFFBOARD_MOVEGEN(square + 9) && pieceColor[position->pieces[square + 9]] == black) {
+				addWhitePawnCaptureMove(position, square, square + 9, position->pieces[square + 9], list);
+			}
+			if (!SQOFFBOARD_MOVEGEN(square + 11) && pieceColor[position->pieces[square + 11]] == black) {
+				addWhitePawnCaptureMove(position, square, square + 11, position->pieces[square + 11], list);
+			}
+
+			if (position->enPassant != noSquare) {
+				if (square + 9 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 9, empty, empty, MFLAGEP), list);
+				}
+				if (square + 11 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 11, empty, empty, MFLAGEP), list);
+				}
+			}
+		}
+	}
+
+}
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
 void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
@@ -2700,6 +2784,24 @@ char* printMove(const int move) {
 	return moveString;
 }
 
+void printMoveList(const moveListStructure* list) {
+
+	int i;
+	int score = 0;
+	int move = 0;
+	printf("move list:\n", list->moveCount);
+
+	for (i = 0; i < list->moveCount; i++) {
+
+		move = list->moves[i].move;
+		score = list->moves[i].score;
+
+		printf("move:%d > %s (score:%d)\n", i + 1, printMove(move), score);
+	}
+	printf("move list total %d moves:\n\n", list->moveCount);
+
+}
+
 
 void initializeAll() {
 	computeMoveBoards();
@@ -2738,23 +2840,16 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(PERFORMANCETESTFEN, currentBoard);
+			parseFen(PAWNMOVETEST, currentBoard);
 			printSquareBoard(currentBoard);
 			cout << "\n";
+
+			moveListStructure list[1];
+
+			generateAllMoves(currentBoard, list);
+
+			printMoveList(list);
 			
-			int move = 0;
-			int from = a2;
-			int to = h7;
-			int cap = wR;
-			int promotion = wR;
-
-			move = ((from) | (to << 7) | (cap << 14) | (promotion << 20));
-			printf("from:%d to:%d cap:%d promoted:%d\n",
-				FROMSQ(move), TOSQ(move), CAPTURED(move), PROMOTED(move));
-
-			printf("algebraic from:%s\n", printSquare(from));
-			printf("algebraic to:%s\n", printSquare(to));
-			printf("algebraic move:%s\n", printMove(move));
 
 		}
 		else if (command == "isready") {
