@@ -2416,12 +2416,53 @@ bool isPieceBishopQueen[13] = { false, false, false, true, false, true, false, f
 bool pieceSlides[13] = { false, false, false, true, true, true, false, false, false, true, true, true, false };
 
 
+bool squareIs120(const int square) {
+	return (square >= 0 && square < 120);
+}
+
+bool squareOnBoard(const int square) {
+	return filesBoard[square] == offBoard ? 0 : 1;
+}
+
+bool sideValid(const int side) {
+	return (side == white || side == black) ? 1 : 0;
+}
+
+bool fileRankValid(const int fromRank) {
+	return (fromRank >= 0 && fromRank <= 7) ? 1 : 0;
+}
+
+bool pieceValidEmpty(const int piece) {
+	return (piece >= empty && piece <= bQ) ? 1 : 0;
+}
+
+bool pieceValidEmptyOffboard(const int piece) {
+	return (pieceValidEmpty(piece) || piece == offBoard);
+}
+
+bool pieceValid(const int piece) {
+	return (piece >= wK && piece <= bQ) ? 1 : 0;
+}
+
 bool squareAttacked(const int square, const int side, const boardStructure *position) {
 	
 	int piece;
 	int i;
 	int tempSquare;
 	int direction;
+
+	if (!squareOnBoard(square)) {
+		std::cout << "square is not on board\n";
+		return false;
+	}
+	else if (!sideValid(side)) {
+		std::cout << "side is not valid\n";
+		return false;
+	}
+	else if (!checkBoard(position)) {
+		std::cout << "check board failed\n";
+		return false;
+	}
 
 	if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
 		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
@@ -2484,35 +2525,6 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 
 }
 
-
-bool squareIs120(const int sq) {
-	return (sq >= 0 && sq < 120);
-}
-
-
-bool squareOnBoard(const int square) {
-	return filesBoard[square] == offBoard ? 0 : 1;
-}
-
-bool sideValid(const int side) {
-	return (side == white || side == black) ? 1 : 0;
-}
-
-bool fileRankValid(const int fromRank) {
-	return (fromRank >= 0 && fromRank <= 7) ? 1 : 0;
-}
-
-bool pieceValidEmpty(const int piece) {
-	return (piece >= empty && piece <= bQ) ? 1 : 0;
-}
-
-bool pieceValidEmptyOffboard(const int piece) {
-	return (pieceValidEmpty(piece) || piece == offBoard);
-}
-
-bool pieceValid(const int piece) {
-	return (piece >= wK && piece <= bQ) ? 1 : 0;
-}
 
 void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
 	
