@@ -2485,30 +2485,30 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 }
 
 
-bool squareIs120(const bool sq) {
+bool squareIs120(const int sq) {
 	return (sq >= 0 && sq < 120);
 }
 
-bool pieceValidEmptyOffboard(const bool piece) {
+bool pieceValidEmptyOffboard(const int piece) {
 	return (pieceValidEmpty(piece) || piece == offBoard);
 }
-bool squareOnBoard(const bool square) {
+bool squareOnBoard(const int square) {
 	return filesBoard[square] == offBoard ? 0 : 1;
 }
 
-bool sideValid(const bool side) {
+bool sideValid(const int side) {
 	return (side == white || side == black) ? 1 : 0;
 }
 
-bool fileRankValid(const bool fromRank) {
+bool fileRankValid(const int fromRank) {
 	return (fromRank >= 0 && fromRank <= 7) ? 1 : 0;
 }
 
-bool pieceValidEmpty(const bool piece) {
+bool pieceValidEmpty(const int piece) {
 	return (piece >= empty && piece <= bQ) ? 1 : 0;
 }
 
-bool pieceValid(const bool piece) {
+bool pieceValid(const int piece) {
 	return (piece >= wK && piece <= bQ) ? 1 : 0;
 }
 
