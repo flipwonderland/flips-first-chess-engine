@@ -59,6 +59,24 @@ enum {
 	blackKingCastle = 0b0100,
 	blackQueenCastle = 0b1000
 };
+
+typedef struct {
+	
+	int move; //this move int is exactly what I was doing with my engine before I started following this series
+	int score;//not exactly eval from what I'm aware
+
+} moveStructure;
+//nice
+/*
+0000 0000 0000 0000 0000 0111 1111 -> From 0x7F
+0000 0000 0000 0011 1111 1000 0000 -> To >> 7, 0x7F
+0000 0000 0011 1100 0000 0000 0000 -> Captured >> 14, 0xF
+0000 0000 0100 0000 0000 0000 0000 -> EP 0x40000
+0000 0000 1000 0000 0000 0000 0000 -> Pawn Start 0x80000
+0000 1111 0000 0000 0000 0000 0000 -> Promoted Piece >> 20, 0xF
+0001 0000 0000 0000 0000 0000 0000 -> Castle 0x1000000
+*/
+
 typedef struct {
 
 	int move;
@@ -115,6 +133,8 @@ typedef struct {
 	int pieceList[13][10];
 
 } boardStructure;
+
+
 
 /*
 class gameState {
@@ -2557,6 +2577,51 @@ void printSquareBoard(const boardStructure* position) {
 	std::cout << "\n-----------------------\n";
 }
 
+char* printSquare(const int square) {
+
+	static char squareString[3];
+
+	int file = filesBoard[square];
+	int rank = ranksBoard[square];
+
+	sprintf_s(squareString, "%c%c", ('a' + file), ('1' + rank));
+
+	return squareString;
+
+}
+
+char* printMove(const int move) {
+
+	static char moveString[6];
+
+	int fileFrom = filesBoard[FROMSQ(move)];
+	int rankFrom = ranksBoard[FROMSQ(move)];
+	int fileTo = filesBoard[TOSQ(move)];
+	int rankTo = ranksBoard[TOSQ(move)];
+
+	int promoted = PROMOTED(move);
+
+	if (promoted > 1) {
+		char promotedChar = 'q'; //note to self, remake this so I can tell when a piece is a queen and throw an error when it's none of the pieces
+		if (IsKn(promoted)) {
+			promotedChar = 'n';
+		}
+		else if (IsRQ(promoted) && !IsBQ(promoted)) {
+			promotedChar = 'r';
+		}
+		else if (!IsRQ(promoted) && IsBQ(promoted)) {
+			promotedChar = 'b';
+		}
+		sprintf_s(moveString, "%c%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo), promotedChar);
+	}
+	else {
+		sprintf_s(moveString, "%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo));
+	}
+
+	return moveString;
+}
+
+
 void initializeAll() {
 	computeMoveBoards();
 	initializeFilesAndRanksBoard();
@@ -2597,12 +2662,20 @@ int main()
 			parseFen(PERFORMANCETESTFEN, currentBoard);
 			printSquareBoard(currentBoard);
 			cout << "\n";
-			cout << "white pawns \n";
-			printBitBoard(currentBoard->bitBoardPawns[white]);
-			cout << "black pawns \n";
-			printBitBoard(currentBoard->bitBoardPawns[black]);
-			cout << "both pawns \n";
-			printBitBoard(currentBoard->bitBoardPawns[none]);
+			
+			int move = 0;
+			int from = a2;
+			int to = h7;
+			int cap = wR;
+			int promotion = wR;
+
+			move = ((from) | (to << 7) | (cap << 14) | (promotion << 20));
+			printf("from:%d to:%d cap:%d promoted:%d\n",
+				FROMSQ(move), TOSQ(move), CAPTURED(move), PROMOTED(move));
+
+			printf("algebraic from:%s\n", printSquare(from));
+			printf("algebraic to:%s\n", printSquare(to));
+			printf("algebraic move:%s\n", printMove(move));
 
 		}
 		else if (command == "isready") {
