@@ -67,6 +67,13 @@ typedef struct {
 
 } moveStructure;
 //nice
+
+typedef struct {
+
+	moveStructure moves[MAXPOSITIONMOVES];
+	int moveCount;
+
+} moveListStructure;
 /*
 0000 0000 0000 0000 0000 0111 1111 -> From 0x7F
 0000 0000 0000 0011 1111 1000 0000 -> To >> 7, 0x7F
@@ -2474,6 +2481,36 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 	}
 
 	return false;
+
+}
+
+void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
+	
+	list->moves[list->moveCount].move = move;
+	list->moves[list->moveCount].score = 0;
+	list->moveCount++;
+
+}
+
+void addCaptureMove(const boardStructure* position, int move, moveListStructure* list) {
+
+	list->moves[list->moveCount].move = move;
+	list->moves[list->moveCount].score = 0;
+	list->moveCount++;
+
+}
+
+void addEnPassantMove(const boardStructure* position, int move, moveListStructure* list) {
+
+	list->moves[list->moveCount].move = move;
+	list->moves[list->moveCount].score = 0;
+	list->moveCount++;
+
+}
+
+void generateAllMoves(const boardStructure* position, moveListStructure* list) {
+
+	list->moveCount = 0;
 
 }
 
