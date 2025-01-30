@@ -2407,13 +2407,13 @@ const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
 const int rookDirection[4] = { -1, -10,	1, 10 };
 const int bishopDirection[8] = { -9, -11, 11, 9 };
 const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
-
-bool isPiecePawn[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
-bool isPieceKnight[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
-bool isPieceKing[13] = { false, false, false, false, false, false, true, false, false, false, false, false, true };
-bool isPieceRookQueen[13] = { false, false, false, false, true, true, false, false, false, false, true, true, false };
-bool isPieceBishopQueen[13] = { false, false, false, true, false, true, false, false, false, true, false, true, false };
-bool pieceSlides[13] = { false, false, false, true, true, true, false, false, false, true, true, true, false };
+//                              empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
+bool isPiecePawn[13] =        { false, false, true, false, false, false, false, false, true, false, false, false, false };
+bool isPieceKnight[13] =      { false, false, false, true, false, false, false, false, false, true, false, false, false };
+bool isPieceKing[13] =        { false, true, false, false, false, false, false, true, false, false, false, false, false };
+bool isPieceRookQueen[13] =   { false, false, false, false, false, true, true, false, false, false, false, true, true };
+bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
+bool pieceSlides[13] =        { false, false, false, false, true, true, true, false, false, false, true, true, true };
 
 
 bool squareIs120(const int square) {
