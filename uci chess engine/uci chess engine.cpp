@@ -62,8 +62,8 @@ enum {
 
 typedef struct {
 	
-	int move; //this move int is exactly what I was doing with my engine before I started following this series
-	int score;//not exactly eval from what I'm aware
+	bool move; //this move bool is exactly what I was doing with my engine before I started following this series
+	bool score;//not exactly eval from what I'm aware
 
 } moveStructure;
 //nice
@@ -71,7 +71,7 @@ typedef struct {
 typedef struct {
 
 	moveStructure moves[MAXPOSITIONMOVES];
-	int moveCount;
+	bool moveCount;
 
 } moveListStructure;
 /*
@@ -86,10 +86,10 @@ typedef struct {
 
 typedef struct {
 
-	int move;
-	int castlePerm;
-	int enPassant;
-	int fiftyMove;
+	bool move;
+	bool castlePerm;
+	bool enPassant;
+	bool fiftyMove;
 	u64 positionKey;
 
 } undoStructure;
@@ -97,9 +97,9 @@ typedef struct {
 //gonna try his struct before I move to classes again so I can get an idea of how this works
 typedef struct {
 
-	int pieces[BRD_SQ_NUM];
+	bool pieces[BRD_SQ_NUM];
 
-	int kingSquare[2];
+	bool kingSquare[2];
 	
 	u64 bitBoardKings[3];
 	u64 bitBoardPawns[3];
@@ -109,35 +109,35 @@ typedef struct {
 	u64 bitBoardQueens[3];
 
 	//adding these now but will remove them after the move gen is created, I'll just use the bitboards after I figure out how that works
-	int pawns[3];
-	int kings[3];
-	int knights[3];
-	int bishops[3];
-	int rooks[3];
-	int queens[3];
+	bool pawns[3];
+	bool kings[3];
+	bool knights[3];
+	bool bishops[3];
+	bool rooks[3];
+	bool queens[3];
 
-	int material[3];
+	bool material[3];
 
-	int side;
-	int enPassant;
-	int fiftyMove;
+	bool side;
+	bool enPassant;
+	bool fiftyMove;
 
-	int ply;
-	int historyPly;
+	bool ply;
+	bool historyPly;
 
-	int castlePermission;
+	bool castlePermission;
 
 	u64 positionKey;
 
-	int normalPieces[3]; //not pawns
-	int majorPieces[3];
-	int minorPieces[3];
-	int nonPieces[3]; //pawns
+	bool normalPieces[3]; //not pawns
+	bool majorPieces[3];
+	bool minorPieces[3];
+	bool nonPieces[3]; //pawns
 
 	undoStructure history[MAX_GAME_MOVES];
 	
-	int pieceNumber[13];
-	int pieceList[13][10];
+	bool pieceNumber[13];
+	bool pieceList[13][10];
 
 } boardStructure;
 
@@ -153,12 +153,12 @@ public:
 	bool whiteLongCastle;
 	bool blackShortCastle;
 	bool blackLongCastle;
-	int movesPassed;
-	int moves[17697]; //longest possible chess game, will never need to store more moves than that
+	bool movesPassed;
+	bool moves[17697]; //longest possible chess game, will never need to store more moves than that
 	
 	//might need these might not
-	//int halfmoveClock;
-	//int fullmoveNumber;
+	//bool halfmoveClock;
+	//bool fullmoveNumber;
 	
 	u64 whiteKingBitBoard;
 	u64 whitePawnBitBoard;
@@ -174,18 +174,18 @@ public:
 	u64 blackQueenBitBoard;
 	u64 allBitBoard;
 
-	void move(int moveId) {
-		int temp1 = moveId;
-		int temp2 = moveId;
-		int temp3 = moveId;
-		int temp4 = moveId;
-		int temp5 = moveId;
+	void move(bool moveId) {
+		bool temp1 = moveId;
+		bool temp2 = moveId;
+		bool temp3 = moveId;
+		bool temp4 = moveId;
+		bool temp5 = moveId;
 
-		int fromFile;
-		int fromRank;
-		int toFile;
-		int toRank;
-		int promotion;
+		bool fromFile;
+		bool fromRank;
+		bool toFile;
+		bool toRank;
+		bool promotion;
 
 		temp1 = temp1 & 0b000000000000111;
 		temp2 = temp2 & 0b000000000111000;
@@ -204,8 +204,8 @@ public:
 		toRank = temp4;
 		promotion = temp5;
 
-		int fromSquare = (fromRank * 8) + fromFile;
-		int toSquare = (toRank * 8) + toFile;
+		bool fromSquare = (fromRank * 8) + fromFile;
+		bool toSquare = (toRank * 8) + toFile;
 
 		if (promotion == 0) {
 			square[toSquare] = square[fromSquare];
@@ -213,9 +213,9 @@ public:
 		else {
 			//I'm sorta proud of this one, I was thinking how to get the side then I realized I store the side in the piece data, why not just use that
 			//I was thinking about including another variable in the func that tracks the side to move but that would've been a lot more clunky and redundant
-			int pieceSide;
+			bool pieceSide;
 			pieceSide = square[fromSquare] & 0b11000;
-			int newPromotionPiece = pieceSide | promotion;
+			bool newPromotionPiece = pieceSide | promotion;
 			square[toSquare] = newPromotionPiece;
 		}
 		square[fromSquare] = piece::none;
@@ -223,15 +223,15 @@ public:
 };
 */
 
-int sq120ToSq64[BRD_SQ_NUM];
-int sq64ToSq120[64];
+bool sq120ToSq64[BRD_SQ_NUM];
+bool sq64ToSq120[64];
 
 void initializeSquare120ToSquare64() {
-	int i;
-	int file;
-	int rank;
-	int square = a1;
-	int square64 = 0;
+	bool i;
+	bool file;
+	bool rank;
+	bool square = a1;
+	bool square64 = 0;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
 		sq120ToSq64[i] = 65;
@@ -254,11 +254,11 @@ u64 setMask[64];
 u64 clearMask[64];
 
 void initializeBitMasks() {
-	for (int i = 0; i < 64; i++) {
+	for (bool i = 0; i < 64; i++) {
 		setMask[i] = 0ULL;
 		clearMask[i] = 0ULL;
 	}
-	for (int i = 0; i < 64; i++) {
+	for (bool i = 0; i < 64; i++) {
 		setMask[i] |= (1ULL << i);
 		clearMask[i] = ~setMask[i];
 	}
@@ -271,13 +271,13 @@ u64 castleKeys[16];
 
 
 void initializeHashKeys() {
-	for (int i = 0; i < 13; i++) {
-		for (int i2 = 0; i2 < 64; i2++) {
+	for (bool i = 0; i < 13; i++) {
+		for (bool i2 = 0; i2 < 64; i2++) {
 			pieceKeys[i][i2] = RAND_64;
 		}
 	}
 	sideKey = RAND_64;
-	for (int i = 0; i < 16; i++) {
+	for (bool i = 0; i < 16; i++) {
 		castleKeys[i] = RAND_64;
 	}
 }
@@ -287,35 +287,35 @@ void initializeHashKeys() {
 
 //got these from bluefever softwares series
 //it is also here https://www.chessprogramming.org/Looking_for_Magics
-const int bitTable[64] = {
+const bool bitTable[64] = {
 	63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35,
 	62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8
 };
 
-int popFirstBit(u64* bb) {
+bool popFirstBit(u64* bb) {
 	u64 b = *bb ^ (*bb - 1);
 	u32 fold = (unsigned)((b & 0xffffffff) ^ (b >> 32));
 	*bb &= (*bb - 1);
-	return bitTable[(fold * 0x783a9b23) >> 26]; //I have no idea what the point of this is
+	return bitTable[(fold * 0x783a9b23) >> 26]; //I have no idea what the pobool of this is
 }
 
-int countBits(u64 b) {
-	int r;
+bool countBits(u64 b) {
+	bool r;
 	for (r = 0; b; r++, b &= b - 1);
 	return r;
 }
 
 
-int filesBoard[BRD_SQ_NUM];
-int ranksBoard[BRD_SQ_NUM];
+bool filesBoard[BRD_SQ_NUM];
+bool ranksBoard[BRD_SQ_NUM];
 
 void initializeFilesAndRanksBoard() {
 
-	int i;
-	int file;
-	int rank;
-	int square = a1;
-	int square64 = 0;
+	bool i;
+	bool file;
+	bool rank;
+	bool square = a1;
+	bool square64 = 0;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
 		filesBoard[i] = offBoard;
@@ -333,9 +333,9 @@ void initializeFilesAndRanksBoard() {
 
 u64 generatePositionKey(const boardStructure* pos) {
 
-	int square = 0;
+	bool square = 0;
 	u64 finalKey = 0ULL;
-	int piece = empty;
+	bool piece = empty;
 
 	//pieces
 	for (; square < BRD_SQ_NUM; square++) {
@@ -378,7 +378,7 @@ gameState currentBoard;
 
 /*
 void clearGameState() {
-	for (int i = 0; i <= 63; i++) {
+	for (bool i = 0; i <= 63; i++) {
 		clearBoard.square[i] = piece::none;
 	}
 	clearBoard.enPassant = 0ULL;
@@ -405,7 +405,7 @@ void clearGameState() {
 	clearBoard.blackQueenBitBoard = clearBoard.allBitBoard;
 	
 
-	for (int i = 0; i <= 17696; i++) {
+	for (bool i = 0; i <= 17696; i++) {
 		clearBoard.moves[i] = 0;
 	}
 	currentBoard = clearBoard;
@@ -415,14 +415,14 @@ void clearGameState() {
 
 
 
-std::string inputParser(std::string input, const int desiredToken) {
+std::string inputParser(std::string input, const bool desiredToken) {
 	std::string temp = input;
 	std::string token;
 	size_t stopTokenPlace;
-	int tokenCount = 0;
+	bool tokenCount = 0;
 	bool stop = false;
-	int loopBreaker = 10000;
-	int allowedTokensWithoutInfo = 2;
+	bool loopBreaker = 10000;
+	bool allowedTokensWithoutInfo = 2;
 
 	while (!stop) {
 		if (desiredToken != 0) stopTokenPlace = temp.find(' ');
@@ -465,21 +465,21 @@ std::string inputFenString{};
 
 /*
 void fenToGamestate(std::string fenString) {
-	int stringPlace = 0;
-	int position;
+	bool stringPlace = 0;
+	bool position;
 	bool boardSet = false;
-	int rank = 0;
-	int file = 7;
-	int piecesLeftInRank = 8;
-	int skips = 0;
-	int piecesSkipped = 0;
+	bool rank = 0;
+	bool file = 7;
+	bool piecesLeftInRank = 8;
+	bool skips = 0;
+	bool piecesSkipped = 0;
 	std::string boardPieces = inputParser(fenString, 0);
 	std::cout << "board pieces: " << boardPieces << "\n";
-	int charactersToGoThrough = boardPieces.length();
+	bool charactersToGoThrough = boardPieces.length();
 
 	while (!boardSet) {
 		position = (file * 8) + rank;
-		int fenPart = fenString[stringPlace];
+		bool fenPart = fenString[stringPlace];
 		switch (fenPart) {
 		case('1'):
 		case('2'):
@@ -488,7 +488,7 @@ void fenToGamestate(std::string fenString) {
 		case('5'):
 		case('6'):
 		case('7'):
-		case('8'): //this is to rectify the char int being the same value as an int
+		case('8'): //this is to rectify the char bool being the same value as an bool
 			switch (fenPart)gonna change this to stoi when I figure out how that works {
 			case('1'):
 				skips = 1;
@@ -604,7 +604,7 @@ void fenToGamestate(std::string fenString) {
 
 
 	std::string castles = inputParser(fenString, 2);
-	int castlesLength = castles.length();
+	bool castlesLength = castles.length();
 
 	stringPlace++;
 	for (; castlesLength != 0; castlesLength--) {
@@ -628,8 +628,8 @@ void fenToGamestate(std::string fenString) {
 	std::cout << "castling set!" << "\n";
 
 
-	int fileLetterAdd = 0;
-	int rankNumberMultiply = 0;
+	bool fileLetterAdd = 0;
+	bool rankNumberMultiply = 0;
 
 	stringPlace++;
 	if (fenString[stringPlace] != '-') {
@@ -660,7 +660,7 @@ void fenToGamestate(std::string fenString) {
 			break;
 		}
 		stringPlace++;
-		switch (fenString[stringPlace]) again the char ints aren't the same as *int* ints  {
+		switch (fenString[stringPlace]) again the char bools aren't the same as *bool* bools  {
 		case('1'):
 			rankNumberMultiply = 0;
 			break;
@@ -691,7 +691,7 @@ void fenToGamestate(std::string fenString) {
 
 	}
 
-	int enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
+	bool enPassantSquare = (rankNumberMultiply * 8) + fileLetterAdd;
 	currentBoard.enPassant |= (1ULL << enPassantSquare);
 	std::cout << "ready to go!!!" << "\n";
 	// there's more for the half clock and full move counters but I don't think the engine has to worry about those (the gui deals with that)
@@ -699,15 +699,15 @@ void fenToGamestate(std::string fenString) {
 */
 
 /*
-void moveCollector(std::string input, int movePlace) {
+void moveCollector(std::string input, bool movePlace) {
 	std::string moveString;
 
 	do {
 		moveString = inputParser(input, movePlace);
-		//have to take the moves, decode the string, and encode them into an int that are in an array 
-		//I think I can read the rank and file and put them into 3 bits each and have an extra 2 for promotions
-		int readLength = moveString.length() - 1;
-		int readNumber = 0;
+		//have to take the moves, decode the string, and encode them boolo an bool that are in an array 
+		//I think I can read the rank and file and put them boolo 3 bits each and have an extra 2 for promotions
+		bool readLength = moveString.length() - 1;
+		bool readNumber = 0;
 		while (readNumber <= readLength) {
 			char toRead = moveString[readNumber];
 			if (readNumber != 4) {
@@ -790,23 +790,23 @@ void moveCollector(std::string input, int movePlace) {
 bool normalPiece[13] = { false, true, false, true, true, true, true, true, false, true, true, true, true };
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
-int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
-int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
+bool pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black , black, black };
+bool pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
 
 /*
 //got these from sebastian lagues vid :D
-int pawnValue = 100;
-int bishopValue = 300;
-int knightValue = 300;
-int rookValue = 500;
-int queenValue = 900;
+bool pawnValue = 100;
+bool bishopValue = 300;
+bool knightValue = 300;
+bool rookValue = 500;
+bool queenValue = 900;
 
 
-int countPieceMaterial() {
-	int material = 0;
-	int	piece = 0;
-	int side = 0;
-	for (int i = 0; i <= 63; i++) {
+bool countPieceMaterial() {
+	bool material = 0;
+	bool	piece = 0;
+	bool side = 0;
+	for (bool i = 0; i <= 63; i++) {
 		piece = currentBoard.square[i] & 0b00111;
 		side = currentBoard.square[i] & 0b11000;
 		switch (piece) {
@@ -834,10 +834,10 @@ int countPieceMaterial() {
 */
 
 void updateListsMaterial(boardStructure* position) {
-	int piece;
-	int square;
-	int color;
-	int i;
+	bool piece;
+	bool square;
+	bool color;
+	bool i;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
 		square = i;
@@ -911,19 +911,19 @@ void updateListsMaterial(boardStructure* position) {
 
 bool checkBoard(const boardStructure* position) {
 
-	int tempPieceNumber[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-	int tempNormalPiece[2] = { 0, 0 };
-	int tempMajorPiece[2] = { 0, 0 };
-	int tempMinorPiece[2] = { 0, 0 };
+	bool tempPieceNumber[13] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	bool tempNormalPiece[2] = { 0, 0 };
+	bool tempMajorPiece[2] = { 0, 0 };
+	bool tempMinorPiece[2] = { 0, 0 };
 
-	int tempMaterial[2] = { 0, 0 };
+	bool tempMaterial[2] = { 0, 0 };
 
-	int tempPiece;
-	int tempPieceCount;
-	int square64;
-	int square120;
-	int color;
-	int pieceCount;
+	bool tempPiece;
+	bool tempPieceCount;
+	bool square64;
+	bool square120;
+	bool color;
+	bool pieceCount;
 
 	bool testFailed = false; //implement this later, just put it to true on all the character out lines
 
@@ -1056,14 +1056,14 @@ bool checkBoard(const boardStructure* position) {
 }
 
 void resetBoard(boardStructure* position) {
-	int i;
+	bool i;
 
 	for (i = 0; i < BRD_SQ_NUM; i++) {
 		position->pieces[i] = offBoard;
 	}
 
 	for (i = 0; i < 64; i++) {
-		position->pieces[sq64ToSq120[i]] = empty; // this converts the index into the actual play board, so the play board is reset to empty
+		position->pieces[sq64ToSq120[i]] = empty; // this converts the index boolo the actual play board, so the play board is reset to empty
 	}
 
 	for (i = 0; i < 3; i++) {
@@ -1113,21 +1113,21 @@ void resetBoard(boardStructure* position) {
 }
 
 void parseFen(const char* fen, boardStructure* position) {
-	int i;
-	int rank = rank8;
-	int file = fileA;
-	int piece = 0;
-	int count = 0;
-	int sq64 = 0;
-	int sq120 = 0;
+	bool i;
+	bool rank = rank8;
+	bool file = fileA;
+	bool piece = 0;
+	bool count = 0;
+	bool sq64 = 0;
+	bool sq120 = 0;
 
 	resetBoard(position);
 
 	if (fen == NULL) {
-		std::cout << "no pointer given to fen parser\n";
+		std::cout << "no pobooler given to fen parser\n";
 	}
 	else if (position == NULL) {
-		std::cout << "no pointer given to fen parser\n";
+		std::cout << "no pobooler given to fen parser\n";
 	}
 	else {
 		//this was basically my solution as well that's cool to see my idea had merit
@@ -1260,14 +1260,14 @@ bool moveTableCardinal[64][64];
 
 //doesn't matter if this is slow, it'll only be ran once at startup
 void computeMoveBoards() {
-	int currentRank = 0;
-	int currentFile = 0;
-	int testRank = 0;
-	int testFile = 0;
-	int testPosition = 0;
+	bool currentRank = 0;
+	bool currentFile = 0;
+	bool testRank = 0;
+	bool testFile = 0;
+	bool testPosition = 0;
 	bool testComplete = false;
 
-	for (int boardArray = 0; boardArray <= 63; boardArray++) {
+	for (bool boardArray = 0; boardArray <= 63; boardArray++) {
 
 		testRank = currentRank;
 		testFile = currentFile;
@@ -1275,7 +1275,7 @@ void computeMoveBoards() {
 		testComplete = false;
 
 
-		for (int diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
+		for (bool diagonalArray = 0; diagonalArray <= 7; diagonalArray++) {
 
 			//nw
 			while (testComplete != true) {
@@ -1344,7 +1344,7 @@ void computeMoveBoards() {
 
 		}
 
-		for (int cardinalArray = 0; cardinalArray <= 7; cardinalArray++) {
+		for (bool cardinalArray = 0; cardinalArray <= 7; cardinalArray++) {
 			//n
 			testRank = currentRank;
 			testFile = currentFile;
@@ -1421,11 +1421,11 @@ void computeMoveBoards() {
 	}
 }
 
-void testMoveBoard(int moveTable, int boardArray) {
-	int place = 0;
+void testMoveBoard(bool moveTable, bool boardArray) {
+	bool place = 0;
 	if (moveTable == 0) {
-		for (int rank = 7; rank >= 0; rank--) {
-			for (int file = 7; file >= 0; file--) {
+		for (bool rank = 7; rank >= 0; rank--) {
+			for (bool file = 7; file >= 0; file--) {
 				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
 				if (moveTableDiagonal[boardArray][place])
 					std::cout << "1";
@@ -1436,8 +1436,8 @@ void testMoveBoard(int moveTable, int boardArray) {
 		}
 	}
 	else if (moveTable == 1) {
-		for (int rank = 7; rank >= 0; rank--) {
-			for (int file = 7; file >= 0; file--) {
+		for (bool rank = 7; rank >= 0; rank--) {
+			for (bool file = 7; file >= 0; file--) {
 				place = (rank * 8) + file;
 				if (moveTableCardinal[boardArray][place])
 					std::cout << "1";
@@ -1451,22 +1451,22 @@ void testMoveBoard(int moveTable, int boardArray) {
 }
 
 /*
-int moveTable;
+bool moveTable;
 cout << "what move table do you want to look at ";
 cin >> moveTable;
-int boardArray;
+bool boardArray;
 cout << "what array do you want to look at ";
 cin >> boardArray;
 testMoveBoard(moveTable, boardArray);
 */
 
 /*
-bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
+bool pseudoLegalChecker(bool from, bool to, bool whitesTurn, bool enPassant[]) {
 
 	bool onEvenSquare = from % 2;
 	bool toEvenSquare = to % 2;
 	bool slidingMovePossible = false;
-	int slidingCheck = 0;
+	bool slidingCheck = 0;
 
 	if (whitesTurn) {
 		switch (currentBoard.square[from]) {
@@ -1578,22 +1578,22 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					slidingMovePossible;
 			}
 			if (slidingMovePossible) {
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
+				bool pieceboolheWayNW = false;
+				bool pieceboolheWayNE = false;
+				bool pieceboolheWaySW = false;
+				bool pieceboolheWaySE = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
+				bool targetSquare = to;
+				bool toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
 
 				bool directionFound = false;
-				int direction = 0; //nw will be 1, ne 2, sw 3, and se 4
-				int infiniteLoopBreaker = 10000;
+				bool direction = 0; //nw will be 1, ne 2, sw 3, and se 4
+				bool infiniteLoopBreaker = 10000;
 				while (!directionFound) {
-					int NWtest = from;
-					int NEtest = from;
-					int SWtest = from;
-					int SEtest = from;
+					bool NWtest = from;
+					bool NEtest = from;
+					bool SWtest = from;
+					bool SEtest = from;
 					NWtest += 7;
 					NEtest += 9;
 					SWtest -= 9;
@@ -1623,64 +1623,64 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				//later I'll optimize this, it'll run the second branch even if the solution was on the first branch
 				//this function is important to be optimal because it'll be run for every piece on every board
 				if (direction == 1) {
-					while (!pieceInTheWayNW) {
+					while (!pieceboolheWayNW) {
 						toGoToTest += 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
+							pieceboolheWayNW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNW = true;
+							pieceboolheWayNW = true;
 						}
 
 					}
 				}
 				if (direction == 2) {
-					while (!pieceInTheWayNE) {
+					while (!pieceboolheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
+							pieceboolheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNE = true;
+							pieceboolheWayNE = true;
 						}
 
 					}
 				}
 				if (direction == 3) {
-					while (!pieceInTheWaySW) {
+					while (!pieceboolheWaySW) {
 						toGoToTest -= 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
+							pieceboolheWaySW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySW = true;
+							pieceboolheWaySW = true;
 						}
 					}
 				}
 				if (direction == 4) {
-					while (!pieceInTheWaySE) {
+					while (!pieceboolheWaySE) {
 						toGoToTest -= 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
+							pieceboolheWaySE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySE = true;
+							pieceboolheWaySE = true;
 						}
 
 					}
@@ -1710,69 +1710,69 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				slidingMovePossible;
 
 			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
+				bool pieceboolheWayN = false;
+				bool pieceboolheWayE = false;
+				bool pieceboolheWayS = false;
+				bool pieceboolheWayW = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
+				bool targetSquare = to;
+				bool toGoToTest = from;
 				if (from < to) {
-					while (!pieceInTheWayN) {
+					while (!pieceboolheWayN) {
 						toGoToTest += 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
+							pieceboolheWayN = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayN = true;
+							pieceboolheWayN = true;
 						}
 
 					}
-					while (!pieceInTheWayE) {
+					while (!pieceboolheWayE) {
 						toGoToTest += 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
+							pieceboolheWayE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayE = true;
+							pieceboolheWayE = true;
 						}
 
 					}
 
 				}
 				if (from > to) {
-					while (!pieceInTheWayS) {
+					while (!pieceboolheWayS) {
 						toGoToTest -= 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
+							pieceboolheWayS = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayS = true;
+							pieceboolheWayS = true;
 						}
 					}
-					while (!pieceInTheWayW) {
+					while (!pieceboolheWayW) {
 						toGoToTest -= 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
+							pieceboolheWayW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayW = true;
+							pieceboolheWayW = true;
 						}
 
 					}
@@ -1802,71 +1802,71 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				slidingMovePossible;
 
 			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
+				bool pieceboolheWayN = false;
+				bool pieceboolheWayE = false;
+				bool pieceboolheWayS = false;
+				bool pieceboolheWayW = false;
+				bool pieceboolheWayNW = false;
+				bool pieceboolheWayNE = false;
+				bool pieceboolheWaySW = false;
+				bool pieceboolheWaySE = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
+				bool targetSquare = to;
+				bool toGoToTest = from;
 				if (from < to) {
-					while (!pieceInTheWayE) {
+					while (!pieceboolheWayE) {
 						toGoToTest += 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
+							pieceboolheWayE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayE = true;
+							pieceboolheWayE = true;
 						}
 
 					}
-					while (!pieceInTheWayNW) {
+					while (!pieceboolheWayNW) {
 						toGoToTest += 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
+							pieceboolheWayNW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNW = true;
+							pieceboolheWayNW = true;
 						}
 
 					}
-					while (!pieceInTheWayN) {
+					while (!pieceboolheWayN) {
 						toGoToTest += 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
+							pieceboolheWayN = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayN = true;
+							pieceboolheWayN = true;
 						}
 
 					}
-					while (!pieceInTheWayNE) {
+					while (!pieceboolheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
+							pieceboolheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNE = true;
+							pieceboolheWayNE = true;
 						}
 
 					}
@@ -1874,58 +1874,58 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 				}
 				if (from > to) {
-					while (!pieceInTheWayW) {
+					while (!pieceboolheWayW) {
 						toGoToTest -= 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
+							pieceboolheWayW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayW = true;
+							pieceboolheWayW = true;
 						}
 
 					}
-					while (!pieceInTheWaySE) {
+					while (!pieceboolheWaySE) {
 						toGoToTest -= 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
+							pieceboolheWaySE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySE = true;
+							pieceboolheWaySE = true;
 						}
 
 					}
-					while (!pieceInTheWayS) {
+					while (!pieceboolheWayS) {
 						toGoToTest -= 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
+							pieceboolheWayS = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayS = true;
+							pieceboolheWayS = true;
 						}
 					}
-					while (!pieceInTheWaySW) {
+					while (!pieceboolheWaySW) {
 						toGoToTest -= 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
+							pieceboolheWaySW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySW = true;
+							pieceboolheWaySW = true;
 						}
 					}
 				}
@@ -2061,69 +2061,69 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 					slidingMovePossible;
 			}
 			if (slidingMovePossible) {
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
+				bool pieceboolheWayNW = false;
+				bool pieceboolheWayNE = false;
+				bool pieceboolheWaySW = false;
+				bool pieceboolheWaySE = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
+				bool targetSquare = to;
+				bool toGoToTest = from;
 				if (from < to) {
-					while (!pieceInTheWayNW) {
+					while (!pieceboolheWayNW) {
 						toGoToTest += 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
+							pieceboolheWayNW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNW = true;
+							pieceboolheWayNW = true;
 						}
 
 					}
-					while (!pieceInTheWayNE) {
+					while (!pieceboolheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
+							pieceboolheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNE = true;
+							pieceboolheWayNE = true;
 						}
 
 					}
 
 				}
 				if (from > to) {
-					while (!pieceInTheWaySW) {
+					while (!pieceboolheWaySW) {
 						toGoToTest -= 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
+							pieceboolheWaySW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySW = true;
+							pieceboolheWaySW = true;
 						}
 					}
-					while (!pieceInTheWaySE) {
+					while (!pieceboolheWaySE) {
 						toGoToTest -= 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
+							pieceboolheWaySE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySE = true;
+							pieceboolheWaySE = true;
 						}
 
 					}
@@ -2153,69 +2153,69 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				slidingMovePossible;
 
 			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
+				bool pieceboolheWayN = false;
+				bool pieceboolheWayE = false;
+				bool pieceboolheWayS = false;
+				bool pieceboolheWayW = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
+				bool targetSquare = to;
+				bool toGoToTest = from;
 				if (from < to) {
-					while (!pieceInTheWayN) {
+					while (!pieceboolheWayN) {
 						toGoToTest += 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
+							pieceboolheWayN = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayN = true;
+							pieceboolheWayN = true;
 						}
 
 					}
-					while (!pieceInTheWayE) {
+					while (!pieceboolheWayE) {
 						toGoToTest += 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
+							pieceboolheWayE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayE = true;
+							pieceboolheWayE = true;
 						}
 
 					}
 
 				}
 				if (from > to) {
-					while (!pieceInTheWayS) {
+					while (!pieceboolheWayS) {
 						toGoToTest -= 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
+							pieceboolheWayS = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayS = true;
+							pieceboolheWayS = true;
 						}
 					}
-					while (!pieceInTheWayW) {
+					while (!pieceboolheWayW) {
 						toGoToTest -= 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
+							pieceboolheWayW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayW = true;
+							pieceboolheWayW = true;
 						}
 
 					}
@@ -2245,71 +2245,71 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 				slidingMovePossible;
 
 			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
+				bool pieceboolheWayN = false;
+				bool pieceboolheWayE = false;
+				bool pieceboolheWayS = false;
+				bool pieceboolheWayW = false;
+				bool pieceboolheWayNW = false;
+				bool pieceboolheWayNE = false;
+				bool pieceboolheWaySW = false;
+				bool pieceboolheWaySE = false;
 				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
+				bool targetSquare = to;
+				bool toGoToTest = from;
 				if (from < to) {
-					while (!pieceInTheWayE) {
+					while (!pieceboolheWayE) {
 						toGoToTest += 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
+							pieceboolheWayE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayE = true;
+							pieceboolheWayE = true;
 						}
 
 					}
-					while (!pieceInTheWayNW) {
+					while (!pieceboolheWayNW) {
 						toGoToTest += 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
+							pieceboolheWayNW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNW = true;
+							pieceboolheWayNW = true;
 						}
 
 					}
-					while (!pieceInTheWayN) {
+					while (!pieceboolheWayN) {
 						toGoToTest += 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
+							pieceboolheWayN = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayN = true;
+							pieceboolheWayN = true;
 						}
 
 					}
-					while (!pieceInTheWayNE) {
+					while (!pieceboolheWayNE) {
 						toGoToTest += 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
+							pieceboolheWayNE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayNE = true;
+							pieceboolheWayNE = true;
 						}
 
 					}
@@ -2317,58 +2317,58 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 
 				}
 				if (from > to) {
-					while (!pieceInTheWayW) {
+					while (!pieceboolheWayW) {
 						toGoToTest -= 1;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
+							pieceboolheWayW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayW = true;
+							pieceboolheWayW = true;
 						}
 
 					}
-					while (!pieceInTheWaySE) {
+					while (!pieceboolheWaySE) {
 						toGoToTest -= 7;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
+							pieceboolheWaySE = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySE = true;
+							pieceboolheWaySE = true;
 						}
 
 					}
-					while (!pieceInTheWayS) {
+					while (!pieceboolheWayS) {
 						toGoToTest -= 8;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
+							pieceboolheWayS = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWayS = true;
+							pieceboolheWayS = true;
 						}
 					}
-					while (!pieceInTheWaySW) {
+					while (!pieceboolheWaySW) {
 						toGoToTest -= 9;
 						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
+							pieceboolheWaySW = false;
 							if (toGoToTest == to) {
 								legalMove = true;
 								return true;
 							}
 						}
 						else {
-							pieceInTheWaySW = true;
+							pieceboolheWaySW = true;
 						}
 					}
 				}
@@ -2403,10 +2403,10 @@ bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
 }
 */
 
-const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
-const int rookDirection[4] = { -1, -10,	1, 10 };
-const int bishopDirection[8] = { -9, -11, 11, 9 };
-const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
+const bool knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
+const bool rookDirection[4] = { -1, -10,	1, 10 };
+const bool bishopDirection[8] = { -9, -11, 11, 9 };
+const bool kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
 
 bool isPiecePawn[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
 bool isPieceKnight[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
@@ -2416,12 +2416,12 @@ bool isPieceBishopQueen[13] = { false, false, false, true, false, true, false, f
 bool pieceSlides[13] = { false, false, false, true, true, true, false, false, false, true, true, true, false };
 
 
-bool squareAttacked(const int square, const int side, const boardStructure *position) {
+bool squareAttacked(const bool square, const bool side, const boardStructure *position) {
 	
-	int piece;
-	int i;
-	int tempSquare;
-	int direction;
+	bool piece;
+	bool i;
+	bool tempSquare;
+	bool direction;
 
 	if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
 		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
@@ -2484,7 +2484,35 @@ bool squareAttacked(const int square, const int side, const boardStructure *posi
 
 }
 
-void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
+
+bool squareIs120(const bool sq) {
+	return (sq >= 0 && sq < 120);
+}
+
+bool pieceValidEmptyOffboard(const bool piece) {
+	return (pieceValidEmpty(piece) || piece == offBoard);
+}
+bool squareOnBoard(const bool square) {
+	return filesBoard[square] == offBoard ? 0 : 1;
+}
+
+bool sideValid(const bool side) {
+	return (side == white || side == black) ? 1 : 0;
+}
+
+bool fileRankValid(const bool fromRank) {
+	return (fromRank >= 0 && fromRank <= 7) ? 1 : 0;
+}
+
+bool pieceValidEmpty(const bool piece) {
+	return (piece >= empty && piece <= bK) ? 1 : 0;
+}
+
+bool pieceValid(const bool piece) {
+	return (piece >= wP && piece <= bK) ? 1 : 0;
+}
+
+void addQuietMove(const boardStructure* position, bool move, moveListStructure* list) {
 	
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2492,7 +2520,7 @@ void addQuietMove(const boardStructure* position, int move, moveListStructure* l
 
 }
 
-void addCaptureMove(const boardStructure* position, int move, moveListStructure* list) {
+void addCaptureMove(const boardStructure* position, bool move, moveListStructure* list) {
 
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2500,7 +2528,7 @@ void addCaptureMove(const boardStructure* position, int move, moveListStructure*
 
 }
 
-void addEnPassantMove(const boardStructure* position, int move, moveListStructure* list) {
+void addEnPassantMove(const boardStructure* position, bool move, moveListStructure* list) {
 
 	list->moves[list->moveCount].move = move;
 	list->moves[list->moveCount].score = 0;
@@ -2514,12 +2542,12 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 }
 
-//here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
+//here I'll make a thing that prbools a screen for the legal moves that a piece can make, later I'll have a thing to prbool the board
 /*
-void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
-	int place = 0;
-	for (int rank = 7; rank >= 0; rank--) {
-		for (int file = 7; file >= 0; file--) {
+void prboolMovesForPiece(bool from, bool whitesTurn, bool enPassant[]) {
+	bool place = 0;
+	for (bool rank = 7; rank >= 0; rank--) {
+		for (bool file = 7; file >= 0; file--) {
 			place = (rank * 8) + file;
 			if (pseudoLegalChecker(from, place, whitesTurn, enPassant))
 				std::cout << "1";
@@ -2531,26 +2559,26 @@ void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
 }
 */
 
-/*	int pieceToTest;
+/*	bool pieceToTest;
 cout << "what piece do you want to see the moves for ";
 cin >> pieceToTest;
-printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
+prboolMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
 */
 
-void printBitBoard(u64 bitBoardToPrint) {
+void prboolBitBoard(u64 bitBoardToPrbool) {
 
 	u64 shift = 1ULL;
 
-	int rank;
-	int file;
-	int square = 0;
+	bool rank;
+	bool file;
+	bool square = 0;
 
 	std::cout << "\n";
 	for (rank = 7; rank >= 0; rank--) {
 		for (file = 0; file <= 7; file++) {
 			square = (rank * 8) + file;
 
-			if ((shift << square) & bitBoardToPrint) {
+			if ((shift << square) & bitBoardToPrbool) {
 				std::cout << "X";
 			} else {
 				std::cout << "-";
@@ -2565,13 +2593,13 @@ char pieceCharacter[] = ".KPNBRQkpnbrq";
 char sideCharacter[] = "wb-";
 char rankCharacter[] = "12345678";
 char fileCharacter[] = "abcdefgh";
-char printCastle;
+char prboolCastle;
 
-void printSquareBoard(const boardStructure* position) {
-	int sq;
-	int file;
-	int rank;
-	int piece;
+void prboolSquareBoard(const boardStructure* position) {
+	bool sq;
+	bool file;
+	bool rank;
+	bool piece;
 
 	std::cout << "\ngame board: \n" << "-----------------------\n";
 
@@ -2587,56 +2615,56 @@ void printSquareBoard(const boardStructure* position) {
 
 	std::cout << "\n    ";
 	for (file = fileA; file <= fileH; file++) {
-		printf("%c",'a' + file);
-		printf(" ");
+		prboolf("%c",'a' + file);
+		prboolf(" ");
 		//std::cout << " " << "a" + file;
 	}
 	std::cout << "\n-----------------------\n";
 	std::cout << "\n";
 
 	std::cout << "side: " << sideCharacter[position->side] << "\n";
-	printf("en Passant:%d\n", position->enPassant);
+	prboolf("en Passant:%d\n", position->enPassant);
 	//std::cout << "en Passant: " << position->enPassant << "\n";
 	std::cout << "castle permission:\n";
-	position->castlePermission & whiteKingCastle ? printCastle = 'K' : printCastle = '-';
-	std::cout << "K: " << printCastle << "\n";
-	position->castlePermission & whiteQueenCastle ? printCastle = 'Q' : printCastle = '-';
-	std::cout << "Q: " << printCastle << "\n";
-	position->castlePermission & blackKingCastle ? printCastle = 'k' : printCastle = '-';
-	std::cout << "k: " << printCastle << "\n";
-	position->castlePermission & blackQueenCastle ? printCastle = 'q' : printCastle = '-';
-	std::cout << "q: " << printCastle << "\n"; //this is really ugly
+	position->castlePermission & whiteKingCastle ? prboolCastle = 'K' : prboolCastle = '-';
+	std::cout << "K: " << prboolCastle << "\n";
+	position->castlePermission & whiteQueenCastle ? prboolCastle = 'Q' : prboolCastle = '-';
+	std::cout << "Q: " << prboolCastle << "\n";
+	position->castlePermission & blackKingCastle ? prboolCastle = 'k' : prboolCastle = '-';
+	std::cout << "k: " << prboolCastle << "\n";
+	position->castlePermission & blackQueenCastle ? prboolCastle = 'q' : prboolCastle = '-';
+	std::cout << "q: " << prboolCastle << "\n"; //this is really ugly
 
-	//this is the only one that I'm gonna do printf because idk how to make character out do hex
+	//this is the only one that I'm gonna do prboolf because idk how to make character out do hex
 	std::cout << "position key:\n" << std::hex << position->positionKey;
 	
 	
 	std::cout << "\n-----------------------\n";
 }
 
-char* printSquare(const int square) {
+char* prboolSquare(const bool square) {
 
 	static char squareString[3];
 
-	int file = filesBoard[square];
-	int rank = ranksBoard[square];
+	bool file = filesBoard[square];
+	bool rank = ranksBoard[square];
 
-	sprintf_s(squareString, "%c%c", ('a' + file), ('1' + rank));
+	sprboolf_s(squareString, "%c%c", ('a' + file), ('1' + rank));
 
 	return squareString;
 
 }
 
-char* printMove(const int move) {
+char* prboolMove(const bool move) {
 
 	static char moveString[6];
 
-	int fileFrom = filesBoard[FROMSQ(move)];
-	int rankFrom = ranksBoard[FROMSQ(move)];
-	int fileTo = filesBoard[TOSQ(move)];
-	int rankTo = ranksBoard[TOSQ(move)];
+	bool fileFrom = filesBoard[FROMSQ(move)];
+	bool rankFrom = ranksBoard[FROMSQ(move)];
+	bool fileTo = filesBoard[TOSQ(move)];
+	bool rankTo = ranksBoard[TOSQ(move)];
 
-	int promoted = PROMOTED(move);
+	bool promoted = PROMOTED(move);
 
 	if (promoted > 1) {
 		char promotedChar = 'q'; //note to self, remake this so I can tell when a piece is a queen and throw an error when it's none of the pieces
@@ -2649,10 +2677,10 @@ char* printMove(const int move) {
 		else if (!IsRQ(promoted) && IsBQ(promoted)) {
 			promotedChar = 'b';
 		}
-		sprintf_s(moveString, "%c%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo), promotedChar);
+		sprboolf_s(moveString, "%c%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo), promotedChar);
 	}
 	else {
-		sprintf_s(moveString, "%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo));
+		sprboolf_s(moveString, "%c%c%c%c", ('a' + fileFrom), ('1' + rankFrom), ('a' + fileTo), ('1' + rankTo));
 	}
 
 	return moveString;
@@ -2672,7 +2700,7 @@ bool keepRunning = true;
 bool boardLoaded = false;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
 //I think I could just do that by making a nn that changes the move order possibly, because with ab pruning if the best move is first the search will be extremely fast
-int main()
+bool main()
 {
 	using std::cout;
 	using std::cin;
@@ -2687,7 +2715,7 @@ int main()
 		//std::getline(cin >> std::ws, input);
 		std::string command = inputParser(input, 0);
 
-		if (command == "uci")/*should turn this into a switch*/ {
+		if (command == "uci")/*should turn this boolo a switch*/ {
 			uci = true;
 			//clearGameState();
 			cout << "id name flipgine" << "\n";
@@ -2695,24 +2723,24 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			//printBitBoard(currentBoard.whitePawnBitBoard);
+			//prboolBitBoard(currentBoard.whitePawnBitBoard);
 			parseFen(PERFORMANCETESTFEN, currentBoard);
-			printSquareBoard(currentBoard);
+			prboolSquareBoard(currentBoard);
 			cout << "\n";
 			
-			int move = 0;
-			int from = a2;
-			int to = h7;
-			int cap = wR;
-			int promotion = wR;
+			bool move = 0;
+			bool from = a2;
+			bool to = h7;
+			bool cap = wR;
+			bool promotion = wR;
 
 			move = ((from) | (to << 7) | (cap << 14) | (promotion << 20));
-			printf("from:%d to:%d cap:%d promoted:%d\n",
+			prboolf("from:%d to:%d cap:%d promoted:%d\n",
 				FROMSQ(move), TOSQ(move), CAPTURED(move), PROMOTED(move));
 
-			printf("algebraic from:%s\n", printSquare(from));
-			printf("algebraic to:%s\n", printSquare(to));
-			printf("algebraic move:%s\n", printMove(move));
+			prboolf("algebraic from:%s\n", prboolSquare(from));
+			prboolf("algebraic to:%s\n", prboolSquare(to));
+			prboolf("algebraic move:%s\n", prboolMove(move));
 
 		}
 		else if (command == "isready") {
@@ -2741,10 +2769,10 @@ int main()
 				std::string positionChosen = inputParser(input, 1);
 				cout << "custom FEN chosen, FEN is: " << positionChosen << "\n";
 				fenToGamestate(input);
-				int movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
+				bool movePlace = 7; //7 is the end of the fen string, so if there's moves this will be the first one
 				moveCollector(input, movePlace); //moveplace is the start of the move tokens\
 
-				for (int i = 0; i <= currentBoard.movesPassed; i++) {
+				for (bool i = 0; i <= currentBoard.movesPassed; i++) {
 					currentBoard.move(currentBoard.moves[i]);
 				}
 				boardLoaded = true;
@@ -2785,13 +2813,13 @@ int main()
 /*
 The UCI protocol as publiced by Stefan-Meyer Kahlen (ShredderChess):
 
-Description of the universal chess interface (UCI)    April 2004
+Description of the universal chess boolerface (UCI)    April 2004
 ================================================================
 
 * all communication is done via standard input and output with text commands,
 
 * The engine should boot and wait for input from the GUI,
-  the engine should wait for the "isready" or "setoption" command to set up its internal parameters
+  the engine should wait for the "isready" or "setoption" command to set up its boolernal parameters
   as the boot process should be as quick as possible.
 
 * the engine must always be able to process input from stdin, even while thinking.
@@ -2830,10 +2858,10 @@ Examples:  e2e4, e7e5, e1g1 (white short castling), e7e8q (for promotion)
 GUI to engine:
 --------------
 
-These are all the command the engine gets from the interface.
+These are all the command the engine gets from the boolerface.
 
 * uci
-	tell engine to use the uci (universal chess interface),
+	tell engine to use the uci (universal chess boolerface),
 	this will be send once as a first command after program boot
 	to tell the engine to switch to uci mode.
 	After receiving the uci command the engine must identify itself with the "id" command
@@ -2860,7 +2888,7 @@ These are all the command the engine gets from the interface.
 	in which case the engine should also immediately answer with "readyok" without stopping the search.
 
 * setoption name  [value ]
-	this is sent to the engine when the user wants to change the internal parameters
+	this is sent to the engine when the user wants to change the boolernal parameters
 	of the engine. For the "button" type no value is needed.
 	One string will be sent for each parameter and this will only be sent when the engine is waiting.
 	The name of the option in  should not be case sensitive and can inludes spaces like also the value.
@@ -2899,8 +2927,8 @@ These are all the command the engine gets from the interface.
    after "ucinewgame" to wait for the engine to finish its operation.
 
 * position [fen  | startpos ]  moves  ....
-	set up the position described in fenstring on the internal board and
-	play the moves on the internal chess board.
+	set up the position described in fenstring on the boolernal board and
+	play the moves on the boolernal chess board.
 	if the game was played  from the start position the string "startpos" will be sent
 	Note: no "new" command is needed. However, if this position is from a different game than
 	the last position sent to the engine, the GUI should have sent a "ucinewgame" inbetween.
@@ -2908,7 +2936,7 @@ These are all the command the engine gets from the interface.
 * go
 	start calculating on the current position set up with the "position" command.
 	There are a number of commands that can follow this command, all will be sent in the same string.
-	If one command is not send its value should be interpreted as it would not influence the search.
+	If one command is not send its value should be boolerpreted as it would not influence the search.
 	* searchmoves  ....
 		restrict search to this moves only
 		Example: After "position startpos" and "go infinite searchmoves e2e4 d2d4"
@@ -2919,9 +2947,9 @@ These are all the command the engine gets from the interface.
 		This means that the last move sent in in the position string is the ponder move.
 		The engine can do what it wants to do, but after a "ponderhit" command
 		it should execute the suggested move to ponder on. This means that the ponder move sent by
-		the GUI can be interpreted as a recommendation about which move to ponder. However, if the
+		the GUI can be boolerpreted as a recommendation about which move to ponder. However, if the
 		engine decides to ponder on a different move, it should not display any mainlines as they are
-		likely to be misinterpreted by the GUI because the GUI expects the engine to ponder
+		likely to be misboolerpreted by the GUI because the GUI expects the engine to ponder
 	   on the suggested move.
 	* wtime
 		white has x msec left on the clock
@@ -3048,7 +3076,7 @@ Engine to GUI:
 		in k-best mode always send all k variants in k strings together.
 	* score
 		* cp
-			the score from the engine's point of view in centipawns.
+			the score from the engine's pobool of view in centipawns.
 		* mate
 			mate in y moves, not plies.
 			If the engine is getting mated use negativ values for y.
@@ -3070,7 +3098,7 @@ Engine to GUI:
 		the cpu usage of the engine is x permill.
 	* string
 		any string str which will be displayed be the engine,
-		if there is a string command the rest of the line will be interpreted as .
+		if there is a string command the rest of the line will be boolerpreted as .
 	* refutation   ...
 	   move  is refuted by the line  ... , i can be any number >= 1.
 	   Example: after move d1h5 is searched, the engine can send
@@ -3143,7 +3171,7 @@ Engine to GUI:
 			The engine is able to limit its strength to a specific Elo number,
 		   This should always be implemented together with "UCI_Elo".
 		*  = UCI_Elo, type spin
-			The engine can limit its strength in Elo within this interval.
+			The engine can limit its strength in Elo within this boolerval.
 			If UCI_LimitStrength is set to false, this value should be ignored.
 			If UCI_LimitStrength is set to true, the engine should play with this specific strength.
 		   This should always be implemented together with "UCI_LimitStrength".
@@ -3166,7 +3194,7 @@ Engine to GUI:
 		* check
 			a checkbox that can either be true or false
 		* spin
-			a spin wheel that can be an integer in a certain range
+			a spin wheel that can be an booleger in a certain range
 		* combo
 			a combo box that can have different predefined strings as a value
 		* button
@@ -3222,7 +3250,7 @@ uci
 		uciok
 
 // Note: here the GUI can already send a "quit" command if it just wants to find out
-//       details about the engine, so the engine should not initialize its internal
+//       details about the engine, so the engine should not initialize its boolernal
 //       parameters before here.
 // now the GUI sets some values in the engine
 // set hash to 32 MB
@@ -3236,7 +3264,7 @@ setoption name NalimovPath value d:\tb;c\tb
 // this command and the answer is required here!
 isready
 
-// engine has finished setting up the internal values
+// engine has finished setting up the boolernal values
 		readyok
 
 // now we are ready to go
