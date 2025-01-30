@@ -2489,9 +2489,7 @@ bool squareIs120(const int sq) {
 	return (sq >= 0 && sq < 120);
 }
 
-bool pieceValidEmptyOffboard(const int piece) {
-	return (pieceValidEmpty(piece) || piece == offBoard);
-}
+
 bool squareOnBoard(const int square) {
 	return filesBoard[square] == offBoard ? 0 : 1;
 }
@@ -2506,6 +2504,10 @@ bool fileRankValid(const int fromRank) {
 
 bool pieceValidEmpty(const int piece) {
 	return (piece >= empty && piece <= bQ) ? 1 : 0;
+}
+
+bool pieceValidEmptyOffboard(const int piece) {
+	return (pieceValidEmpty(piece) || piece == offBoard);
 }
 
 bool pieceValid(const int piece) {
