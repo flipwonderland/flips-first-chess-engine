@@ -1046,7 +1046,7 @@ bool checkBoard(const boardStructure* position) {
 	if (position->pieces[position->kingSquare[black]] != bK)
 		std::cout << "the black 'king square' square does not have the black king on it\n";
 
-	if (position->castlePermission <= 0 || position->castlePermission >= 16)
+	if (position->castlePermission < 0 || position->castlePermission > 15)
 		std::cout << "castle permission is invalid\n";
 
 	if (!testFailed)
@@ -1232,7 +1232,7 @@ void parseFen(const char* fen, boardStructure* position) {
 			}
 			fen++;
 		}
-		if (position->castlePermission <= 0 && position->castlePermission >= 15) {
+		if (position->castlePermission < 0 && position->castlePermission > 15) {
 			std::cout << "error, castle permission out of range in fen\n";
 		}
 
@@ -2550,7 +2550,7 @@ void addEnPassantMove(const boardStructure* position, int move, moveListStructur
 
 }
 
-static void addWhitePawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
+void addWhitePawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
 
 	/*
 	ASSERT(SqOnBoard(from));
@@ -2568,6 +2568,26 @@ static void addWhitePawnMove(const boardStructure* pos, const int from, const in
 		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
 	}
 }
+
+void addBlackPawnMove(const boardStructure* pos, const int from, const int to, moveListStructure* list) {
+
+	/*
+	ASSERT(SqOnBoard(from));
+	ASSERT(SqOnBoard(to));
+	ASSERT(CheckBoard(pos));
+	*/
+
+	if (ranksBoard[from] == rank2) {
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bQ, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bR, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bB, 0), list);
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, bN, 0), list);
+	}
+	else {
+		addQuietMove(pos, MOVE_MOVEGEN(from, to, empty, empty, 0), list);
+	}
+}
+
 
 void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
@@ -2589,6 +2609,25 @@ void addWhitePawnCaptureMove(const boardStructure* position, const int from, con
 	}
 }
 
+void addBlackPawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
+
+	/*
+	ASSERT(PieceValidEmpty(cap));
+	ASSERT(SqOnBoard(from));
+	ASSERT(SqOnBoard(to));
+	ASSERT(CheckBoard(pos));
+	*/
+
+	if (ranksBoard[from] == rank2) {
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bQ, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bR, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bB, 0), list);
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bN, 0), list);
+	}
+	else {
+		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, empty, 0), list);
+	}
+}
 
 void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
@@ -2634,6 +2673,39 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 				}
 				if (square + 11 == position->enPassant) {
 					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 11, empty, empty, MFLAGEP), list);
+				}
+			}
+		}
+	}
+	else {
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[bP]; pieceNumber++) {
+			square = position->pieceList[bP][pieceNumber];
+
+			if (!squareOnBoard(square)) {
+				std::cout << "pawn was off board in generate moves function\n";
+				break;
+			}
+
+			if (position->pieces[square - 10] == empty) {
+				addBlackPawnMove(position, square, square - 10, list);
+				if (ranksBoard[square] == rank7 && position->pieces[square - 20] == empty) {
+					addQuietMove(position, MOVE_MOVEGEN(square, (square - 20), empty, empty, MFLAGPS), list);
+				}
+			}
+
+			if (!SQOFFBOARD_MOVEGEN(square - 9) && pieceColor[position->pieces[square - 9]] == white) {
+				addBlackPawnCaptureMove(position, square, square - 9, position->pieces[square - 9], list);
+			}
+			if (!SQOFFBOARD_MOVEGEN(square - 11) && pieceColor[position->pieces[square - 11]] == white) {
+				addBlackPawnCaptureMove(position, square, square - 11, position->pieces[square - 11], list);
+			}
+
+			if (position->enPassant != noSquare) {
+				if (square - 9 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 9, empty, empty, MFLAGEP), list);
+				}
+				if (square - 11 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 11, empty, empty, MFLAGEP), list);
 				}
 			}
 		}
@@ -2789,7 +2861,7 @@ void printMoveList(const moveListStructure* list) {
 	int i;
 	int score = 0;
 	int move = 0;
-	printf("move list:\n", list->moveCount);
+	std::cout << "move list:" << list->moveCount << "\n";
 
 	for (i = 0; i < list->moveCount; i++) {
 
@@ -2840,7 +2912,7 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(PAWNMOVETEST, currentBoard);
+			parseFen(PAWNMOVETESTB, currentBoard);
 			printSquareBoard(currentBoard);
 			cout << "\n";
 
