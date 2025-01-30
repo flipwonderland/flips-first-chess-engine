@@ -2505,11 +2505,11 @@ bool fileRankValid(const bool fromRank) {
 }
 
 bool pieceValidEmpty(const bool piece) {
-	return (piece >= empty && piece <= bK) ? 1 : 0;
+	return (piece >= empty && piece <= bQ) ? 1 : 0;
 }
 
 bool pieceValid(const bool piece) {
-	return (piece >= wP && piece <= bK) ? 1 : 0;
+	return (piece >= wK && piece <= bQ) ? 1 : 0;
 }
 
 void addQuietMove(const boardStructure* position, int move, moveListStructure* list) {
