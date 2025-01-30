@@ -1066,14 +1066,16 @@ void resetBoard(boardStructure* position) {
 		position->pieces[sq64ToSq120[i]] = empty; // this converts the index into the actual play board, so the play board is reset to empty
 	}
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		position->normalPieces[i] = 0;
 		position->majorPieces[i] = 0;
 		position->minorPieces[i] = 0;
 		position->nonPieces[i] = 0;
-		
-		position->material[i] = 0;
 
+		position->material[i] = 0;
+	}
+	for (i = 0; i < 3; i++) {
+		
 		position->bitBoardKings[i] = 0ULL;
 		position->bitBoardPawns[i] = 0ULL;
 		position->bitBoardBishops[i] = 0ULL;
@@ -1081,13 +1083,11 @@ void resetBoard(boardStructure* position) {
 		position->bitBoardRooks[i] = 0ULL;
 		position->bitBoardQueens[i] = 0ULL;
 
-
 		position->kings[i] = 0;
 		position->bishops[i] = 0;
 		position->knights[i] = 0;
 		position->rooks[i] = 0;
 		position->queens[i] = 0;
-
 
 	}
 
@@ -2804,6 +2804,23 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 				}
 			}
 		}
+		
+		if (position->castlePermission & whiteKingCastle) {
+			if (position->pieces[f1] == empty && position->pieces[g1] == empty) {
+				if (!squareAttacked(e1, black, position) && !squareAttacked(f1, black, position)) {
+					addQuietMove(position, MOVE_MOVEGEN(e1, g1, empty, empty, MFLAGCA), list);
+				}
+			}
+		}
+
+		if (position->castlePermission & whiteQueenCastle) {
+			if (position->pieces[d1] == empty && position->pieces[c1] == empty && position->pieces[b1] == empty) {
+				if (!squareAttacked(e1, black, position) && !squareAttacked(d1, black, position)) {
+					addQuietMove(position, MOVE_MOVEGEN(e1, c1, empty, empty, MFLAGCA), list);
+				}
+			}
+		}
+
 	}
 	else {
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[bP]; pieceNumber++) {
@@ -2837,6 +2854,22 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 				}
 			}
 		}
+
+		if (position->castlePermission & blackKingCastle) {
+			if (position->pieces[f8] == empty && position->pieces[g8] == empty) {
+				if (!squareAttacked(e8, white, position) && !squareAttacked(f8, white, position)) {
+					addQuietMove(position, MOVE_MOVEGEN(e8, g8, empty, empty, MFLAGCA), list);
+				}
+			}
+		}
+
+		if (position->castlePermission & blackQueenCastle) {
+			if (position->pieces[d8] == empty && position->pieces[c8] == empty && position->pieces[b8] == empty) {
+				if (!squareAttacked(e8, black, position) && !squareAttacked(d8, white, position)) {
+					addQuietMove(position, MOVE_MOVEGEN(e8, c8, empty, empty, MFLAGCA), list);
+				}
+			}
+		}
 	}
 
 	pieceIndex = loopSlidingIndex[side];
@@ -2848,8 +2881,29 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 			std::cout << "piece invalid on move list generator\n";
 			break;
 		}
+		
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
+			square = position->pieceList[piece][pieceNumber];
+			if (!squareOnBoard(square)) {
+				std::cout << "non sliding piece not on board\n";
+			}
+			for (index = 0; index < numberOfDirections[piece]; index++) {
+				direction = pieceDirection[piece][index];
+				targetSquare = square + direction;
 
-		printf("sliding piece index:%d pce:%d\n", pieceIndex, piece);
+				while (!SQOFFBOARD_MOVEGEN(targetSquare)) {
+					if (position->pieces[targetSquare] != empty) {
+						if (pieceColor[position->pieces[targetSquare]] == (side ^ 1)) { // black ^ 1 == white and vice reversa
+							addCaptureMove(position, MOVE_MOVEGEN(square, targetSquare, position->pieces[targetSquare], empty, 0), list);
+						}
+						break;
+					}
+					addQuietMove(position, MOVE_MOVEGEN(square, targetSquare, empty, empty, 0), list);
+					targetSquare += direction; //this code really is remarkably similar to what I made, maybe I have some talent? probably just got lucky
+				}
+			}
+
+		}
 		piece = loopSlidingPiece[pieceIndex];
 		pieceIndex++;
 
@@ -2865,13 +2919,12 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 			break;
 		}
 		printf("non sliding piece index:%d pce:%d\n", pieceIndex, piece);
+		
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 			square = position->pieceList[piece][pieceNumber];
 			if (!squareOnBoard(square)) {
 				std::cout << "non sliding piece not on board\n";
 			}
-			printf("piece:%c on %s\n", pieceCharacter[piece], printSquare(square));
-
 			for (index = 0; index < numberOfDirections[piece]; index++) {
 				direction = pieceDirection[piece][index];
 				targetSquare = square + direction;
@@ -2881,11 +2934,11 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 				if (position->pieces[targetSquare] != empty) {
 					if (pieceColor[position->pieces[targetSquare]] == (side ^ 1)) { // black ^ 1 == white and vice reversa
-						printf("\t\tcapture on %s\n", printSquare(targetSquare));
+						addCaptureMove(position, MOVE_MOVEGEN(square, targetSquare, position->pieces[targetSquare], empty, 0), list);
 					}
 					continue;
 				}
-				printf("\t\tnormal move on %s\n", printSquare(targetSquare));
+				addQuietMove(position, MOVE_MOVEGEN(square, targetSquare, empty, empty, 0), list);
 			}
 
 		}
@@ -3036,13 +3089,13 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(KNIGHTSKINGS, currentBoard);
+			parseFen(CASTLETESTFEN, currentBoard);
 			//printSquareBoard(currentBoard);
 			//cout << "\n";
 
 			generateAllMoves(currentBoard, list);
 
-			//printMoveList(list);
+			printMoveList(list);
 			
 
 		}
