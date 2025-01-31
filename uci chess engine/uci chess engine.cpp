@@ -2990,6 +2990,45 @@ static void clearPiece(const int square, boardStructure* position) {
 
 }
 
+static void AddPiece(const int square, boardStructure* position, const int piece) {
+
+	if (!squareOnBoard(square)) {
+		std::cout << "clear piece called on a square that's not on the board\n";
+	}
+	if (!pieceValid(piece)) {
+		std::cout << "add piece called on a piece that is not valid\n";
+	}
+
+	int color = pieceColor[piece];
+
+	if (!sideValid(color)) {
+		std::cout << "side given to add piece is not valid\n";
+	}
+
+	HASH_PCE(piece, square);
+
+	position->pieces[square] = piece;
+
+	if (normalPiece[piece]) {
+		position->normalPieces[color]++;
+		if (majorPiece[piece]) {
+			position->majorPieces[color]++;
+		}
+		else {
+			position->minorPieces[color]++;
+		}
+	}
+	else {
+		SETBIT(position->bitBoardPawns[color], SQ64(square));
+		SETBIT(position->bitBoardPawns[none], SQ64(square));
+		//need to add the other bitboards when I start using them part doux
+	}
+
+	position->material[color] += pieceValue[piece];
+	position->pieceList[piece][position->pieceNumber[piece]++] = square;
+
+}
+
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
 void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
