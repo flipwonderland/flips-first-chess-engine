@@ -87,7 +87,7 @@ typedef struct {
 typedef struct {
 
 	int move;
-	int castlePerm;
+	int castlePermission;
 	int enPassant;
 	int fiftyMove;
 	u64 positionKey;
@@ -3083,6 +3083,105 @@ static void movePiece(const int from, const int to, boardStructure* position) {
 #endif
 }
 
+static void takeMove(boardStructure* position) {
+
+	if (!checkBoard(position)) {
+		std::cout << "check board failed at the start of take move\n";
+	}
+
+	position->historyPly--;
+	position->ply--;
+
+	if (position->historyPly < 0 || position->historyPly > MAX_GAME_MOVES) {
+		std::cout << "history went further than longest possible game (or under 0), consider upping the limit or if it's already the longest game possible theres a bug\n";
+		std::cout << "history: " << position->historyPly << "\n";
+	}
+	if (position->ply < 0 || position->ply > MAXDEPTH) {
+		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
+		std::cout << "ply: " << position->ply << "\n";
+	}
+
+	int move = position->history[position->historyPly].move;
+	int from = FROMSQ(move);
+	int to = TOSQ(move);
+
+	if (!squareOnBoard(from)) {
+		std::cout << "move from is invalid\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "move to is invalid\n";
+	}
+
+	if (position->enPassant != noSquare) HASH_EP;
+	HASH_CA;
+
+	position->castlePermission = position->history[position->historyPly].castlePermission;
+	position->fiftyMove = position->history[position->historyPly].fiftyMove;
+	position->enPassant = position->history[position->historyPly].enPassant;
+
+	if (position->enPassant != noSquare)
+		HASH_EP;
+	
+	HASH_CA;
+
+	position->side ^= 1;
+	HASH_SIDE;
+
+	if (MFLAGEP & move) {
+		if (position->side == white) {
+			addPiece(to - 10, position, bP);
+		}
+		else {
+			addPiece(to + 10, position, wP);
+		}
+	}
+	else if (MFLAGCA & move) {
+		switch (to) {
+		case c1: 
+			movePiece(d1, a1, position);
+			break;
+		case c8: 
+			movePiece(d8, a8, position);
+			break;
+		case g1: 
+			movePiece(f1, h1, position);
+			break;
+		case g8: 
+			movePiece(f8, h8, position);
+			break;
+		default: 
+			std::cout << "invalid castling move on take move\n";
+			break;
+		}
+	}
+
+	movePiece(to, from, position);
+
+	if (isPieceKing[position->pieces[from]]) {
+		position->kingSquare[position->side] = from;
+	}
+
+	int captured = CAPTURED(move);
+	if (captured != empty) {
+		if (!pieceValid(captured)) {
+			std::cout << "piece captured was not valid\n";
+		}
+		addPiece(to, position, captured);
+	}
+
+	if (PROMOTED(move) != empty) {
+		if (!pieceValid(PROMOTED(move)) || isPiecePawn[PROMOTED(move)]) {
+			std::cout << "promoted piece invalid\n";
+		}
+		clearPiece(from, position);
+		addPiece(from, position, (pieceColor[PROMOTED(move)] == white ? wP : bP));
+	}
+
+	if (!checkBoard(position)) {
+		std::cout << "check board failed at the end of take move\n";
+	}
+}
+
 static bool makeMove(boardStructure* position, int move) {
 
 	if (!checkBoard(position)) {
@@ -3152,7 +3251,7 @@ static bool makeMove(boardStructure* position, int move) {
 	position->history[position->historyPly].move = move;
 	position->history[position->historyPly].fiftyMove = position->fiftyMove;
 	position->history[position->historyPly].enPassant = position->enPassant;
-	position->history[position->historyPly].castlePerm = position->castlePermission;
+	position->history[position->historyPly].castlePermission = position->castlePermission;
 
 	position->castlePermission &= castlePermission[from];
 	position->castlePermission &= castlePermission[to];
@@ -3206,7 +3305,9 @@ static bool makeMove(boardStructure* position, int move) {
 
 	int promotedPiece = PROMOTED(move);
 	if (promotedPiece != empty) {
-		if (!pieceValid(promotedPiece) || isPiecePawn[promotedPiece]);
+		if (!pieceValid(promotedPiece) || isPiecePawn[promotedPiece]) {
+			std::cout << "promoted piece invalid\n";
+		}
 		clearPiece(to, position);
 		addPiece(to, position, promotedPiece);
 	}
