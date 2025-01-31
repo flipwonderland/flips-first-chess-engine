@@ -2937,7 +2937,57 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 
 }
 
+static void clearPiece(const int square, boardStructure* position) {
 
+	if (!squareOnBoard(square)) {
+		std::cout << "clear piece called on a square that's not on the board\n";
+	}
+
+	int piece = position->pieces[square];
+
+	if (!pieceValid(piece)) {
+		std::cout << "clear piece called on a piece that is not valid\n";
+	}
+
+	int color = pieceColor[piece];
+	int i = 0;
+	int tempPieceNumber = -1;
+
+	HASH_PCE(piece, square);
+
+	position->pieces[square] = empty;
+	position->material[color] -= pieceValue[piece];
+
+	if (normalPiece[piece]) {
+		position->normalPieces[color]--;
+		if (majorPiece[piece]) {
+			position->majorPieces[color]--;
+		}
+		else {
+			position->minorPieces[color]--;
+		}
+	}
+	else {
+		CLRBIT(position->bitBoardPawns[color], SQ64(square));
+		CLRBIT(position->bitBoardPawns[none], SQ64(square));
+		//need to add the other bitboards when I start using them
+	}
+
+	for (i = 0; i < position->pieceNumber[piece]; i++) {
+		if (position->pieceList[piece][i] == square) {
+			tempPieceNumber = i;
+			break;
+		}
+	}
+
+	if (tempPieceNumber == -1) {
+		std::cout << "no\n";
+	}
+
+	position->pieceNumber[piece]--;
+	position->pieceList[piece][tempPieceNumber] = position->pieceList[piece][position->pieceNumber[piece]];
+
+}
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
