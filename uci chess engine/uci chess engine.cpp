@@ -3325,7 +3325,7 @@ static bool makeMove(boardStructure* position, int move) {
 
 
 	if (squareAttacked(position->kingSquare[side], position->side, position)) {
-		// takeMove(position);
+		takeMove(position);
 		return false;
 	}
 
