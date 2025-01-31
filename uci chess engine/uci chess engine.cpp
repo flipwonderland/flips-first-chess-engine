@@ -2983,9 +2983,10 @@ static void clearPiece(const int square, boardStructure* position) {
 	if (tempPieceNumber == -1) {
 		std::cout << "no\n";
 	}
-
-	position->pieceNumber[piece]--;
-	position->pieceList[piece][tempPieceNumber] = position->pieceList[piece][position->pieceNumber[piece]];
+	else {
+		position->pieceNumber[piece]--;
+		position->pieceList[piece][tempPieceNumber] = position->pieceList[piece][position->pieceNumber[piece]];
+	}
 
 }
 
