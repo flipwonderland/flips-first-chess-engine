@@ -3025,8 +3025,62 @@ static void AddPiece(const int square, boardStructure* position, const int piece
 	}
 
 	position->material[color] += pieceValue[piece];
-	position->pieceList[piece][position->pieceNumber[piece]++] = square;
+	position->pieceList[piece][position->pieceNumber[piece]] = square;
+	position->pieceNumber[piece]++;
 
+}
+
+static void MovePiece(const int from, const int to, boardStructure* position) {
+
+	if (!squareOnBoard(from)) {
+		std::cout << "move from is invalid\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "move to is invalid\n";
+	}
+
+	int i = 0;
+	int piece = position->pieces[from];
+	int color = pieceColor[piece];
+	
+	if (!sideValid(color)) {
+		std::cout << "side given to move piece is not valid\n";
+	}
+	if (!pieceValid(piece)) {
+		std::cout << "move piece called on a piece that is not valid\n";
+	}
+
+#ifdef DEBUG
+	int t_PieceNum = FALSE;
+#endif
+
+	HASH_PCE(piece, from);
+	position->pieces[from] = empty;
+
+	HASH_PCE(piece, to);
+	position->pieces[to] = piece;
+
+	if (!normalPiece[piece]) {
+		CLRBIT(position->bitBoardPawns[color], SQ64(from));
+		CLRBIT(position->bitBoardPawns[none], SQ64(from));
+		SETBIT(position->bitBoardPawns[color], SQ64(to));
+		SETBIT(position->bitBoardPawns[none], SQ64(to));
+	} //need to add the other bitboards when I start using them part tres
+
+	for (i = 0; i < position->pieceNumber[piece]; i++) {
+		if (position->pieceList[piece][i] == from) {
+			position->pieceList[piece][i] = to;
+#ifdef DEBUG
+			t_PieceNum = TRUE;
+#endif
+			break;
+		}
+	}
+#ifdef DEBUG
+	if (!t_PieceNum) {
+		std::cout << "piece not moved in move piece func\n";
+	}
+#endif
 }
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
