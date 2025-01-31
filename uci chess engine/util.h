@@ -17,6 +17,7 @@ typedef unsigned long long u64;
 //#define MAX_GAME_MOVES 17697
 //this would be better, I'd run into issues if someone played a longer game which is possible but I'm gonna save on ram and do this instead
 #define MAXPOSITIONMOVES 218 // this is the max number of moves that we would expect to be in a single position
+#define MAXDEPTH 512
 
 //these are from the bluefever software series
 #define RAND_64 (	(u64)rand() | \

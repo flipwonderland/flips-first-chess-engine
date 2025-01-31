@@ -2396,7 +2396,7 @@ const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
 const int rookDirection[4] = { -1, -10,	1, 10 };
 const int bishopDirection[8] = { -9, -11, 11, 9 };
 const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
-//                              empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
+//									  empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
 const bool isPiecePawn[13] =        { false, false, true, false, false, false, false, false, true, false, false, false, false };
 const bool isPieceKnight[13] =      { false, false, false, true, false, false, false, false, false, true, false, false, false };
 const bool isPieceKing[13] =        { false, true, false, false, false, false, false, true, false, false, false, false, false };
@@ -2990,7 +2990,7 @@ static void clearPiece(const int square, boardStructure* position) {
 
 }
 
-static void AddPiece(const int square, boardStructure* position, const int piece) {
+static void addPiece(const int square, boardStructure* position, const int piece) {
 
 	if (!squareOnBoard(square)) {
 		std::cout << "clear piece called on a square that's not on the board\n";
@@ -3030,7 +3030,7 @@ static void AddPiece(const int square, boardStructure* position, const int piece
 
 }
 
-static void MovePiece(const int from, const int to, boardStructure* position) {
+static void movePiece(const int from, const int to, boardStructure* position) {
 
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
@@ -3082,6 +3082,156 @@ static void MovePiece(const int from, const int to, boardStructure* position) {
 	}
 #endif
 }
+
+static bool makeMove(boardStructure* position, int move) {
+
+	if (!checkBoard(position)) {
+		std::cout << "invalid position given to make move func\n";
+	}
+
+	int from = FROMSQ(move);
+	int to = TOSQ(move);
+	int side = position->side;
+
+	if (!squareOnBoard(from)) {
+		std::cout << "move from is invalid\n";
+	}
+	if (!squareOnBoard(to)) {
+		std::cout << "move to is invalid\n";
+	}
+	if (!sideValid(side)) {
+		std::cout << "side given to make move is not valid\n";
+	}
+	if (!pieceValid(position->pieces[from])) {
+		std::cout << "make move called on a piece that is not valid\n";
+	}
+	if (position->historyPly < 0 || position->historyPly > MAX_GAME_MOVES) {
+		std::cout << "history went further than longest possible game (or under 0), consider upping the limit or if it's already the longest game possible theres a bug\n";
+		std::cout << "history: " << position->historyPly << "\n";
+	}
+	if (position->ply < 0 || position->ply > MAXDEPTH) {
+		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
+		std::cout << "ply: " << position->ply << "\n";
+	}
+
+	position->history[position->historyPly].positionKey = position->positionKey;
+
+	if (move & MFLAGEP) { //en passant
+		if (side == white) {
+			clearPiece(to - 10, position);
+		}
+		else {
+			clearPiece(to + 10, position);
+		} //gotta be careful, if a secret 3rd player enters the match they will be treated as black
+	}
+	else if (move & MFLAGCA) { //castling
+		switch (to) {
+		case c1:
+			movePiece(a1, d1, position);
+			break;
+		case c8:
+			movePiece(a8, d8, position);
+			break;
+		case g1:
+			movePiece(h1, f1, position);
+			break;
+		case g8:
+			movePiece(h8, f8, position);
+			break;
+		default:
+			std::cout << "illegal castle in make move\n";
+			break;
+		}
+	}
+
+	if (position->enPassant != noSquare)
+		HASH_EP;
+
+	HASH_CA;
+
+	position->history[position->historyPly].move = move;
+	position->history[position->historyPly].fiftyMove = position->fiftyMove;
+	position->history[position->historyPly].enPassant = position->enPassant;
+	position->history[position->historyPly].castlePerm = position->castlePermission;
+
+	position->castlePermission &= castlePermission[from];
+	position->castlePermission &= castlePermission[to];
+	position->enPassant = noSquare;
+
+	HASH_CA;
+
+	int captured = CAPTURED(move);
+	position->fiftyMove++;
+
+	if (captured != empty) {
+		if (!pieceValid(captured)) {
+			std::cout << "piece captured was not valid\n";
+		}
+		clearPiece(to, position);
+		position->fiftyMove = 0;
+	}
+
+	position->historyPly++;
+	position->ply++;
+
+	if (position->historyPly < 0 || position->historyPly > MAX_GAME_MOVES) {
+		std::cout << "history went further than longest possible game (or under 0), consider upping the limit or if it's already the longest game possible theres a bug\n";
+		std::cout << "history: " << position->historyPly << "\n";
+	}
+	if (position->ply < 0 || position->ply > MAXDEPTH) {
+		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
+		std::cout << "ply: " << position->ply << "\n";
+	}
+
+	if (isPiecePawn[position->pieces[from]]) {
+		position->fiftyMove = 0;
+		if (move & MFLAGPS) {
+			if (side == white) {
+				position->enPassant = from + 10;
+				if (ranksBoard[position->enPassant] != rank3) {
+					std::cout << "en passant on an invalid rank\n";
+				}
+			}
+			else {
+				position->enPassant = from - 10;
+				if (ranksBoard[position->enPassant] != rank6) {
+					std::cout << "en passant on an invalid rank\n";
+				}
+			}
+			HASH_EP;
+		}
+	}
+
+	movePiece(from, to, position);
+
+	int promotedPiece = PROMOTED(move);
+	if (promotedPiece != empty) {
+		if (!pieceValid(promotedPiece) || isPiecePawn[promotedPiece]);
+		clearPiece(to, position);
+		addPiece(to, position, promotedPiece);
+	}
+
+	if (isPieceKing[position->pieces[to]]) {
+		position->kingSquare[position->side] = to;
+	}
+
+	position->side ^= 1;
+	HASH_SIDE;
+
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed at the end of make move func\n";
+	}
+
+
+	if (squareAttacked(position->kingSquare[side], position->side, position)) {
+		// takeMove(position);
+		return false;
+	}
+
+	return true;
+}
+
+
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
