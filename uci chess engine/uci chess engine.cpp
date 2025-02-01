@@ -2933,7 +2933,7 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 
 		if (position->castlePermission & blackQueenCastle) {
 			if (position->pieces[d8] == empty && position->pieces[c8] == empty && position->pieces[b8] == empty) {
-				if (!squareAttacked(e8, black, position) && !squareAttacked(d8, white, position)) {
+				if (!squareAttacked(e8, white, position) && !squareAttacked(d8, white, position)) {
 					addQuietMove(position, MOVE_MOVEGEN(e8, c8, empty, empty, MFLAGCA), list);
 				}
 			}
