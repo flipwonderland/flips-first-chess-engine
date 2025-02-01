@@ -1,5 +1,7 @@
 #include "stdlib.h"
 
+//#define DEBUG
+
 typedef char s8;
 typedef unsigned char u8;
 typedef short s16;

@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "stdlib.h"
+#include "stdio.h"
 #include "util.h"
 
 
@@ -1025,9 +1026,13 @@ static bool checkBoard(const boardStructure* position) {
 
 	if (position->side != white && position->side != black)
 		std::cout << "position side is neither white nor black\n";
-	if (generatePositionKey(position) != position->positionKey)
-		std::cout << "position keys do not match\n"; 
-
+	if (generatePositionKey(position) != position->positionKey) {
+		std::cout << "position keys do not match\n";
+		std::cout << "temp pos key: " << position->positionKey << "\n";
+		std::cout << "true pos key: " << generatePositionKey(position) <<"\n";
+		
+		testFailed = true;
+	}
 	if (position->enPassant != noSquare && ((ranksBoard[position->enPassant] != rank6 && position->side == white)
 		|| (ranksBoard[position->enPassant] != rank3 && position->side == black))) //I'm not super confident in this one but looks right
 		std::cout << "en passant square in invalid position\n"; 
@@ -2440,6 +2445,7 @@ static bool squareAttacked(const int square, const int side, const boardStructur
 	int tempSquare;
 	int direction;
 
+#ifdef DEBUG
 	if (!squareOnBoard(square)) {
 		std::cout << "square is not on board\n";
 		return false;
@@ -2452,6 +2458,7 @@ static bool squareAttacked(const int square, const int side, const boardStructur
 		std::cout << "check board failed\n";
 		return false;
 	}
+#endif
 
 	if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
 		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
@@ -2591,15 +2598,15 @@ const int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
 const int loopNonSlidingIndex[2] = { 0, 3 };
 
 const int pieceDirection[13][8] = {
-	{ 0, 0, 0, 0, 0, 0, 0 }, //empty
+	{ 0, 0, 0, 0, 0, 0, 0, 0 }, //empty
 	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
-	{ 0, 0, 0, 0, 0, 0, 0 } , //wp
+	{ 0, 0, 0, 0, 0, 0, 0, 0 } , //wp
 	{ -8, -19,	-21, -12, 8, 19, 21, 12 }, //wn
 	{ -9, -11, 11, 9, 0, 0, 0, 0 } ,//wb
 	{ -1, -10,	1, 10, 0, 0, 0, 0 },//wr
 	{ -1, -10,	1, 10, -9, -11, 11, 9 },//wq
 	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bk
-	{ 0, 0, 0, 0, 0, 0, 0 },//bp
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },//bp
 	{ -8, -19,	-21, -12, 8, 19, 21, 12 },//bn
 	{ -9, -11, 11, 9, 0, 0, 0, 0 },//bb
 	{ -1, -10,	1, 10, 0, 0, 0, 0 },//br
@@ -2639,7 +2646,7 @@ static void addEnPassantMove(const boardStructure* position, int move, moveListS
 
 static void addWhitePawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
-	
+#ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "pawn from move not on board\n";
 	}
@@ -2649,6 +2656,7 @@ static void addWhitePawnMove(const boardStructure* position, const int from, con
 	if (!checkBoard(position)) {
 		std::cout << "checkboard failed on pawn move\n";
 	}
+#endif
 
 	if (ranksBoard[from] == rank7) {
 		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, wQ, 0), list);
@@ -2663,6 +2671,7 @@ static void addWhitePawnMove(const boardStructure* position, const int from, con
 
 static void addBlackPawnMove(const boardStructure* position, const int from, const int to, moveListStructure* list) {
 
+#ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "pawn from move not on board\n";
 	}
@@ -2672,6 +2681,7 @@ static void addBlackPawnMove(const boardStructure* position, const int from, con
 	if (!checkBoard(position)) {
 		std::cout << "checkboard failed on pawn move\n";
 	}
+#endif
 
 	if (ranksBoard[from] == rank2) {
 		addQuietMove(position, MOVE_MOVEGEN(from, to, empty, bQ, 0), list);
@@ -2687,6 +2697,7 @@ static void addBlackPawnMove(const boardStructure* position, const int from, con
 
 static void addWhitePawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
+#ifdef DEBUG
 	if (!pieceValidEmpty(capture)) {
 		std::cout << "pawn from move not on board\n";
 	}
@@ -2699,6 +2710,7 @@ static void addWhitePawnCaptureMove(const boardStructure* position, const int fr
 	if (!checkBoard(position)) {
 		std::cout << "checkboard failed on pawn move\n";
 	}
+#endif
 
 	if (ranksBoard[from] == rank7) {
 		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, wQ, 0), list);
@@ -2713,6 +2725,7 @@ static void addWhitePawnCaptureMove(const boardStructure* position, const int fr
 
 static void addBlackPawnCaptureMove(const boardStructure* position, const int from, const int to, const int capture, moveListStructure* list) {
 
+#ifdef DEBUG
 	if (!pieceValidEmpty(capture)) {
 		std::cout << "pawn from move not on board\n";
 	}
@@ -2725,6 +2738,7 @@ static void addBlackPawnCaptureMove(const boardStructure* position, const int fr
 	if (!checkBoard(position)) {
 		std::cout << "checkboard failed on pawn move\n";
 	}
+#endif
 
 	if (ranksBoard[from] == rank2) {
 		addCaptureMove(position, MOVE_MOVEGEN(from, to, capture, bQ, 0), list);
@@ -2741,9 +2755,11 @@ static void addBlackPawnCaptureMove(const boardStructure* position, const int fr
 
 static void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
+#ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "board check failed in generate moves function\n";
 	}
+#endif
 
 	list->moveCount = 0;
 
@@ -2867,7 +2883,6 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 			std::cout << "piece invalid on move list generator\n";
 			break;
 		}
-		
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 			square = position->pieceList[piece][pieceNumber];
 			if (!squareOnBoard(square)) {
@@ -2904,8 +2919,6 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 			std::cout << "piece invalid on move list generator\n";
 			break;
 		}
-		printf("non sliding piece index:%d pce:%d\n", pieceIndex, piece);
-		
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 			square = position->pieceList[piece][pieceNumber];
 			if (!squareOnBoard(square)) {
@@ -2938,16 +2951,18 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 }
 
 static void clearPiece(const int square, boardStructure* position) {
-
+#ifdef DEBUG
 	if (!squareOnBoard(square)) {
 		std::cout << "clear piece called on a square that's not on the board\n";
 	}
-
+#endif
 	int piece = position->pieces[square];
 
+#ifdef DEBUG
 	if (!pieceValid(piece)) {
 		std::cout << "clear piece called on a piece that is not valid\n";
 	}
+#endif
 
 	int color = pieceColor[piece];
 	int i = 0;
@@ -2991,13 +3006,14 @@ static void clearPiece(const int square, boardStructure* position) {
 }
 
 static void addPiece(const int square, boardStructure* position, const int piece) {
-
+#ifdef DEBUG
 	if (!squareOnBoard(square)) {
 		std::cout << "clear piece called on a square that's not on the board\n";
 	}
 	if (!pieceValid(piece)) {
 		std::cout << "add piece called on a piece that is not valid\n";
 	}
+#endif
 
 	int color = pieceColor[piece];
 
@@ -3032,26 +3048,29 @@ static void addPiece(const int square, boardStructure* position, const int piece
 
 static void movePiece(const int from, const int to, boardStructure* position) {
 
+#ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
 	}
 	if (!squareOnBoard(to)) {
 		std::cout << "move to is invalid\n";
 	}
+#endif
 
 	int i = 0;
 	int piece = position->pieces[from];
 	int color = pieceColor[piece];
-	
+#ifdef DEBUG
 	if (!sideValid(color)) {
 		std::cout << "side given to move piece is not valid\n";
 	}
 	if (!pieceValid(piece)) {
 		std::cout << "move piece called on a piece that is not valid\n";
 	}
+#endif
 
 #ifdef DEBUG
-	int t_PieceNum = FALSE;
+	int t_PieceNum = false;
 #endif
 
 	HASH_PCE(piece, from);
@@ -3071,7 +3090,7 @@ static void movePiece(const int from, const int to, boardStructure* position) {
 		if (position->pieceList[piece][i] == from) {
 			position->pieceList[piece][i] = to;
 #ifdef DEBUG
-			t_PieceNum = TRUE;
+			t_PieceNum = true;
 #endif
 			break;
 		}
@@ -3084,14 +3103,16 @@ static void movePiece(const int from, const int to, boardStructure* position) {
 }
 
 static void takeMove(boardStructure* position) {
-
+#ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "check board failed at the start of take move\n";
 	}
+#endif
 
 	position->historyPly--;
 	position->ply--;
 
+#ifdef DEBUG
 	if (position->historyPly < 0 || position->historyPly > MAX_GAME_MOVES) {
 		std::cout << "history went further than longest possible game (or under 0), consider upping the limit or if it's already the longest game possible theres a bug\n";
 		std::cout << "history: " << position->historyPly << "\n";
@@ -3100,17 +3121,19 @@ static void takeMove(boardStructure* position) {
 		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
 		std::cout << "ply: " << position->ply << "\n";
 	}
+#endif
 
 	int move = position->history[position->historyPly].move;
 	int from = FROMSQ(move);
 	int to = TOSQ(move);
-
+#ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
 	}
 	if (!squareOnBoard(to)) {
 		std::cout << "move to is invalid\n";
 	}
+#endif
 
 	if (position->enPassant != noSquare) HASH_EP;
 	HASH_CA;
@@ -3176,22 +3199,24 @@ static void takeMove(boardStructure* position) {
 		clearPiece(from, position);
 		addPiece(from, position, (pieceColor[PROMOTED(move)] == white ? wP : bP));
 	}
-
+#ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "check board failed at the end of take move\n";
 	}
+#endif
 }
 
 static bool makeMove(boardStructure* position, int move) {
-
+#ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "invalid position given to make move func\n";
 	}
+#endif
 
 	int from = FROMSQ(move);
 	int to = TOSQ(move);
 	int side = position->side;
-
+#ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
 	}
@@ -3212,6 +3237,7 @@ static bool makeMove(boardStructure* position, int move) {
 		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
 		std::cout << "ply: " << position->ply << "\n";
 	}
+#endif
 
 	position->history[position->historyPly].positionKey = position->positionKey;
 
@@ -3273,6 +3299,7 @@ static bool makeMove(boardStructure* position, int move) {
 	position->historyPly++;
 	position->ply++;
 
+#ifdef DEBUG
 	if (position->historyPly < 0 || position->historyPly > MAX_GAME_MOVES) {
 		std::cout << "history went further than longest possible game (or under 0), consider upping the limit or if it's already the longest game possible theres a bug\n";
 		std::cout << "history: " << position->historyPly << "\n";
@@ -3281,6 +3308,7 @@ static bool makeMove(boardStructure* position, int move) {
 		std::cout << "ply invalid, either under 0 or above " << MAXDEPTH << "\n";
 		std::cout << "ply: " << position->ply << "\n";
 	}
+#endif
 
 	if (isPiecePawn[position->pieces[from]]) {
 		position->fiftyMove = 0;
@@ -3319,9 +3347,11 @@ static bool makeMove(boardStructure* position, int move) {
 	position->side ^= 1;
 	HASH_SIDE;
 
+#ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "checkboard failed at the end of make move func\n";
 	}
+#endif
 
 
 	if (squareAttacked(position->kingSquare[side], position->side, position)) {
@@ -3382,9 +3412,6 @@ void printBitBoard(u64 bitBoardToPrint) {
 }
 
 
-
-
-
 char* printMove(const int move) {
 
 	static char moveString[6];
@@ -3434,6 +3461,75 @@ void printMoveList(const moveListStructure* list) {
 
 }
 
+//perft testing here
+long leafNodes;
+
+static void perft(int depth, boardStructure* position) {
+
+#ifdef DEBUG
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed at the start of perft func\n";
+	}
+#endif
+
+	if (depth == 0) {
+		leafNodes++;
+		return;
+	}
+
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+
+	int MoveNum = 0;
+	for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+
+		if (!makeMove(position, list->moves[MoveNum].move)) { //essential if the move is legal
+			continue;
+		}
+		perft(depth - 1, position); //ahh! recursion! this is probably nessecary in this case but usually you want to avoid it
+		takeMove(position);
+	}
+
+	return;
+}
+
+
+static void perftTest(int depth, boardStructure* position) {
+
+#ifdef DEBUG
+	if (!checkBoard(position)) {
+		std::cout << "checkboard failed at the start of perft testing func\n";
+	}
+#endif
+
+	printSquareBoard(position);
+	printf("\nStarting Test To Depth:%d\n", depth);
+	leafNodes = 0;
+	//int start = GetTimeMs();
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+
+	int move;
+	int moveNumber = 0;
+	for (moveNumber = 0; moveNumber < list->moveCount; ++moveNumber) {
+		move = list->moves[moveNumber].move;
+		if (!makeMove(position, move)) {
+			continue;
+		}
+		long cumNodes = leafNodes; //what nodes???
+		perft(depth - 1, position);
+		takeMove(position);
+		long oldNodes = leafNodes - cumNodes;
+		printf("move %d : %s : %ld\n", moveNumber + 1, printMove(move), oldNodes); //cumulative nodes I think, odd choice of word to shorten
+	}
+
+	//printf("\nTest Complete : %ld nodes visited in %dms\n", leafNodes, GetTimeMs() - start);
+	printf("\nTest Complete : %ld nodes visited", leafNodes);
+
+	return;
+}
+
+
 
 void initializeAll() {
 	computeMoveBoards();
@@ -3473,13 +3569,16 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(CASTLETESTFEN, currentBoard);
+			parseFen(STARTFEN, currentBoard);
 			//printSquareBoard(currentBoard);
 			//cout << "\n";
 
-			generateAllMoves(currentBoard, list);
+			//generateAllMoves(currentBoard, list);
 
-			printMoveList(list);
+			//printMoveList(list);
+			
+			perftTest(6, currentBoard);
+
 			
 
 		}
