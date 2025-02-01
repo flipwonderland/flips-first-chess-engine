@@ -1,6 +1,7 @@
 #include "stdlib.h"
 
 //#define DEBUG
+#define PERFORMANCEMODE
 
 typedef char s8;
 typedef unsigned char u8;
@@ -74,20 +75,7 @@ typedef unsigned long long u64;
 #define HASH_SIDE (position->positionKey ^= (sideKey))
 #define HASH_EP (position->positionKey ^= (pieceKeys[empty][(position->enPassant)]))
 
-const int castlePermission[120] = {
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15
-};
+
 
 #define STARTFEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 #define TESTFEN "rnbqkbnr/1ppppppp/8/pP6/8/8/P1PPPPPP/RNBQKBNR w KQkq a6 0 1"
@@ -102,6 +90,8 @@ const int castlePermission[120] = {
 #define CASTLETESTFEN "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
 #define CASTLETEST2FEN "3rk2r/8/8/8/8/8/6p1/R3K2R w KQk - 0 1"
 #define PERFORMANCETESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+#define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
+
 
 inline int
 clamp(int min, int val, int max) {
