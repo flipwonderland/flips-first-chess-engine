@@ -3458,7 +3458,9 @@ static bool makeMove(boardStructure* position, int move) {
 	return true;
 }
 
+int search() {
 
+}
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
@@ -3555,6 +3557,60 @@ void printMoveList(const moveListStructure* list) {
 	}
 	printf("move list total %d moves:\n\n", list->moveCount);
 
+}
+
+bool parseMove(char* pointerCharacter, boardStructure* position) {
+
+#ifdef DEBUG
+	if (!checkBoard(position)) {
+		std::cout << "check move failed on parsemove\n";
+	}
+#endif
+
+	if (pointerCharacter[1] > '8' || pointerCharacter[1] < '1') return NOMOVE;
+	if (pointerCharacter[3] > '8' || pointerCharacter[3] < '1') return NOMOVE;
+	if (pointerCharacter[0] > 'h' || pointerCharacter[0] < 'a') return NOMOVE;
+	if (pointerCharacter[2] > 'h' || pointerCharacter[2] < 'a') return NOMOVE;
+
+	int from = FR2SQ(pointerCharacter[0] - 'a', pointerCharacter[1] - '1');
+	int to = FR2SQ(pointerCharacter[2] - 'a', pointerCharacter[3] - '1');
+
+#ifdef DEBUG
+	if (!squareOnBoard(from) || !squareOnBoard(to)) {
+		std::cout << "to or from not on board in parsemove\n";
+	}
+#endif
+
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+	int moveNumber = 0;
+	int move = 0;
+	int promotedPiece = empty;
+
+	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
+		move = list->moves[moveNumber].move;
+		if (FROMSQ(move) == from && TOSQ(move) == to) {
+			promotedPiece = PROMOTED(move);
+			if (promotedPiece != empty) {
+				if (IsRQ(promotedPiece) && !IsBQ(promotedPiece) && pointerCharacter[4] == 'r') {
+					return move;
+				}
+				else if (!IsRQ(promotedPiece) && IsBQ(promotedPiece) && pointerCharacter[4] == 'b') {
+					return move;
+				}
+				else if (IsRQ(promotedPiece) && IsBQ(promotedPiece) && pointerCharacter[4] == 'q') {
+					return move;
+				}
+				else if (IsKn(promotedPiece) && pointerCharacter[4] == 'n') {
+					return move;
+				}
+				continue;
+			}
+			return move;
+		}
+	}
+
+	return NOMOVE;
 }
 
 //perft testing here
@@ -3675,7 +3731,7 @@ int main()
 
 			//printMoveList(list);
 			
-			perftTest(2, currentBoard);
+			perftTest(4, currentBoard);
 
 			
 

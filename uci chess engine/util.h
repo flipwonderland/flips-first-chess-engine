@@ -1,7 +1,7 @@
 #include "stdlib.h"
 
-//#define DEBUG
-#define PERFORMANCEMODE
+#define DEBUG
+//#define PERFORMANCEMODE
 
 typedef char s8;
 typedef unsigned char u8;
@@ -67,8 +67,7 @@ typedef unsigned long long u64;
 #define MOVE_MOVEGEN(f,t,ca,pro,fl) ( (f) | ((t) << 7) | ( (ca) << 14 ) | ( (pro) << 20 ) | (fl))
 #define SQOFFBOARD_MOVEGEN(sq) (filesBoard[(sq)]==offBoard)
 
-#define NOMOVE 0
-
+#define NOMOVE false
 
 #define HASH_PCE(piece,square) (position->positionKey ^= (pieceKeys[(piece)][(square)]))
 #define HASH_CA (position->positionKey ^= (castleKeys[(position->castlePermission)]))
@@ -90,7 +89,7 @@ typedef unsigned long long u64;
 #define CASTLETESTFEN "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
 #define CASTLETEST2FEN "3rk2r/8/8/8/8/8/6p1/R3K2R w KQk - 0 1"
 #define PERFORMANCETESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-#define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
+#define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
 
 
 inline int
