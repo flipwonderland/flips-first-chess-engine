@@ -23,7 +23,9 @@ typedef unsigned long long u64;
 #define MAXDEPTH 512
 
 #define DRAW 0
-#define MATE INFINITE
+#define INFINITEC 30000
+#define ISMATE (INFINITEC - MAXDEPTH)
+#define INTFINITE 2147483647
 
 //these are from the bluefever software series
 #define RAND_64 (	(u64)rand() | \
@@ -96,6 +98,7 @@ typedef unsigned long long u64;
 #define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
 
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
+enum { UCIMODE, XBOARDMODE, CONSOLEMODE };
 
 inline int
 clamp(int min, int val, int max) {

@@ -5,6 +5,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "util.h"
+#include "math.h"
 
 #ifdef _WIN32
 #include "windows.h"
@@ -105,16 +106,18 @@ typedef struct {
 
 
 typedef struct {
+
 	u64 positionKey;
 	int move;
 	int score;
 	int depth;
 	int flags;
+
 } hashEntryStructure;
 
 typedef struct {
 	hashEntryStructure* pTable;
-	int numEntries;
+	int numberOfEntries;
 	int newWrite;
 	int overWrite;
 	int hit;
@@ -191,6 +194,13 @@ typedef struct {
 
 	int quit;
 	int stopped;
+
+	float fh;
+	float fhf;
+	int nullCut;
+
+	int GAME_MODE;
+	int POST_THINKING;
 
 } SearchInfoStructure;
 
@@ -338,7 +348,7 @@ void clearHashTable(hashTableStructure* table) {
 
 	hashEntryStructure* tableEntry;
 
-	for (tableEntry = table->pTable; tableEntry < table->pTable + table->numEntries; tableEntry++) {
+	for (tableEntry = table->pTable; tableEntry < table->pTable + table->numberOfEntries; tableEntry++) {
 		tableEntry->positionKey = 0ULL;
 		tableEntry->move = NOMOVE;
 		tableEntry->depth = 0;
@@ -351,21 +361,21 @@ void clearHashTable(hashTableStructure* table) {
 void initializeHashTable(hashTableStructure* table, const int megaBytes) {
 
 	int HashSize = 0x100000 * megaBytes;
-	table->numEntries = HashSize / sizeof(hashEntryStructure);
-	table->numEntries -= 2;
+	table->numberOfEntries = HashSize / sizeof(hashEntryStructure);
+	table->numberOfEntries -= 2;
 
 	if (table->pTable != NULL) {
 		free(table->pTable);
 	}
 
-	table->pTable = (hashEntryStructure*)malloc(table->numEntries * sizeof(hashEntryStructure));
+	table->pTable = (hashEntryStructure*)malloc(table->numberOfEntries * sizeof(hashEntryStructure));
 	if (table->pTable == NULL) {
 		printf("Hash Allocation Failed, trying %dmega bytes...\n", megaBytes / 2);
 		initializeHashTable(table, megaBytes / 2);
 	}
 	else {
 		clearHashTable(table);
-		printf("HashTable init complete with %d entries\n", table->numEntries);
+		printf("HashTable init complete with %d entries\n", table->numberOfEntries);
 	}
 
 }
@@ -2551,10 +2561,10 @@ static int moveExists(boardStructure* position, const int move) {
 		}
 		takeMove(position);
 		if (list->moves[moveNumber].move == move) {
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 const int pawnIsolated = -10;
@@ -2906,9 +2916,9 @@ int evaluatePosition(const boardStructure *position) {
 
 static int probePVMove(const boardStructure* position) {
 
-	int index = position->positionKey % position->hashTable->numEntries;
+	int index = position->positionKey % position->hashTable->numberOfEntries;
 #ifdef DEBUG
-	if (index < 0 && index > position->hashTable->numEntries - 1) {
+	if (index < 0 && index > position->hashTable->numberOfEntries - 1) {
 		std::cout << "invalid index in probe pv move\n";
 	}
 #endif
@@ -2955,102 +2965,125 @@ static int getPVLine(const int depth, boardStructure* position) {
 
 }
 
-/*
-void ClearHashTable(S_HASHTABLE* table) {
 
-	S_HASHENTRY* tableEntry;
 
-	for (tableEntry = table->pTable; tableEntry < table->pTable + table->numEntries; tableEntry++) {
-		tableEntry->posKey = 0ULL;
-		tableEntry->move = NOMOVE;
-		tableEntry->depth = 0;
-		tableEntry->score = 0;
-		tableEntry->flags = 0;
-	}
-	table->newWrite = 0;
-}
+int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, int beta, int depth) {
 
-void InitHashTable(S_HASHTABLE* table, const int MB) {
+	int index = position->positionKey % position->hashTable->numberOfEntries;
 
-	int HashSize = 0x100000 * MB;
-	table->numEntries = HashSize / sizeof(S_HASHENTRY);
-	table->numEntries -= 2;
-
-	if (table->pTable != NULL) {
-		free(table->pTable);
-	}
-
-	table->pTable = (S_HASHENTRY*)malloc(table->numEntries * sizeof(S_HASHENTRY));
-	if (table->pTable == NULL) {
-		printf("Hash Allocation Failed, trying %dMB...\n", MB / 2);
-		InitHashTable(table, MB / 2);
-	}
+#ifdef DEBUG
+	if (index >= 0 && index <= position->hashTable->numberOfEntries - 1) {}// I got lazy part 2
 	else {
-		ClearHashTable(table);
-		printf("HashTable init complete with %d entries\n", table->numEntries);
+		std::cout << "hash table entries mismatched\n";
+		std::cout << "hash table entires: " << position->hashTable->numberOfEntries << "\n";
+		std::cout << "index: " << index << "\n";
 	}
+	if (depth >= 1 && depth < MAXDEPTH) {}
+	else {
+		std::cout << "depth is incorrect\n";
+	}
+	if (alpha >= -INFINITEC && alpha <= INFINITEC) {}
+	else {
+		std::cout << "alpha is greater than you mating or less than your opponent mating\n";
+		std::cout << "alpha: " << score << "\n";
+	}
+	if (beta >= -INFINITEC && beta <= INFINITEC) {}
+	else {
+		std::cout << "beta is greater than you mating or less than your opponent mating\n";
+		std::cout << "beta: " << score << "\n";
+	}
+	if (position->ply >= 0 && position->ply < MAXDEPTH) {}
+	else {
+		std::cout << "ply is less than 0 or greater than max depth\n";
+	}
+	if (alpha < beta) {}
+	else {
+		std::cout << "beta is greater than alpha\n";
+	}
+#endif
+	
 
-}
+	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
+		*move = position->hashTable->pTable[index].move;
+		if (position->hashTable->pTable[index].depth >= depth) {
+			position->hashTable->hit++;
+#ifdef DEBUG
+			if (position->hashTable->pTable[index].depth >= 1 && position->hashTable->pTable[index].depth < MAXDEPTH) {}
+			else {
+				std::cout << "depth invalid in hash entry prober\n";
+			}
+			if (position->hashTable->pTable[index].flags >= HFALPHA && position->hashTable->pTable[index].flags <= HFEXACT) {}
+			else {
+				std::cout << "flags invalid in hash entry prober\n";
+			}
+#endif
+			*score = position->hashTable->pTable[index].score;
+			if (*score > ISMATE) 
+				*score -= position->ply;
+			else if (*score < -ISMATE) 
+				*score += position->ply;
 
-int ProbeHashEntry(S_BOARD* pos, int* move, int* score, int alpha, int beta, int depth) {
-
-	int index = pos->posKey % pos->HashTable->numEntries;
-
-	ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
-	ASSERT(depth >= 1 && depth < MAXDEPTH);
-	ASSERT(alpha < beta);
-	ASSERT(alpha >= -INFINITE && alpha <= INFINITE);
-	ASSERT(beta >= -INFINITE && beta <= INFINITE);
-	ASSERT(pos->ply >= 0 && pos->ply < MAXDEPTH);
-
-	if (pos->HashTable->pTable[index].posKey == pos->posKey) {
-		*move = pos->HashTable->pTable[index].move;
-		if (pos->HashTable->pTable[index].depth >= depth) {
-			pos->HashTable->hit++;
-
-			ASSERT(pos->HashTable->pTable[index].depth >= 1 && pos->HashTable->pTable[index].depth < MAXDEPTH);
-			ASSERT(pos->HashTable->pTable[index].flags >= HFALPHA && pos->HashTable->pTable[index].flags <= HFEXACT);
-
-			*score = pos->HashTable->pTable[index].score;
-			if (*score > ISMATE) *score -= pos->ply;
-			else if (*score < -ISMATE) *score += pos->ply;
-
-			switch (pos->HashTable->pTable[index].flags) {
-
-				ASSERT(*score >= -INFINITE && *score <= INFINITE);
-
+			switch (position->hashTable->pTable[index].flags) {
+#ifdef DEBUG
+				if (*score >= -INFINITEC && *score <= INFINITEC) {}
+				else {
+					std::cout << "score invalid in hash entry prober\n";
+				}
+#endif
 			case HFALPHA: if (*score <= alpha) {
 				*score = alpha;
-				return TRUE;
+				return true;
 			}
 						break;
 			case HFBETA: if (*score >= beta) {
 				*score = beta;
-				return TRUE;
+				return true;
 			}
 					   break;
 			case HFEXACT:
-				return TRUE;
+				return true;
 				break;
-			default: ASSERT(FALSE); break;
+			default: 
+				std::cout << "invalid flag in prober in the switch thingy I'm getting sick of writing these you'll probably never read this one\n";
+				break;
 			}
 		}
 	}
 
-	return FALSE;
+	return false;
 }
-*/
+
 
 static void storeHashEntry(boardStructure* position, const int move, int score, const int flags, const int depth) {
 
-	int index = position->positionKey % position->hashTable->numEntries;
-	/*
-	ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
-	ASSERT(depth >= 1 && depth < MAXDEPTH);
-	ASSERT(flags >= HFALPHA && flags <= HFEXACT);
-	ASSERT(score >= -INFINITE && score <= INFINITE);
-	ASSERT(pos->ply >= 0 && pos->ply < MAXDEPTH);
-	*/
+	int index = position->positionKey % position->hashTable->numberOfEntries;
+	
+#ifdef DEBUG
+	if (index >= 0 && index <= position->hashTable->numberOfEntries - 1) {
+	}// I got lazy
+	else {
+		std::cout << "hash table entries mismatched\n";
+		std::cout << "hash table entires: " << position->hashTable->numberOfEntries << "\n";
+		std::cout << "index: " << index << "\n";
+	}
+	if (depth >= 1 && depth < MAXDEPTH) {
+	} else {
+		std::cout << "depth is incorrect\n";
+	}
+	if (flags >= HFALPHA && flags <= HFEXACT) {
+	} else {
+		std::cout << "flags are incorrect\n";
+	}
+	if (score >= -INFINITEC && score <= INFINITEC) {
+	} else {
+		std::cout << "score is greater than you mating or less than your opponent mating\n";
+		std::cout << "score: " << score << "\n";
+	}
+	if (position->ply >= 0 && position->ply < MAXDEPTH) {
+	} else {
+		std::cout << "ply is less than 0 or greater than max depth\n";
+	}
+#endif
 
 	if (position->hashTable->pTable[index].positionKey == 0) {
 		position->hashTable->newWrite++;
@@ -3059,10 +3092,10 @@ static void storeHashEntry(boardStructure* position, const int move, int score, 
 		position->hashTable->overWrite++;
 	}
 
-	/*
-	if (score > ISMATE) score += pos->ply;
-	else if (score < -ISMATE) score -= pos->ply;
-	*/
+	
+	if (score > ISMATE) score += position->ply;
+	else if (score < -ISMATE) score -= position->ply;
+	
 
 	position->hashTable->pTable[index].move = move;
 	position->hashTable->pTable[index].positionKey = position->positionKey;
@@ -3074,9 +3107,9 @@ static void storeHashEntry(boardStructure* position, const int move, int score, 
 
 static int probePvMove(const boardStructure* position) {
 
-	int index = position->positionKey % position->hashTable->numEntries;
+	int index = position->positionKey % position->hashTable->numberOfEntries;
 #ifdef DEBUG
-	if (index < 0 && index > position->hashTable->numEntries - 1) {
+	if (index < 0 && index > position->hashTable->numberOfEntries - 1) {
 		std::cout << "invalid index in probe pv move\n";
 	}
 #endif
@@ -3390,10 +3423,10 @@ static void clearForSearch(boardStructure* position, SearchInfoStructure* info) 
 	info->startTime = getTimeMs();
 	info->stopped = 0;
 	info->nodes = 0;
-	/*
+	
 	info->fh = 0;
 	info->fhf = 0;
-	*/
+	
 
 }
 
@@ -3442,7 +3475,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, S
 		depth++;
 	}
 
-	int Score = ~INFINITE;
+	int Score = ~INFINITEC;
 	int PvMove = NOMOVE;
 
 	if (ProbeHashEntry(pos, &PvMove, &Score, alpha, beta, depth) == TRUE) {
@@ -3473,9 +3506,9 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, S
 	int oldAlpha = alpha;
 	int bestMove = NOMOVE;
 
-	int bestScore = ~INFINITE;
+	int bestScore = -INFINITEC;
 
-	int score = ~INFINITE;
+	int score = -INFINITEC;
 
 	/*
 	if (PvMove != NOMOVE) {
@@ -3534,6 +3567,10 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, S
 
 		if (score > alpha) {
 			if (score >= beta) {
+				if (legal == 1) {
+					info->fhf++; // I can use this to see how good the move ordering is, this will be especially useful in the NN because I can train it and reward it based off the ratio of fh to fhf
+				}
+				info->fh++;
 				return beta;
 			}
 			alpha = score;
@@ -3543,16 +3580,17 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, S
 	/*
 	if (Legal == 0) {
 		if (InCheck) {
-			return -INFINITE + pos->ply;
+			return -INFINITEC + pos->ply;
 		}
 		else {
+			return 0;
 			return 0;
 		}
 	}
 	*/
 	if (legal == 0) {
 		if (squareAttacked(position->kingSquare[position->side], position->side ^ 1, position)) {
-			return ~MATE + position->ply;
+			return -INFINITEC + position->ply;
 		}
 		else {
 			return DRAW;
@@ -3575,10 +3613,12 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, S
 	return alpha;
 }
 
+int rootDepth;
+
 static void searchPosition(boardStructure* position, SearchInfoStructure* info) {
 	
 	int bestMove = NOMOVE;
-	int bestScore = ~INFINITE;
+	int bestScore = -INFINITEC;
 	int currentDepth = 0;
 	int pvMoves = 0;
 	int pvNumber = 0;
@@ -3586,19 +3626,85 @@ static void searchPosition(boardStructure* position, SearchInfoStructure* info) 
 	clearForSearch(position, info);
 
 	for (currentDepth = 1; currentDepth <= info->depth; currentDepth++) {
-		bestScore = alphaBeta(~INFINITE, INFINITE, currentDepth, position, info, true);
-		pvMoves = getPVLine(currentDepth, position);
-		bestMove = position->PVArray[0];
 		
-		printf("depth:%d score:%d move:%s nodes:$ld ", currentDepth, bestScore, printMove(bestMove), info->nodes);
+		bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, true);
+
+
+		pvMoves = pvMoves = getPVLine(currentDepth, position);
+		bestMove = position->PVArray[0];
+
+		printf("depth:%d score:%d move:%s nodes:%ld ", currentDepth, bestScore, printMove(bestMove), info->nodes);
 
 		pvMoves = getPVLine(currentDepth, position);
 		printf("pv");
 		for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
 			printf(" %s", printMove(position->PVArray[pvNumber]));
 		}
-		std::cout << "\n";
+		printf("\n");
+		printf("ordering:%.2f\n", (info->fhf / info->fh));
 	}
+
+	/*
+	if (EngineOptions->UseBook == TRUE) {
+		bestMove = GetBookMove(pos);
+	}
+	*/
+
+	/*
+	printf("search depth:%d\n",info->depth);
+
+	iterative deepening
+	if (bestMove == NOMOVE) {
+		for (currentDepth = 1; currentDepth <= info->depth; ++currentDepth) {
+			// alpha	 beta
+			rootDepth = currentDepth;
+			bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, TRUE);
+
+			if (info->stopped == TRUE) {
+				break;
+			}
+
+			pvMoves = getPVLine(currentDepth, position);
+			bestMove = position->PVArray[0];
+			if (info->GAME_MODE == UCIMODE) {
+				printf("info score cp %d depth %d nodes %ld time %d ",
+					bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
+			}
+			else if (info->GAME_MODE == XBOARDMODE && info->POST_THINKING == TRUE) {
+				printf("%d %d %d %ld ",
+					currentDepth, bestScore, (getTimeMs() - info->startTime) / 10, info->nodes);
+			}
+			else if (info->POST_THINKING == TRUE) {
+				printf("score:%d depth:%d nodes:%ld time:%d(ms) ",
+					bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
+			}
+			if (info->GAME_MODE == UCIMODE || info->POST_THINKING == TRUE) {
+				pvMoves = getPVLine(currentDepth, position);
+				if (!info->GAME_MODE == XBOARDMODE) {
+					printf("pv");
+				}
+				for (pvNumber = 0; pvNumber < pvMoves; ++pvNumber) {
+					printf(" %s", printMove(position->PVArray[pvNumber]));
+				}
+				printf("\n");
+			}
+
+			printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d\nOrdering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
+		}
+	}
+
+	if (info->GAME_MODE == UCIMODE) {
+		printf("bestmove %s\n", printMove(bestMove));
+	}
+	else if (info->GAME_MODE == XBOARDMODE) {
+		printf("move %s\n", printMove(bestMove));
+		makeMove(position, bestMove);
+	}
+	else {
+		printf("best move is: %s\n", printMove(bestMove));
+		makeMove(position, bestMove);
+	}
+	*/
 }
 
 
@@ -3632,6 +3738,11 @@ int main()
 	initializeHashTable(position->hashTable, 64);
 
 	boardStructure currentBoard[1];
+	currentBoard->hashTable->pTable = NULL;
+	initializeHashTable(currentBoard->hashTable, 64);
+
+	SearchInfoStructure info[1];
+	info->GAME_MODE = UCIMODE;
 	//moveListStructure list[1];
 
 	do {
@@ -3672,6 +3783,10 @@ int main()
 					break;
 				} else if (inputMove[0] == 't') {
 					takeMove(currentBoard);
+				}
+				else if (inputMove[0] == 's') {
+					info->depth = 4;
+					searchPosition(currentBoard, info);
 				}
 				else {
 					Move = parseMove(inputMove, currentBoard);
@@ -3894,7 +4009,7 @@ These are all the command the engine gets from the interface.
 	If one command is not send its value should be interpreted as it would not influence the search.
 	* searchmoves  ....
 		restrict search to this moves only
-		Example: After "position startpos" and "go infinite searchmoves e2e4 d2d4"
+		Example: After "position startpos" and "go INFINITEC searchmoves e2e4 d2d4"
 		the engine should only search the two moves e2e4 and d2d4 in the initial position.
 	* ponder
 		start searching in pondering mode.
@@ -3926,7 +4041,7 @@ These are all the command the engine gets from the interface.
 		search for a mate in x moves
 	* movetime
 		search exactly x mseconds
-	* infinite
+	* INFINITEC
 		search until the "stop" command. Do not exit the search without being told so in this mode!
 
 * stop
@@ -4233,9 +4348,9 @@ ucinewgame
 // set to false with this engine
 setoption name UCI_AnalyseMode value true
 
-// tell the engine to search infinite from the start position after 1.e4 e5
+// tell the engine to search INFINITEC from the start position after 1.e4 e5
 position startpos moves e2e4 e7e5
-go infinite
+go INFINITEC
 
 // the engine starts sending infos about the search to the GUI
 // (only some examples are given)
