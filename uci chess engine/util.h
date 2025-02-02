@@ -1,7 +1,7 @@
 #include "stdlib.h"
 
-#define DEBUG
-//#define PERFORMANCEMODE
+//#define DEBUG
+#define PERFORMANCEMODE
 
 typedef char s8;
 typedef unsigned char u8;
@@ -14,6 +14,8 @@ typedef unsigned long long u64;
 
 #define global_variable static
 #define internal static
+
+#define INPUTBUFFER 400 * 6
 
 #define BRD_SQ_NUM 120
 #define MAX_GAME_MOVES 2048
@@ -95,6 +97,8 @@ typedef unsigned long long u64;
 #define CASTLETESTFEN "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
 #define CASTLETEST2FEN "3rk2r/8/8/8/8/8/6p1/R3K2R w KQk - 0 1"
 #define PERFORMANCETESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
+#define WAC1 "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"
+#define WAC2 "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"
 #define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
 
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
