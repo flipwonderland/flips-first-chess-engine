@@ -6,7 +6,22 @@
 #include "stdio.h"
 #include "util.h"
 
+#ifdef _WIN32
+#include "windows.h"
+#else
+#include "time.h"
+#endif
 
+int getTimeMs() {
+#ifdef _WIN32
+	return GetTickCount();
+#else
+	struct timeval t;
+	gettimeofday(&t, NULL);
+	return t.tv_sec * 1000 + t.tv_usec / 1000;
+#endif
+
+}
 
 /*
 enum piece {
@@ -410,48 +425,6 @@ u64 generatePositionKey(const boardStructure* position) {
 }
 
 
-/*
-gameState clearBoard;
-gameState currentBoard;
-*/
-
-/*
-void clearGameState() {
-	for (int i = 0; i <= 63; i++) {
-		clearBoard.square[i] = piece::none;
-	}
-	clearBoard.enPassant = 0ULL;
-
-	clearBoard.whiteToMove = true;
-	clearBoard.whiteShortCastle = false;
-	clearBoard.whiteLongCastle = false;
-	clearBoard.blackLongCastle = false;
-	clearBoard.blackShortCastle = false;
-	clearBoard.movesPassed = 0;
-
-	clearBoard.allBitBoard = 0ULL;
-	clearBoard.whiteKingBitBoard = clearBoard.allBitBoard;
-	clearBoard.whitePawnBitBoard = clearBoard.allBitBoard;
-	clearBoard.whiteKnightBitBoard = clearBoard.allBitBoard;
-	clearBoard.whiteBishopBitBoard = clearBoard.allBitBoard;
-	clearBoard.whiteRookBitBoard = clearBoard.allBitBoard;
-	clearBoard.whiteQueenBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackKingBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackPawnBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackKnightBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackBishopBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackRookBitBoard = clearBoard.allBitBoard;
-	clearBoard.blackQueenBitBoard = clearBoard.allBitBoard;
-	
-
-	for (int i = 0; i <= 17696; i++) {
-		clearBoard.moves[i] = 0;
-	}
-	currentBoard = clearBoard;
-}
-*/
-
-
 
 
 std::string inputParser(std::string input, const int desiredToken) {
@@ -832,45 +805,6 @@ bool minorPiece[13] = { false, false, false, true, true, false, false, false, fa
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
 int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
 
-/*
-//got these from sebastian lagues vid :D
-int pawnValue = 100;
-int bishopValue = 300;
-int knightValue = 300;
-int rookValue = 500;
-int queenValue = 900;
-
-
-int countPieceMaterial() {
-	int material = 0;
-	int	piece = 0;
-	int side = 0;
-	for (int i = 0; i <= 63; i++) {
-		piece = currentBoard.square[i] & 0b00111;
-		side = currentBoard.square[i] & 0b11000;
-		switch (piece) {
-		case piece::none:
-			break;
-		case piece::pawn:
-			side == 1 ? material += pawnValue : material += -pawnValue;
-			break;
-		case piece::bishop:
-			side == 1 ? material += bishopValue : material += -bishopValue;
-			break;
-		case piece::knight:
-			side == 1 ? material += knightValue : material += -knightValue;
-			break;
-		case piece::rook:
-			side == 1 ? material += rookValue : material += -rookValue;
-			break;
-		case piece::queen:
-			side == 1 ? material += queenValue : material += -queenValue;
-			break;
-		}
-	}
-	return material;
-}
-*/
 
 static void updateListsMaterial(boardStructure* position) {
 	int piece;
@@ -1492,958 +1426,7 @@ void testMoveBoard(int moveTable, int boardArray) {
 
 }
 
-/*
-int moveTable;
-cout << "what move table do you want to look at ";
-cin >> moveTable;
-int boardArray;
-cout << "what array do you want to look at ";
-cin >> boardArray;
-testMoveBoard(moveTable, boardArray);
-*/
 
-/*
-bool pseudoLegalChecker(int from, int to, bool whitesTurn, bool enPassant[]) {
-
-	bool onEvenSquare = from % 2;
-	bool toEvenSquare = to % 2;
-	bool slidingMovePossible = false;
-	int slidingCheck = 0;
-
-	if (whitesTurn) {
-		switch (currentBoard.square[from]) {
-		case 9:  //piece::white && piece::king
-			switch (from - to) {
-			case -1:
-			case -7:
-			case -8:
-			case -9:
-			case 1:
-			case 7:
-			case 8:
-			case 9:
-				switch (currentBoard.square[to]) {
-				case 0:
-				case 17:
-				case 18:
-				case 19:
-				case 20:
-				case 21:
-				case 22:
-					return true;
-				default:
-					return false;
-				}
-			default:
-				return false;
-			}
-
-		case 10: //piece::white && piece::pawn
-			switch (to - from) {
-			case 8:
-				switch (currentBoard.square[to]) {
-				case 0:
-					return true;
-				default:
-					return false;
-				}
-			case 16: // this is the first double move
-				switch (from) { // for the first row of pawns
-				case 8:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-				case 14:
-				case 15:
-					switch (currentBoard.square[to]) {
-					case 0:
-						return true;
-					default:
-						return false;
-					}
-				default:
-					return false;
-				}
-
-			case 7: //captures here
-			case 9:
-				switch (currentBoard.square[to]) {
-				case 17:
-				case 18:
-				case 19:
-				case 20:
-				case 21:
-				case 22:
-					return true;
-				default:
-					if (enPassant[to])
-						return true;
-					else
-						return false;
-				}
-			default:
-				return false;
-			}
-		case 11: //piece::white && piece::knight:
-			switch (from - to) {
-			case -17:
-			case -15:
-			case -10:
-			case -6:
-			case 6:
-			case 10:
-			case 15:
-			case 17:
-				switch (currentBoard.square[to]) {
-				case 0:
-				case 17:
-				case 18:
-				case 19:
-				case 20:
-				case 21:
-				case 22:
-					return true;
-				default:
-					return false;
-				}
-			default:
-				return false;
-			}
-		case 12://piece::white && piece::bishop:
-
-			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
-				return false;
-			else {
-				if (moveTableDiagonal[from][to])
-					slidingMovePossible;
-			}
-			if (slidingMovePossible) {
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from; // might be able to remove this and just test the from, but will test that after I can confirm it by tying commands
-
-				bool directionFound = false;
-				int direction = 0; //nw will be 1, ne 2, sw 3, and se 4
-				int infiniteLoopBreaker = 10000;
-				while (!directionFound) {
-					int NWtest = from;
-					int NEtest = from;
-					int SWtest = from;
-					int SEtest = from;
-					NWtest += 7;
-					NEtest += 9;
-					SWtest -= 9;
-					SEtest -= 7;
-					infiniteLoopBreaker--;
-
-					if (NWtest == to) {
-						directionFound = true;
-						direction = 1;
-					}
-					if (NEtest == to) {
-						directionFound = true;
-						direction = 2;
-					}
-					if (SWtest == to) {
-						directionFound = true;
-						direction = 3;
-					}
-					if (SEtest == to) {
-						directionFound = true;
-						direction = 4;
-					}
-					if (infiniteLoopBreaker == 0) {
-						std::cout << "oops, something caused an infinite loop in the bishop legal move checker :P" << "\n";
-					}
-				}
-				//later I'll optimize this, it'll run the second branch even if the solution was on the first branch
-				//this function is important to be optimal because it'll be run for every piece on every board
-				if (direction == 1) {
-					while (!pieceInTheWayNW) {
-						toGoToTest += 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNW = true;
-						}
-
-					}
-				}
-				if (direction == 2) {
-					while (!pieceInTheWayNE) {
-						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNE = true;
-						}
-
-					}
-				}
-				if (direction == 3) {
-					while (!pieceInTheWaySW) {
-						toGoToTest -= 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySW = true;
-						}
-					}
-				}
-				if (direction == 4) {
-					while (!pieceInTheWaySE) {
-						toGoToTest -= 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySE = true;
-						}
-
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 17:
-					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 19:
-					case 20:
-					case 21:
-					case 22:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		case 13://white + rook
-			if (moveTableCardinal[from][to])
-				slidingMovePossible;
-
-			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
-				if (from < to) {
-					while (!pieceInTheWayN) {
-						toGoToTest += 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayN = true;
-						}
-
-					}
-					while (!pieceInTheWayE) {
-						toGoToTest += 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayE = true;
-						}
-
-					}
-
-				}
-				if (from > to) {
-					while (!pieceInTheWayS) {
-						toGoToTest -= 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayS = true;
-						}
-					}
-					while (!pieceInTheWayW) {
-						toGoToTest -= 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayW = true;
-						}
-
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 17:
-					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 19:
-					case 20:
-					case 21:
-					case 22:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		case 14://white + queen
-			if (moveTableCardinal[from][to] || moveTableDiagonal) //this is just bishop + rook 
-				slidingMovePossible;
-
-			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
-				if (from < to) {
-					while (!pieceInTheWayE) {
-						toGoToTest += 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayE = true;
-						}
-
-					}
-					while (!pieceInTheWayNW) {
-						toGoToTest += 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNW = true;
-						}
-
-					}
-					while (!pieceInTheWayN) {
-						toGoToTest += 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayN = true;
-						}
-
-					}
-					while (!pieceInTheWayNE) {
-						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNE = true;
-						}
-
-					}
-
-
-				}
-				if (from > to) {
-					while (!pieceInTheWayW) {
-						toGoToTest -= 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayW = true;
-						}
-
-					}
-					while (!pieceInTheWaySE) {
-						toGoToTest -= 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySE = true;
-						}
-
-					}
-					while (!pieceInTheWayS) {
-						toGoToTest -= 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayS = true;
-						}
-					}
-					while (!pieceInTheWaySW) {
-						toGoToTest -= 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySW = true;
-						}
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 17:
-					case 18: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 19:
-					case 20:
-					case 21:
-					case 22:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		default:
-			return false;
-		}
-	}
-	else {
-		switch (currentBoard.square[from]) {
-		case 17: //piece::black && piece::king:
-			switch (from - to) {
-			case -1:
-			case -7:
-			case -8:
-			case -9:
-			case 1:
-			case 7:
-			case 8:
-			case 9:
-				switch (currentBoard.square[to]) {
-				case 0:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-				case 14:
-					return true;
-				default:
-					return false;
-				}
-			default:
-				return false;
-			}
-		case 18: //piece::black && piece::pawn:
-			switch (to - from) {
-			case -8:
-				switch (currentBoard.square[to]) {
-				case 0:
-					return true;
-				default:
-					return false;
-				}
-			case -16: // this is the first double move
-				switch (from) { // for the first row of pawns
-				case 48:
-				case 49:
-				case 50:
-				case 51:
-				case 52:
-				case 53:
-				case 54:
-				case 55:
-					switch (currentBoard.square[to]) {
-					case 0:
-						return true;
-					default:
-						return false;
-					}
-				default:
-					return false;
-				}
-			case -7: //captures here
-			case -9:
-				switch (currentBoard.square[to]) {
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-				case 14:
-					return true;
-				default:
-					if (enPassant[to])
-						return true;
-					else
-						return false;
-				}
-
-			default:
-				return false;
-			}
-		case 19: //piece::black && piece::knight:
-			switch (from - to) {
-			case -17:
-			case -15:
-			case -10:
-			case -6:
-			case 6:
-			case 10:
-			case 15:
-			case 17:
-				switch (currentBoard.square[to]) {
-				case 0:
-				case 9:
-				case 10:
-				case 11:
-				case 12:
-				case 13:
-				case 14:
-					return true;
-				default:
-					return false;
-				}
-			default:
-				return false;
-			}
-		case 20: //piece::black && piece::bishop:
-			if (!onEvenSquare == toEvenSquare) //I think this is a pretty cool optimization, because bishops can only move to a square that is the same color, I'll have to include this in the actual legal move function
-				return false;
-			else {
-				if (moveTableDiagonal[from][to])
-					slidingMovePossible;
-			}
-			if (slidingMovePossible) {
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
-				if (from < to) {
-					while (!pieceInTheWayNW) {
-						toGoToTest += 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNW = true;
-						}
-
-					}
-					while (!pieceInTheWayNE) {
-						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNE = true;
-						}
-
-					}
-
-				}
-				if (from > to) {
-					while (!pieceInTheWaySW) {
-						toGoToTest -= 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySW = true;
-						}
-					}
-					while (!pieceInTheWaySE) {
-						toGoToTest -= 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySE = true;
-						}
-
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 14:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		case 21: //piece::black && piece::rook:
-			if (moveTableCardinal[from][to])
-				slidingMovePossible;
-
-			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
-				if (from < to) {
-					while (!pieceInTheWayN) {
-						toGoToTest += 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayN = true;
-						}
-
-					}
-					while (!pieceInTheWayE) {
-						toGoToTest += 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayE = true;
-						}
-
-					}
-
-				}
-				if (from > to) {
-					while (!pieceInTheWayS) {
-						toGoToTest -= 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayS = true;
-						}
-					}
-					while (!pieceInTheWayW) {
-						toGoToTest -= 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayW = true;
-						}
-
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 14:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		case 22: //piece::black && piece::queen:
-			if (moveTableCardinal[from][to] || moveTableDiagonal) //this is just bishop + rook 
-				slidingMovePossible;
-
-			if (slidingMovePossible) {
-				bool pieceInTheWayN = false;
-				bool pieceInTheWayE = false;
-				bool pieceInTheWayS = false;
-				bool pieceInTheWayW = false;
-				bool pieceInTheWayNW = false;
-				bool pieceInTheWayNE = false;
-				bool pieceInTheWaySW = false;
-				bool pieceInTheWaySE = false;
-				bool legalMove = false;
-				int targetSquare = to;
-				int toGoToTest = from;
-				if (from < to) {
-					while (!pieceInTheWayE) {
-						toGoToTest += 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayE = true;
-						}
-
-					}
-					while (!pieceInTheWayNW) {
-						toGoToTest += 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNW = true;
-						}
-
-					}
-					while (!pieceInTheWayN) {
-						toGoToTest += 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayN = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayN = true;
-						}
-
-					}
-					while (!pieceInTheWayNE) {
-						toGoToTest += 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayNE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayNE = true;
-						}
-
-					}
-
-
-				}
-				if (from > to) {
-					while (!pieceInTheWayW) {
-						toGoToTest -= 1;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayW = true;
-						}
-
-					}
-					while (!pieceInTheWaySE) {
-						toGoToTest -= 7;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySE = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySE = true;
-						}
-
-					}
-					while (!pieceInTheWayS) {
-						toGoToTest -= 8;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWayS = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWayS = true;
-						}
-					}
-					while (!pieceInTheWaySW) {
-						toGoToTest -= 9;
-						if (!currentBoard.square[toGoToTest] == piece::none) {
-							pieceInTheWaySW = false;
-							if (toGoToTest == to) {
-								legalMove = true;
-								return true;
-							}
-						}
-						else {
-							pieceInTheWaySW = true;
-						}
-					}
-				}
-				if (!legalMove) captures {
-					switch (currentBoard.square[to]) {
-					case 9: //don't have to put the none because it'll already be 'legalMove' if it is none, from the part above
-					case 10:
-					case 11:
-					case 12:
-					case 13:
-					case 14:
-						return true;
-					default:
-						return false;
-					}
-				}
-				else {
-					return true;
-				}
-			}
-			else {
-				return false;
-			}
-		}
-
-
-	}
-
-	return false;
-
-
-}
-*/
 
 const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
 const int rookDirection[4] = { -1, -10,	1, 10 };
@@ -3123,9 +2106,11 @@ static void movePiece(const int from, const int to, boardStructure* position) {
 #ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
+		std::cout << "move from > " << from << "\n";
 	}
 	if (!squareOnBoard(to)) {
 		std::cout << "move to is invalid\n";
+		std::cout << "move to > " << to << "\n";
 	}
 #endif
 
@@ -3201,9 +2186,13 @@ static void takeMove(boardStructure* position) {
 #ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
+		std::cout << "move from > " << from << "\n";
+
 	}
 	if (!squareOnBoard(to)) {
 		std::cout << "move to is invalid\n";
+		std::cout << "move to > " << to << "\n";
+
 	}
 #endif
 
@@ -3312,9 +2301,11 @@ static bool makeMove(boardStructure* position, int move) {
 #ifdef DEBUG
 	if (!squareOnBoard(from)) {
 		std::cout << "move from is invalid\n";
+		std::cout << "move from > " << from << "\n";
 	}
 	if (!squareOnBoard(to)) {
 		std::cout << "move to is invalid\n";
+		std::cout << "move to > " << from << "\n";
 	}
 	if (!sideValid(side)) {
 		std::cout << "side given to make move is not valid\n";
@@ -3458,9 +2449,6 @@ static bool makeMove(boardStructure* position, int move) {
 	return true;
 }
 
-int search() {
-
-}
 
 //here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
 /*
@@ -3559,7 +2547,8 @@ void printMoveList(const moveListStructure* list) {
 
 }
 
-bool parseMove(char* pointerCharacter, boardStructure* position) {
+/*
+bool parseMove(std::string pointerCharacter, boardStructure* position) {
 
 #ifdef DEBUG
 	if (!checkBoard(position)) {
@@ -3567,10 +2556,14 @@ bool parseMove(char* pointerCharacter, boardStructure* position) {
 	}
 #endif
 
-	if (pointerCharacter[1] > '8' || pointerCharacter[1] < '1') return NOMOVE;
-	if (pointerCharacter[3] > '8' || pointerCharacter[3] < '1') return NOMOVE;
-	if (pointerCharacter[0] > 'h' || pointerCharacter[0] < 'a') return NOMOVE;
-	if (pointerCharacter[2] > 'h' || pointerCharacter[2] < 'a') return NOMOVE;
+	if (pointerCharacter[1] > '8' || pointerCharacter[1] < '1') 
+		return NOMOVE;
+	if (pointerCharacter[3] > '8' || pointerCharacter[3] < '1') 
+		return NOMOVE;
+	if (pointerCharacter[0] > 'h' || pointerCharacter[0] < 'a') 
+		return NOMOVE;
+	if (pointerCharacter[2] > 'h' || pointerCharacter[2] < 'a') 
+		return NOMOVE;
 
 	int from = FR2SQ(pointerCharacter[0] - 'a', pointerCharacter[1] - '1');
 	int to = FR2SQ(pointerCharacter[2] - 'a', pointerCharacter[3] - '1');
@@ -3579,6 +2572,9 @@ bool parseMove(char* pointerCharacter, boardStructure* position) {
 	if (!squareOnBoard(from) || !squareOnBoard(to)) {
 		std::cout << "to or from not on board in parsemove\n";
 	}
+
+	std::cout << "parsemove from > " << from << "\n";
+	std::cout << "parsemove to > " << to << "\n";
 #endif
 
 	moveListStructure list[1];
@@ -3607,6 +2603,53 @@ bool parseMove(char* pointerCharacter, boardStructure* position) {
 				continue;
 			}
 			return move;
+		}
+	}
+
+	return NOMOVE;
+}
+*/
+
+int parseMove(char* ptrChar, boardStructure* position) {
+
+	//ASSERT(CheckBoard(position));
+
+	if (ptrChar[1] > '8' || ptrChar[1] < '1') return NOMOVE;
+	if (ptrChar[3] > '8' || ptrChar[3] < '1') return NOMOVE;
+	if (ptrChar[0] > 'h' || ptrChar[0] < 'a') return NOMOVE;
+	if (ptrChar[2] > 'h' || ptrChar[2] < 'a') return NOMOVE;
+
+	int from = FR2SQ(ptrChar[0] - 'a', ptrChar[1] - '1');
+	int to = FR2SQ(ptrChar[2] - 'a', ptrChar[3] - '1');
+
+	//ASSERT(SqOnBoard(from) && SqOnBoard(to));
+
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+	int MoveNum = 0;
+	int Move = 0;
+	int PromPce = empty;
+
+	for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+		Move = list->moves[MoveNum].move;
+		if (FROMSQ(Move) == from && TOSQ(Move) == to) {
+			PromPce = PROMOTED(Move);
+			if (PromPce != empty) {
+				if (IsRQ(PromPce) && !IsBQ(PromPce) && ptrChar[4] == 'r') {
+					return Move;
+				}
+				else if (!IsRQ(PromPce) && IsBQ(PromPce) && ptrChar[4] == 'b') {
+					return Move;
+				}
+				else if (IsRQ(PromPce) && IsBQ(PromPce) && ptrChar[4] == 'q') {
+					return Move;
+				}
+				else if (IsKn(PromPce) && ptrChar[4] == 'n') {
+					return Move;
+				}
+				continue;
+			}
+			return Move;
 		}
 	}
 
@@ -3654,6 +2697,8 @@ static void perftTest(int depth, boardStructure* position) {
 	}
 #endif
 
+	int start = getTimeMs();
+
 	printSquareBoard(position);
 	printf("\nStarting Test To Depth:%d\n", depth);
 	leafNodes = 0;
@@ -3674,13 +2719,26 @@ static void perftTest(int depth, boardStructure* position) {
 		long oldNodes = leafNodes - cumNodes;
 		printf("move %d : %s : %ld\n", moveNumber + 1, printMove(move), oldNodes); //cumulative nodes I think, odd choice of word to shorten
 	}
-
-	//printf("\nTest Complete : %ld nodes visited in %dms\n", leafNodes, GetTimeMs() - start);
-	printf("\nTest Complete : %ld nodes visited", leafNodes);
+	int timeDifferential = getTimeMs() - start;
+	int nodesPerSecond = (leafNodes / timeDifferential) * 1000;
+	printf("\nTest Complete : %ld nodes visited in %dms, NPS: %d\n", leafNodes, timeDifferential, nodesPerSecond);
 
 	return;
 }
 
+static bool isRepitition(const boardStructure *position) {
+
+	int i;
+
+	for (i = position->historyPly - position->fiftyMove; i < position->historyPly - 1; i++) {
+		if (position->positionKey == position->history[i].positionKey) {
+			return true;
+		}
+	}
+
+	return false;
+
+}
 
 
 void initializeAll() {
@@ -3723,7 +2781,7 @@ int main()
 		}
 		else if (command == "debug") {
 			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(CURRENTTESTFEN, currentBoard);
+			parseFen(STARTFEN, currentBoard);
 			//printSquareBoard(currentBoard);
 			//cout << "\n";
 
@@ -3731,8 +2789,36 @@ int main()
 
 			//printMoveList(list);
 			
-			perftTest(4, currentBoard);
+			//perftTest(4, currentBoard);
+			char inputMove[6];
+			int Move = NOMOVE;
 
+			while (true) {
+				printSquareBoard(currentBoard);
+				printf("enter a move> ");
+				fgets(inputMove, 6, stdin);
+
+				if (inputMove[0] == 'q') {
+					break;
+				} else if (inputMove[0] == 't') {
+					takeMove(currentBoard);
+				}
+				else {
+					Move = parseMove(inputMove, currentBoard);
+					if (Move != NOMOVE) {
+						makeMove(currentBoard, Move);
+						/*
+						if (isRepitition(currentBoard)) {
+							std::cout << "repititon made\n";
+						}
+						*/
+					}
+					else {
+						cout << "move not parsed\n";
+					}
+				}
+				fflush(stdin);
+			}
 			
 
 		}
@@ -3748,16 +2834,18 @@ int main()
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
+
 			//clearGameState(); //this might create unexpected behavior if the gui does not send this every time
 			//boardLoaded = false;
 			//cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
-			/*if (inputParser(input, 1) == "startpos") {
+			if (inputParser(input, 1) == "startpos") {
 				cout << "startpos chosen \n";
-				fenToGamestate(startingFenString);
+				parseFen(STARTFEN, currentBoard);
 				boardLoaded = true;
 			}
+			/*
 			else {
 				std::string positionChosen = inputParser(input, 1);
 				cout << "custom FEN chosen, FEN is: " << positionChosen << "\n";
@@ -3792,6 +2880,10 @@ int main()
 			else {
 				cout << "board is not loaded!" << "\n";
 			}
+		}
+		else if (command == "perft") {
+			int perftAmount = std::stoi((inputParser(input, 1)));
+			perftTest(perftAmount, currentBoard);
 		}
 		else {
 			cout << "unknown command, try again. command: " << command << "\n";
