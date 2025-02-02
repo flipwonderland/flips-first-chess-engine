@@ -1,7 +1,7 @@
 #include "stdlib.h"
 
-//#define DEBUG
-#define PERFORMANCEMODE
+#define DEBUG
+//#define PERFORMANCEMODE
 
 typedef char s8;
 typedef unsigned char u8;
@@ -21,6 +21,9 @@ typedef unsigned long long u64;
 //this would be better, I'd run into issues if someone played a longer game which is possible but I'm gonna save on ram and do this instead
 #define MAXPOSITIONMOVES 218 // this is the max number of moves that we would expect to be in a single position
 #define MAXDEPTH 512
+
+#define DRAW 0
+#define MATE INFINITE
 
 //these are from the bluefever software series
 #define RAND_64 (	(u64)rand() | \
@@ -69,6 +72,7 @@ typedef unsigned long long u64;
 
 #define NOMOVE 0
 
+
 #define HASH_PCE(piece,square) (position->positionKey ^= (pieceKeys[(piece)][(square)]))
 #define HASH_CA (position->positionKey ^= (castleKeys[(position->castlePermission)]))
 #define HASH_SIDE (position->positionKey ^= (sideKey))
@@ -89,8 +93,9 @@ typedef unsigned long long u64;
 #define CASTLETESTFEN "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
 #define CASTLETEST2FEN "3rk2r/8/8/8/8/8/6p1/R3K2R w KQk - 0 1"
 #define PERFORMANCETESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
-#define CURRENTTESTFEN "n1n5/PPPk4/8/8/8/8/4Kppp/5N1N w - - 0 1"
+#define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
 
+enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
 
 inline int
 clamp(int min, int val, int max) {

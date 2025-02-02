@@ -23,6 +23,8 @@ int getTimeMs() {
 
 }
 
+//PV = principal variation, the best move as seen so far along with the line
+
 /*
 enum piece {
 	none = 0b00000,
@@ -91,6 +93,33 @@ typedef struct {
 
 } moveListStructure;
 
+typedef struct {
+	u64 positionKey;
+	int move;
+} PVEntryStructure; //this is to store the move every time a new best move is found
+
+typedef struct {
+	PVEntryStructure* pTable;
+	int numEntries;
+} PVTableStructure;
+
+
+typedef struct {
+	u64 positionKey;
+	int move;
+	int score;
+	int depth;
+	int flags;
+} hashEntryStructure;
+
+typedef struct {
+	hashEntryStructure* pTable;
+	int numEntries;
+	int newWrite;
+	int overWrite;
+	int hit;
+	int cut;
+} hashTableStructure;
 
 typedef struct {
 
@@ -139,9 +168,31 @@ typedef struct {
 	int pieceNumber[13];
 	int pieceList[13][10];
 
+	hashTableStructure hashTable[1];
+	PVTableStructure PVTable[1];
+	int PVArray[MAXDEPTH];
+
+	int searchHistory[13][BRD_SQ_NUM];
+	int searchKillers[2][MAXDEPTH]; //this one is the move that beat the alpha number
+
 } boardStructure;
 
+typedef struct {
 
+	int startTime;
+	int stopTime;
+	int depth;
+	int depthset;
+	int movesToGo;
+	int timeset;
+
+	int infinite;
+	long nodes;
+
+	int quit;
+	int stopped;
+
+} SearchInfoStructure;
 
 /*
 class gameState {
@@ -283,7 +334,41 @@ void initializeHashKeys() {
 	}
 }
 
+void clearHashTable(hashTableStructure* table) {
 
+	hashEntryStructure* tableEntry;
+
+	for (tableEntry = table->pTable; tableEntry < table->pTable + table->numEntries; tableEntry++) {
+		tableEntry->positionKey = 0ULL;
+		tableEntry->move = NOMOVE;
+		tableEntry->depth = 0;
+		tableEntry->score = 0;
+		tableEntry->flags = 0;
+	}
+	table->newWrite = 0;
+}
+
+void initializeHashTable(hashTableStructure* table, const int megaBytes) {
+
+	int HashSize = 0x100000 * megaBytes;
+	table->numEntries = HashSize / sizeof(hashEntryStructure);
+	table->numEntries -= 2;
+
+	if (table->pTable != NULL) {
+		free(table->pTable);
+	}
+
+	table->pTable = (hashEntryStructure*)malloc(table->numEntries * sizeof(hashEntryStructure));
+	if (table->pTable == NULL) {
+		printf("Hash Allocation Failed, trying %dmega bytes...\n", megaBytes / 2);
+		initializeHashTable(table, megaBytes / 2);
+	}
+	else {
+		clearHashTable(table);
+		printf("HashTable init complete with %d entries\n", table->numEntries);
+	}
+
+}
 
 
 //got these from bluefever softwares series
@@ -1034,6 +1119,7 @@ static bool checkBoard(const boardStructure* position) {
 		return false;
 }
 
+
 static void resetBoard(boardStructure* position) {
 	int i;
 
@@ -1083,7 +1169,6 @@ static void resetBoard(boardStructure* position) {
 	position->castlePermission = 0;
 
 	position->positionKey = 0ULL;
-
 
 
 }
@@ -1999,6 +2084,8 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 
 }
 
+
+
 static void clearPiece(const int square, boardStructure* position) {
 #ifdef DEBUG
 	if (!squareOnBoard(square)) {
@@ -2271,6 +2358,8 @@ static void takeMove(boardStructure* position) {
 #endif
 }
 
+
+
 const int castlePermSheet[120] = {
 	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
 	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
@@ -2449,29 +2538,555 @@ static bool makeMove(boardStructure* position, int move) {
 	return true;
 }
 
+static int moveExists(boardStructure* position, const int move) {
 
-//here I'll make a thing that prints a screen for the legal moves that a piece can make, later I'll have a thing to print the board
-/*
-void printMovesForPiece(int from, bool whitesTurn, bool enPassant[]) {
-	int place = 0;
-	for (int rank = 7; rank >= 0; rank--) {
-		for (int file = 7; file >= 0; file--) {
-			place = (rank * 8) + file;
-			if (pseudoLegalChecker(from, place, whitesTurn, enPassant))
-				std::cout << "1";
-			else
-				std::cout << "0";
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+
+	int moveNumber;
+	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
+
+		if (!makeMove(position, list->moves[moveNumber].move)) {
+			continue;
 		}
-		std::cout << "\n";
+		takeMove(position);
+		if (list->moves[moveNumber].move == move) {
+			return TRUE;
+		}
 	}
+	return FALSE;
+}
+
+const int pawnIsolated = -10;
+const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
+const int rookOpenFile = 10;
+const int rookSemiOpenFile = 5;
+const int queenOpenFile = 5;
+const int queenSemiOpenFile = 3;
+const int bishopPair = 30;
+
+const int pawnTable[64] = {
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
+10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
+5	,	0	,	0	,	5	,	5	,	0	,	0	,	5	,
+0	,	0	,	10	,	20	,	20	,	10	,	0	,	0	,
+5	,	5	,	5	,	10	,	10	,	5	,	5	,	5	,
+10	,	10	,	10	,	20	,	20	,	10	,	10	,	10	,
+20	,	20	,	20	,	30	,	30	,	20	,	20	,	20	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+};
+
+const int knightTable[64] = {
+0	,	-10	,	0	,	0	,	0	,	0	,	-10	,	0	,
+0	,	0	,	0	,	5	,	5	,	0	,	0	,	0	,
+0	,	0	,	10	,	10	,	10	,	10	,	0	,	0	,
+0	,	0	,	10	,	20	,	20	,	10	,	5	,	0	,
+5	,	10	,	15	,	20	,	20	,	15	,	10	,	5	,
+5	,	10	,	10	,	20	,	20	,	10	,	10	,	5	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+};
+
+const int bishopTable[64] = {
+0	,	0	,	-10	,	0	,	0	,	-10	,	0	,	0	,
+0	,	0	,	0	,	10	,	10	,	0	,	0	,	0	,
+0	,	0	,	10	,	15	,	15	,	10	,	0	,	0	,
+0	,	10	,	15	,	20	,	20	,	15	,	10	,	0	,
+0	,	10	,	15	,	20	,	20	,	15	,	10	,	0	,
+0	,	0	,	10	,	15	,	15	,	10	,	0	,	0	,
+0	,	0	,	0	,	10	,	10	,	0	,	0	,	0	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+};
+
+const int rookTable[64] = {
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0	,
+25	,	25	,	25	,	25	,	25	,	25	,	25	,	25	,
+0	,	0	,	5	,	10	,	10	,	5	,	0	,	0
+};
+
+const int kingEndGame[64] = {
+	-50	,	-10	,	0	,	0	,	0	,	0	,	-10	,	-50	,
+	-10,	0	,	10	,	10	,	10	,	10	,	0	,	-10	,
+	0	,	10	,	20	,	20	,	20	,	20	,	10	,	0	,
+	0	,	10	,	20	,	40	,	40	,	20	,	10	,	0	,
+	0	,	10	,	20	,	40	,	40	,	20	,	10	,	0	,
+	0	,	10	,	20	,	20	,	20	,	20	,	10	,	0	,
+	-10,	0	,	10	,	10	,	10	,	10	,	0	,	-10	,
+	-50	,	-10	,	0	,	0	,	0	,	0	,	-10	,	-50
+};
+
+const int kingOpening[64] = {
+	0	,	5	,	5	,	-10	,	-10	,	0	,	10	,	5	,
+	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,
+	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,
+	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,
+	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,
+	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,
+	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,
+	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70
+};
+
+int mirror64[64] = {
+56	,	57	,	58	,	59	,	60	,	61	,	62	,	63	,
+48	,	49	,	50	,	51	,	52	,	53	,	54	,	55	,
+40	,	41	,	42	,	43	,	44	,	45	,	46	,	47	,
+32	,	33	,	34	,	35	,	36	,	37	,	38	,	39	,
+24	,	25	,	26	,	27	,	28	,	29	,	30	,	31	,
+16	,	17	,	18	,	19	,	20	,	21	,	22	,	23	,
+8	,	9	,	10	,	11	,	12	,	13	,	14	,	15	,
+0	,	1	,	2	,	3	,	4	,	5	,	6	,	7
+};
+
+#define MIRROR64(sq) (mirror64[(sq)])
+
+int evaluatePosition(const boardStructure *position) {
+
+	int piece;
+	int pieceNumber;
+	int square;
+	int score = position->material[white] - position->material[black];
+	
+
+	piece = wP;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval position func\n";
+		}
+		if (SQ64(square) < 0 || SQ64(square) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score += pawnTable[SQ64(square)];
+		/*
+		if ((IsolatedMask[SQ64(sq)] & pos->pawns[WHITE]) == 0) {
+			//printf("wP Iso:%s\n",PrSq(sq));
+			score += PawnIsolated;
+		}
+
+		if ((WhitePassedMask[SQ64(sq)] & pos->pawns[BLACK]) == 0) {
+			//printf("wP Passed:%s\n",PrSq(sq));
+			score += PawnPassed[RanksBrd[sq]];
+		}
+		*/
+
+	}
+
+	piece = bP;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score -= pawnTable[MIRROR64(SQ64(square))];
+
+		/*
+		if ((IsolatedMask[SQ64(sq)] & pos->pawns[BLACK]) == 0) {
+			//printf("bP Iso:%s\n",PrSq(sq));
+			score -= PawnIsolated;
+		}
+
+		if ((BlackPassedMask[SQ64(sq)] & pos->pawns[WHITE]) == 0) {
+			//printf("bP Passed:%s\n",PrSq(sq));
+			score -= PawnPassed[7 - RanksBrd[sq]];
+		}
+		*/
+	}
+
+	piece = wN;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score += knightTable[SQ64(square)];
+	}
+
+	piece = bN;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score -= knightTable[MIRROR64(SQ64(square))];
+	}
+
+	piece = wB;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];		
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score += bishopTable[SQ64(square)];
+	}
+
+	piece = bB;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score -= bishopTable[MIRROR64(SQ64(square))];
+	}
+
+	piece = wR;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score += rookTable[SQ64(square)];
+		/*
+		ASSERT(FileRankValid(FilesBrd[square]));
+		*/
+		/*
+		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
+			score += RookOpenFile;
+		}
+		else if (!(position->pawns[WHITE] & FileBBMask[FilesBrd[square]])) {
+			score += RookSemiOpenFile;
+		}
+		*/
+	}
+
+	piece = bR;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		score -= rookTable[MIRROR64(SQ64(square))];
+		/*
+		ASSERT(FileRankValid(FilesBrd[square]));
+		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
+			score -= RookOpenFile;
+		}
+		else if (!(position->pawns[BLACK] & FileBBMask[FilesBrd[square]])) {
+			score -= RookSemiOpenFile;
+		}
+		*/
+	}
+
+	piece = wQ;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		/*
+		ASSERT(FileRankValid(FilesBrd[square]));
+		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
+			score += QueenOpenFile;
+		}
+		else if (!(position->pawns[WHITE] & FileBBMask[FilesBrd[square]])) {
+			score += QueenSemiOpenFile;
+		}
+		*/
+	}
+
+	piece = bQ;
+	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+		square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
+		if (!squareOnBoard(square)) {
+			std::cout << "square not on board in eval func\n";
+		}
+		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+			std::cout << "square in invalid position in eval func\n";
+		}
+#endif
+		/*
+		ASSERT(FileRankValid(FilesBrd[square]));
+		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
+			score -= QueenOpenFile;
+		}
+		else if (!(position->pawns[BLACK] & FileBBMask[FilesBrd[square]])) {
+			score -= QueenSemiOpenFile;
+		}
+		*/
+	}
+	//8/p6k/6p1/5p2/P4K2/8/5pB1/8 b - - 2 62 
+	piece = wK;
+	square = position->pieceList[piece][0];
+#ifdef DEBUG
+	if (!squareOnBoard(square)) {
+		std::cout << "square not on board in eval func\n";
+	}
+	if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+		std::cout << "square in invalid position in eval func\n";
+	}
+#endif
+	/*
+	if ((position->material[BLACK] <= ENDGAME_MAT)) {
+		score += KingE[SQ64(square)];
+	}
+	else {
+		score += KingO[SQ64(square)];
+	}
+	*/
+
+	piece = bK;
+	square = position->pieceList[piece][0];
+#ifdef DEBUG
+	if (!squareOnBoard(square)) {
+		std::cout << "square not on board in eval func\n";
+	}
+	if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
+		std::cout << "square in invalid position in eval func\n";
+	}
+#endif
+	/*
+	if ((position->material[WHITE] <= ENDGAME_MAT)) {
+		score -= KingE[MIRROR64(SQ64(square))];
+	}
+	else {
+		score -= KingO[MIRROR64(SQ64(square))];
+	}
+	*/
+
+	if (position->pieceNumber[wB] >= 2) score += bishopPair;
+	if (position->pieceNumber[bB] >= 2) score -= bishopPair;
+
+	if (position->side == white) {
+		return score;
+	}
+	else {
+		return -score;
+	}
+	
+	
+	return 0;
+}
+
+static int probePVMove(const boardStructure* position) {
+
+	int index = position->positionKey % position->hashTable->numEntries;
+#ifdef DEBUG
+	if (index < 0 && index > position->hashTable->numEntries - 1) {
+		std::cout << "invalid index in probe pv move\n";
+	}
+#endif
+	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
+		return position->hashTable->pTable[index].move;
+	}
+
+	return NOMOVE;
+}
+
+static int getPVLine(const int depth, boardStructure* position) {
+
+#ifdef DEBUG
+	if (!(depth < MAXDEPTH) || !(depth >= 1)) {
+		std::cout << "invalid depth given to pv line\n";
+	}
+#endif
+	int move = probePVMove(position);
+	int count = 0;
+
+	while (move != NOMOVE && count < depth) {
+
+#ifdef DEBUG
+		if (!(count < MAXDEPTH)) {
+			std::cout << "count outside pv array\n";
+		}
+#endif
+		if (moveExists(position, move)) {
+			makeMove(position, move);
+			position->PVArray[count] = move;
+			count++;
+		}
+		else {
+			break;
+		}
+		move = probePVMove(position);
+	}
+
+	while (position->ply > 0) {
+		takeMove(position);
+	}
+
+	return count;
+
+}
+
+/*
+void ClearHashTable(S_HASHTABLE* table) {
+
+	S_HASHENTRY* tableEntry;
+
+	for (tableEntry = table->pTable; tableEntry < table->pTable + table->numEntries; tableEntry++) {
+		tableEntry->posKey = 0ULL;
+		tableEntry->move = NOMOVE;
+		tableEntry->depth = 0;
+		tableEntry->score = 0;
+		tableEntry->flags = 0;
+	}
+	table->newWrite = 0;
+}
+
+void InitHashTable(S_HASHTABLE* table, const int MB) {
+
+	int HashSize = 0x100000 * MB;
+	table->numEntries = HashSize / sizeof(S_HASHENTRY);
+	table->numEntries -= 2;
+
+	if (table->pTable != NULL) {
+		free(table->pTable);
+	}
+
+	table->pTable = (S_HASHENTRY*)malloc(table->numEntries * sizeof(S_HASHENTRY));
+	if (table->pTable == NULL) {
+		printf("Hash Allocation Failed, trying %dMB...\n", MB / 2);
+		InitHashTable(table, MB / 2);
+	}
+	else {
+		ClearHashTable(table);
+		printf("HashTable init complete with %d entries\n", table->numEntries);
+	}
+
+}
+
+int ProbeHashEntry(S_BOARD* pos, int* move, int* score, int alpha, int beta, int depth) {
+
+	int index = pos->posKey % pos->HashTable->numEntries;
+
+	ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
+	ASSERT(depth >= 1 && depth < MAXDEPTH);
+	ASSERT(alpha < beta);
+	ASSERT(alpha >= -INFINITE && alpha <= INFINITE);
+	ASSERT(beta >= -INFINITE && beta <= INFINITE);
+	ASSERT(pos->ply >= 0 && pos->ply < MAXDEPTH);
+
+	if (pos->HashTable->pTable[index].posKey == pos->posKey) {
+		*move = pos->HashTable->pTable[index].move;
+		if (pos->HashTable->pTable[index].depth >= depth) {
+			pos->HashTable->hit++;
+
+			ASSERT(pos->HashTable->pTable[index].depth >= 1 && pos->HashTable->pTable[index].depth < MAXDEPTH);
+			ASSERT(pos->HashTable->pTable[index].flags >= HFALPHA && pos->HashTable->pTable[index].flags <= HFEXACT);
+
+			*score = pos->HashTable->pTable[index].score;
+			if (*score > ISMATE) *score -= pos->ply;
+			else if (*score < -ISMATE) *score += pos->ply;
+
+			switch (pos->HashTable->pTable[index].flags) {
+
+				ASSERT(*score >= -INFINITE && *score <= INFINITE);
+
+			case HFALPHA: if (*score <= alpha) {
+				*score = alpha;
+				return TRUE;
+			}
+						break;
+			case HFBETA: if (*score >= beta) {
+				*score = beta;
+				return TRUE;
+			}
+					   break;
+			case HFEXACT:
+				return TRUE;
+				break;
+			default: ASSERT(FALSE); break;
+			}
+		}
+	}
+
+	return FALSE;
 }
 */
 
-/*	int pieceToTest;
-cout << "what piece do you want to see the moves for ";
-cin >> pieceToTest;
-printMovesForPiece(pieceToTest, currentBoard.whiteToMove, currentBoard.enPassant);
-*/
+static void storeHashEntry(boardStructure* position, const int move, int score, const int flags, const int depth) {
+
+	int index = position->positionKey % position->hashTable->numEntries;
+	/*
+	ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
+	ASSERT(depth >= 1 && depth < MAXDEPTH);
+	ASSERT(flags >= HFALPHA && flags <= HFEXACT);
+	ASSERT(score >= -INFINITE && score <= INFINITE);
+	ASSERT(pos->ply >= 0 && pos->ply < MAXDEPTH);
+	*/
+
+	if (position->hashTable->pTable[index].positionKey == 0) {
+		position->hashTable->newWrite++;
+	}
+	else {
+		position->hashTable->overWrite++;
+	}
+
+	/*
+	if (score > ISMATE) score += pos->ply;
+	else if (score < -ISMATE) score -= pos->ply;
+	*/
+
+	position->hashTable->pTable[index].move = move;
+	position->hashTable->pTable[index].positionKey = position->positionKey;
+	position->hashTable->pTable[index].flags = flags;
+	position->hashTable->pTable[index].score = score;
+	position->hashTable->pTable[index].depth = depth;
+}
+
+
+static int probePvMove(const boardStructure* position) {
+
+	int index = position->positionKey % position->hashTable->numEntries;
+#ifdef DEBUG
+	if (index < 0 && index > position->hashTable->numEntries - 1) {
+		std::cout << "invalid index in probe pv move\n";
+	}
+#endif
+	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
+		return position->hashTable->pTable[index].move;
+	}
+
+	return NOMOVE;
+}
+
 
 void printBitBoard(u64 bitBoardToPrint) {
 
@@ -2726,11 +3341,21 @@ static void perftTest(int depth, boardStructure* position) {
 	return;
 }
 
-static bool isRepitition(const boardStructure *position) {
+static void checkUp() {
+	// check if time is up or interrupted by gooey
+
+}
+
+static bool isRepetition(const boardStructure *position) {
 
 	int i;
 
 	for (i = position->historyPly - position->fiftyMove; i < position->historyPly - 1; i++) {
+#ifdef DEBUG
+		if (i < 0 || i > MAX_GAME_MOVES) {
+			std::cout << "error in the repitition func, index is less than 0 or greater than max game moves\n";
+		}
+#endif
 		if (position->positionKey == position->history[i].positionKey) {
 			return true;
 		}
@@ -2739,6 +3364,243 @@ static bool isRepitition(const boardStructure *position) {
 	return false;
 
 }
+
+static void clearForSearch(boardStructure* position, SearchInfoStructure* info) {
+
+	int i = 0;
+	int i2 = 0;
+
+	for (i = 0; i < 13; i++) {
+		for (i2 = 0; i2 < BRD_SQ_NUM; i2++) {
+			position->searchHistory[i][i2] = 0;
+		}
+	}
+
+	for (i = 0; i < 2; i++) {
+		for (i2 = 0; i2 < MAXDEPTH; i2++) {
+			position->searchKillers[i][i2] = 0;
+		}
+	}
+
+	position->hashTable->overWrite = 0;
+	position->hashTable->hit = 0;
+	position->hashTable->cut = 0;
+	position->ply = 0;
+
+	info->startTime = getTimeMs();
+	info->stopped = 0;
+	info->nodes = 0;
+	/*
+	info->fh = 0;
+	info->fhf = 0;
+	*/
+
+}
+
+static int quiescence(int alpha, int beta, boardStructure* position, SearchInfoStructure* info) {
+	return 0;
+}
+
+static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, SearchInfoStructure* info, bool doNull) {
+	
+#ifdef DEBUG
+	if (!checkBoard(position)) {
+		std::cout << "check board failed in alpha beta func\n";
+	}
+	if (beta < alpha) {
+		std::cout << "beta less than alpha\n";
+	}
+	if (depth < 0) {
+		std::cout << "depth less than zero in alpha beta func\n";
+	}
+#endif
+
+	if (depth <= 0) {
+		//return Quiescence(alpha, beta, pos, info);
+		 return evaluatePosition(position);
+	}
+	/*
+	if ((info->nodes & 2047) == 0) {
+		CheckUp(info);
+	}
+	*/
+
+	info->nodes++;
+
+	if ((isRepetition(position) || position->fiftyMove >= 100) && position->ply) {
+		return DRAW;
+	}
+
+	if (position->ply > MAXDEPTH - 1) {
+		return evaluatePosition(position);
+	}
+
+	/*
+	int InCheck = SqAttacked(pos->KingSq[pos->side], pos->side ^ 1, pos);
+
+	if (InCheck == TRUE) {
+		depth++;
+	}
+
+	int Score = ~INFINITE;
+	int PvMove = NOMOVE;
+
+	if (ProbeHashEntry(pos, &PvMove, &Score, alpha, beta, depth) == TRUE) {
+		pos->HashTable->cut++;
+		return Score;
+	}
+
+	if (DoNull && !InCheck && pos->ply && (pos->bigPce[pos->side] > 0) && depth >= 4) {
+		MakeNullMove(pos);
+		Score = -AlphaBeta(-beta, -beta + 1, depth - 4, pos, info, FALSE);
+		TakeNullMove(pos);
+		if (info->stopped == TRUE) {
+			return 0;
+		}
+
+		if (Score >= beta && abs(Score) < ISMATE) {
+			info->nullCut++;
+			return beta;
+		}
+	}
+	*/
+
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+
+	int moveNumber = 0;
+	int legal = 0;
+	int oldAlpha = alpha;
+	int bestMove = NOMOVE;
+
+	int bestScore = ~INFINITE;
+
+	int score = ~INFINITE;
+
+	/*
+	if (PvMove != NOMOVE) {
+		for (MoveNum = 0; MoveNum < list->count; ++MoveNum) {
+			if (list->moves[MoveNum].move == PvMove) {
+				list->moves[MoveNum].score = 2000000;
+				//printf("Pv move found \n");
+				break;
+			}
+		}
+	}
+	*/
+
+	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
+
+		//PickNextMove(MoveNum, list);
+
+		if (!makeMove(position, list->moves[moveNumber].move)) {
+			continue;
+		}
+
+		legal++;
+		score = -alphaBeta(-beta, -alpha, depth - 1, position, info, true);
+		takeMove(position);
+		/*
+		if (info->stopped == true) {
+			return 0;
+		}
+		if (Score > BestScore) {
+			BestScore = Score;
+			BestMove = list->moves[MoveNum].move;
+			if (Score > alpha) {
+				if (Score >= beta) {
+					if (Legal == 1) {
+						info->fhf++;
+					}
+					info->fh++;
+
+					if (!(list->moves[MoveNum].move & MFLAGCAP)) {
+						pos->searchKillers[1][pos->ply] = pos->searchKillers[0][pos->ply];
+						pos->searchKillers[0][pos->ply] = list->moves[MoveNum].move;
+					}
+
+					StoreHashEntry(pos, BestMove, beta, HFBETA, depth);
+
+					return beta;
+				}
+				alpha = Score;
+
+				if (!(list->moves[MoveNum].move & MFLAGCAP)) {
+					pos->searchHistory[pos->pieces[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth;
+				}
+			}
+		}
+		*/
+
+		if (score > alpha) {
+			if (score >= beta) {
+				return beta;
+			}
+			alpha = score;
+			bestMove = list->moves[moveNumber].move;
+		}
+	}
+	/*
+	if (Legal == 0) {
+		if (InCheck) {
+			return -INFINITE + pos->ply;
+		}
+		else {
+			return 0;
+		}
+	}
+	*/
+	if (legal == 0) {
+		if (squareAttacked(position->kingSquare[position->side], position->side ^ 1, position)) {
+			return ~MATE + position->ply;
+		}
+		else {
+			return DRAW;
+		}
+	}
+#ifdef DEBUG
+	if (alpha < oldAlpha) {
+		std::cout << "new alpha worse than old alpha??????\n";
+	}
+#endif
+	
+	if (alpha != oldAlpha) {
+		storeHashEntry(position, bestMove, bestScore, HFEXACT, depth);
+	}
+	else {
+		storeHashEntry(position, bestMove, alpha, HFALPHA, depth);
+	}
+	
+
+	return alpha;
+}
+
+static void searchPosition(boardStructure* position, SearchInfoStructure* info) {
+	
+	int bestMove = NOMOVE;
+	int bestScore = ~INFINITE;
+	int currentDepth = 0;
+	int pvMoves = 0;
+	int pvNumber = 0;
+
+	clearForSearch(position, info);
+
+	for (currentDepth = 1; currentDepth <= info->depth; currentDepth++) {
+		bestScore = alphaBeta(~INFINITE, INFINITE, currentDepth, position, info, true);
+		pvMoves = getPVLine(currentDepth, position);
+		bestMove = position->PVArray[0];
+		
+		printf("depth:%d score:%d move:%s nodes:$ld ", currentDepth, bestScore, printMove(bestMove), info->nodes);
+
+		pvMoves = getPVLine(currentDepth, position);
+		printf("pv");
+		for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
+			printf(" %s", printMove(position->PVArray[pvNumber]));
+		}
+		std::cout << "\n";
+	}
+}
+
 
 
 void initializeAll() {
@@ -2761,8 +3623,14 @@ int main()
 	using std::cout;
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
+	
+	boardStructure position[1];
 
 	initializeAll();
+
+	position->hashTable->pTable = NULL;
+	initializeHashTable(position->hashTable, 64);
+
 	boardStructure currentBoard[1];
 	//moveListStructure list[1];
 
@@ -2792,6 +3660,8 @@ int main()
 			//perftTest(4, currentBoard);
 			char inputMove[6];
 			int Move = NOMOVE;
+			int PVNum = 0;
+			int max = 0;
 
 			while (true) {
 				printSquareBoard(currentBoard);
