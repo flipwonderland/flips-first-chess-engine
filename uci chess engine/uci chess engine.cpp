@@ -95,6 +95,7 @@ typedef struct {
 
 } moveListStructure;
 
+/*
 typedef struct {
 	u64 positionKey;
 	int move;
@@ -102,8 +103,9 @@ typedef struct {
 
 typedef struct {
 	PVEntryStructure* pTable;
-	int numEntries;
+	int numberOfEntries;
 } PVTableStructure;
+*/
 
 
 typedef struct {
@@ -173,7 +175,7 @@ typedef struct {
 	int pieceList[13][10];
 
 	hashTableStructure hashTable[1];
-	PVTableStructure PVTable[1];
+	//PVTableStructure PVTable[1];
 	int PVArray[MAXDEPTH];
 
 	int searchHistory[13][BRD_SQ_NUM];
@@ -344,6 +346,16 @@ void initializeHashKeys() {
 		castleKeys[i] = RAND_64;
 	}
 }
+/*
+void clearPVTable(PVTableStructure* table) {
+	PVEntryStructure* pvEntry;
+
+	for (pvEntry = table->pTable; pvEntry < table->pTable + table->numberOfEntries; pvEntry++) {
+		pvEntry->positionKey = 0ULL;
+		pvEntry->move = NOMOVE;
+	}
+}
+*/
 
 void clearHashTable(hashTableStructure* table) {
 
@@ -358,7 +370,17 @@ void clearHashTable(hashTableStructure* table) {
 	}
 	table->newWrite = 0;
 }
-
+/*
+const int PvSize = 0x1000000 * 2;
+void initializePVTable(PVTableStructure* table) {
+	table->numberOfEntries = PvSize / sizeof(PVEntryStructure);
+	table->numberOfEntries -= 2;
+	if (table->pTable != NULL)
+		free(table->pTable);
+	table->pTable = (PVEntryStructure*)malloc(table->numberOfEntries * sizeof(PVEntryStructure));
+	clearPVTable(table);
+}
+*/
 void initializeHashTable(hashTableStructure* table, const int megaBytes) {
 
 	int HashSize = 0x100000 * megaBytes;
@@ -376,7 +398,7 @@ void initializeHashTable(hashTableStructure* table, const int megaBytes) {
 	}
 	else {
 		clearHashTable(table);
-		printf("HashTable init complete with %d entries\n", table->numberOfEntries);
+		//printf("HashTable init complete with %d entries\n", table->numberOfEntries);
 	}
 
 }
@@ -3049,6 +3071,24 @@ static int probePVMove(const boardStructure* position) {
 	return NOMOVE;
 }
 
+/*
+static int probePVMove(const boardStructure* position) {
+
+	int index = position->positionKey % position->PVTable->numberOfEntries;
+#ifdef DEBUG
+	if (index < 0 && index > position->hashTable->numberOfEntries - 1) {
+		std::cout << "invalid index in probe pv move\n";
+	}
+#endif
+	if (position->PVTable->pTable[index].positionKey == position->positionKey) {
+		return position->PVTable->pTable[index].move;
+	}
+
+	return NOMOVE;
+}
+*/
+
+
 static int getPVLine(const int depth, boardStructure* position) {
 
 #ifdef DEBUG
@@ -3084,7 +3124,6 @@ static int getPVLine(const int depth, boardStructure* position) {
 	return count;
 
 }
-
 
 
 int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, int beta, int depth) {
@@ -3173,8 +3212,18 @@ int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, i
 	return false;
 }
 
+/*
+void storePVMove(const boardStructure* position, const int move) {
 
-static void storeHashEntry(boardStructure* position, const int move, int score, const int flags, const int depth) {
+	int index = position->positionKey % position->PVTable->numberOfEntries;
+
+	position->PVTable->pTable[index].move = move;
+	position->PVTable->pTable[index].positionKey = position->positionKey;
+}
+*/
+
+
+static void storeHashEntry (boardStructure* position, const int move, int score, const int flags, const int depth) {
 
 	int index = position->positionKey % position->hashTable->numberOfEntries;
 	
@@ -3239,6 +3288,7 @@ static int probePvMove(const boardStructure* position) {
 
 	return NOMOVE;
 }
+
 
 
 void printBitBoard(u64 bitBoardToPrint) {
@@ -3588,16 +3638,16 @@ static void clearForSearch(boardStructure* position, searchInfoStructure* info) 
 			position->searchKillers[i][i2] = 0;
 		}
 	}
-
+	/*
 	position->hashTable->overWrite = 0;
 	position->hashTable->hit = 0;
 	position->hashTable->cut = 0;
 	position->ply = 0;
+	*/
 
-	info->startTime = getTimeMs();
+
 	info->stopped = 0;
 	info->nodes = 0;
-	
 	info->fh = 0;
 	info->fhf = 0;
 	
@@ -3837,17 +3887,18 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 
 	bool inCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
 
-	/*
+	
 	if (inCheck == true) {
-		depth ++;
+		depth++;
 	}
-	*/
+	
 	
     
 	int score = -INFINITEC;
 	int PVMove = NOMOVE;
-
 	
+	
+	//something about this is fucked, good luck
 	/*
 	if (probeHashEntry(position, &PVMove, &score, alpha, beta, depth) == true) {
 		position->hashTable->cut++;
@@ -3923,12 +3974,12 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 						position->searchKillers[0][position->ply] = list->moves[moveNumber].move;
 					}
 
-					storeHashEntry(position, bestMove, beta, HFBETA, depth);
+					//storeHashEntry(position, bestMove, beta, HFBETA, depth);
 
 					return beta;
 				}
 				alpha = score;
-
+				bestMove = list->moves[moveNumber].move;
 				if (!(list->moves[moveNumber].move & MFLAGCAP)) {
 					position->searchHistory[position->pieces[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth;
 				}
@@ -3953,6 +4004,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	
 	if (alpha != oldAlpha) {
 		storeHashEntry(position, bestMove, bestScore, HFEXACT, depth);
+		//storePVMove(position, bestMove);
 	}
 	else {
 		storeHashEntry(position, bestMove, alpha, HFALPHA, depth);
@@ -4002,34 +4054,39 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 	*/
 	
 
-	printf("search depth:%d\n",info->depth);
+	//printf("search depth:%d\n",info->depth);
 	
-	//iterative deepening
 	if (bestMove == NOMOVE) {
-		for (currentDepth = 1; currentDepth <= info->depth; ++currentDepth) {
+	//iterative deepening
+		for (currentDepth = 1; currentDepth <= info->depth; currentDepth++) {
 			// alpha	 beta
 			rootDepth = currentDepth;
-			bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, TRUE);
+			bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, true);
 
-			if (info->stopped == TRUE) {
+			if (info->stopped == true) {
 				break;
 			}
 
 			pvMoves = getPVLine(currentDepth, position);
 			bestMove = position->PVArray[0];
 			if (info->GAME_MODE == UCIMODE) {
-				printf("info score cp %d depth %d nodes %ld time %d ",
-					bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
+				printf("info depth %d score cp %d nodes %ld nps %d time %d ",
+					currentDepth, bestScore, info->nodes, (info->nodes / ((getTimeMs() - info->startTime)+ 1) * 1000), getTimeMs() - info->startTime);
 			}
-			else if (info->GAME_MODE == XBOARDMODE && info->POST_THINKING == TRUE) {
+			else if (info->GAME_MODE == XBOARDMODE && info->POST_THINKING == true) {
 				printf("%d %d %d %ld ",
 					currentDepth, bestScore, (getTimeMs() - info->startTime) / 10, info->nodes);
 			}
-			else if (info->POST_THINKING == TRUE) {
-				printf("score:%d depth:%d nodes:%ld time:%d(ms) ",
-					bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
+			else if (info->POST_THINKING == true) {
+				//int time = getTimeMs() - info->startTime;
+				//long nodesPerSecond = info->nodes / (getTimeMs() - info->startTime);
+				//printf("depth %d score %d nodes %ld nps %ld time %d(ms) \n",
+				printf("depth %d score %d nodes %ld time %d(ms) \n",
+					currentDepth, bestScore, info->nodes/*, nodesPerSecond*/, getTimeMs() - info->startTime);
+				//  printf("score %d depth %d nodes %ld time %d(ms) ",
+				//	bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
 			}
-			if (info->GAME_MODE == UCIMODE || info->POST_THINKING == TRUE) {
+			if (info->GAME_MODE == UCIMODE /* || info->POST_THINKING == true*/) {
 				pvMoves = getPVLine(currentDepth, position);
 				if (!info->GAME_MODE == XBOARDMODE) {
 					printf("pv");
@@ -4040,7 +4097,7 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 				printf("\n");
 			}
 
-			printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d\nOrdering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
+			//printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d Ordering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
 		}
 	}
 
@@ -4061,10 +4118,14 @@ int parseMove(const char* ptrChar, boardStructure* position) {
 
 	//ASSERT(CheckBoard(position));
 
-	if (ptrChar[1] > '8' || ptrChar[1] < '1') return NOMOVE;
-	if (ptrChar[3] > '8' || ptrChar[3] < '1') return NOMOVE;
-	if (ptrChar[0] > 'h' || ptrChar[0] < 'a') return NOMOVE;
-	if (ptrChar[2] > 'h' || ptrChar[2] < 'a') return NOMOVE;
+	if (ptrChar[1] > '8' || ptrChar[1] < '1')
+		return NOMOVE;
+	if (ptrChar[3] > '8' || ptrChar[3] < '1')
+		return NOMOVE;
+	if (ptrChar[0] > 'h' || ptrChar[0] < 'a')
+		return NOMOVE;
+	if (ptrChar[2] > 'h' || ptrChar[2] < 'a')
+		return NOMOVE;
 
 	int from = FR2SQ(ptrChar[0] - 'a', ptrChar[1] - '1');
 	int to = FR2SQ(ptrChar[2] - 'a', ptrChar[3] - '1');
@@ -4105,7 +4166,7 @@ int parseMove(const char* ptrChar, boardStructure* position) {
 
 void parsePosition(std::string lineInStr, boardStructure* position) {
 
-	//lineIn += 9;
+	lineInStr += 9;
 
 	const char* ptrChar = lineInStr.c_str();
 	const char* lineIn = lineInStr.c_str();
@@ -4138,7 +4199,9 @@ void parsePosition(std::string lineInStr, boardStructure* position) {
 			ptrChar++;
 		}
 	}
+#ifdef debug
 	printSquareBoard(position);
+#endif
 }
 
 void parseGo(std::string line3, searchInfoStructure* info, boardStructure* position) {
@@ -4206,9 +4269,10 @@ void parseGo(std::string line3, searchInfoStructure* info, boardStructure* posit
 	if (depth == -1) {
 		info->depth = MAXDEPTH;
 	}
-
-	printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
-		time, info->startTime, info->stopTime, info->depth, info->timeSet);
+	
+	//printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
+	//	time, info->startTime, info->stopTime, info->depth, info->timeSet); 
+	
 	searchPosition(position, info);
 }
 
@@ -4240,7 +4304,8 @@ int main()
 	boardStructure currentBoard[1];
 	currentBoard->hashTable->pTable = NULL;
 	initializeHashTable(currentBoard->hashTable, 64);
-	
+	//currentBoard->PVTable->pTable = NULL;
+
 	searchInfoStructure info[1];
 	info->quit = false;
 	info->GAME_MODE = UCIMODE;
@@ -4321,23 +4386,25 @@ int main()
 		else if (command == "ucinewgame") {
 
 			//clearGameState(); //this might create unexpected behavior if the gui does not send this every time
-			//boardLoaded = false;
-			//cout << "new game ready to be loaded!" << "\n";
+			parsePosition("position startpos\n", currentBoard);
+			cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
-			parsePosition(input , currentBoard);
+			parsePosition(input, currentBoard);
 		}
 		else if (command == "go") {
 			parseGo(input, info, currentBoard);
 		}
 		else if (command == "stop") {
-
+			info->quit = true;
 		}
 		else if (command == "ponderhit") {
 
 		}
-		else if (command == "quit")
+		else if (command == "quit") {
 			keepRunning = false;
+			//info->quit = true;
+		}
 		else if (command == "legalCheck") {
 			if (boardLoaded) {
 			}
