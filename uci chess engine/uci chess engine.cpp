@@ -89,7 +89,7 @@ typedef struct {
 	int score;//not exactly eval from what I'm aware
 
 } moveStructure;
-//nice
+
 
 typedef struct {
 
@@ -98,17 +98,6 @@ typedef struct {
 
 } moveListStructure;
 
-/*
-typedef struct {
-	u64 positionKey;
-	int move;
-} PVEntryStructure; //this is to store the move every time a new best move is found
-
-typedef struct {
-	PVEntryStructure* pTable;
-	int numberOfEntries;
-} PVTableStructure;
-*/
 
 
 typedef struct {
@@ -376,7 +365,7 @@ void initializeHashTable(hashTableStructure* table, const int megaBytes) {
 
 	table->pTable = (hashEntryStructure *) malloc(table->numberOfEntries * sizeof(hashEntryStructure));
 	if (table->pTable == NULL) {
-		printf("Hash Allocation Failed, trying %dmega bytes...\n", megaBytes / 2);
+		printf("Hash Allocation Failed, trying %d mega bytes...\n", megaBytes / 2);
 		initializeHashTable(table, megaBytes / 2);
 	}
 	else {
@@ -2611,7 +2600,7 @@ static bool makeMove(boardStructure* position, int move) {
 	return true;
 }
 
-void makeNullMove(boardStructure* position) {
+static void makeNullMove(boardStructure* position) {
 
 #ifdef DEBUG
 	if (checkBoard(position)) {}
@@ -2808,7 +2797,7 @@ int mirror64[64] = {
 
 #define MIRROR64(sq) (mirror64[(sq)])
 
-void mirrorBoard(boardStructure* position) {
+static void mirrorBoard(boardStructure* position) {
 
 	int tempPiecesArray[64];
 	int tempSide = position->side ^ 1;
@@ -3882,7 +3871,7 @@ static void clearForSearch(boardStructure* position, searchInfoStructure* info) 
 
 }
 
-void generateAllCaptures(const boardStructure* position, moveListStructure* list) {
+static void generateAllCaptures(const boardStructure* position, moveListStructure* list) {
 
 	//ASSERT(CheckBoard(position));
 
@@ -4443,7 +4432,7 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 	std::cout << "bestmove " << printMove(bestMove) << "\n";
 	
 }
-int parseMove(const char* ptrChar, boardStructure* position) {
+static int parseMove(const char* ptrChar, boardStructure* position) {
 
 	//ASSERT(CheckBoard(position));
 
@@ -4495,7 +4484,7 @@ int parseMove(const char* ptrChar, boardStructure* position) {
 
 
 
-void parsePosition(std::string lineInStr, boardStructure* position) {
+static void parsePosition(std::string lineInStr, boardStructure* position) {
 
 	lineInStr += 9;
 	
@@ -4538,7 +4527,7 @@ void parsePosition(std::string lineInStr, boardStructure* position) {
 
 
 
-void parseGo( std::string line3, searchInfoStructure* info, boardStructure* position) {
+static void parseGo( std::string line3, searchInfoStructure* info, boardStructure* position) {
 
 	int depth = -1, movestogo = 30, movetime = -1;
 	int time = -1, inc = 0;
@@ -4753,9 +4742,12 @@ int main(int argc, char* argv[])
 	
 	initializeAll();
 
+	int hashTableMegaBytes = 64;
+
+
 	boardStructure currentBoard[1];
 	currentBoard->hashTable->pTable = NULL;
-	initializeHashTable(currentBoard->hashTable, 64);
+	initializeHashTable(currentBoard->hashTable, hashTableMegaBytes);
 	//currentBoard->PVTable->pTable = NULL;
 
 	searchInfoStructure info[1];
@@ -4785,8 +4777,16 @@ int main(int argc, char* argv[])
 			if (inputParser(input, 1) == "hi") cout << "I see you! \n";
 			cout << "readyok" << "\n";
 		}
-		else if (command == "setoption name")  {//gotta fix this, this is 2 tokens in one
-			// if I figure out how to do multithreading I'll put a command here
+		else if (command == "setoption")  {//gotta fix this, this is 2 tokens in one
+			if (inputParser(input, 3) == "hash") {
+				hashTableMegaBytes = stoi(inputParser(input, 3));
+				if (hashTableMegaBytes < 4)
+					hashTableMegaBytes = 4;
+
+				currentBoard->hashTable->pTable = NULL;
+				initializeHashTable(currentBoard->hashTable, hashTableMegaBytes);
+
+			}
 		}
 		else if (command == "register") {
 			//idk if I'm gonna need this one actually
