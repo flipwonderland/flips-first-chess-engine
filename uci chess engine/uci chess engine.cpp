@@ -192,7 +192,7 @@ typedef struct {
 	int movesToGo;
 	int timeSet;
 
-	int infinite;
+	bool infinite;
 	long nodes;
 
 	bool quit;
@@ -203,7 +203,7 @@ typedef struct {
 	int nullCut;
 
 	int GAME_MODE;
-	int POST_THINKING;
+	bool POST_THINKING;
 
 } searchInfoStructure;
 
@@ -346,16 +346,7 @@ void initializeHashKeys() {
 		castleKeys[i] = RAND_64;
 	}
 }
-/*
-void clearPVTable(PVTableStructure* table) {
-	PVEntryStructure* pvEntry;
 
-	for (pvEntry = table->pTable; pvEntry < table->pTable + table->numberOfEntries; pvEntry++) {
-		pvEntry->positionKey = 0ULL;
-		pvEntry->move = NOMOVE;
-	}
-}
-*/
 
 void clearHashTable(hashTableStructure* table) {
 
@@ -370,35 +361,25 @@ void clearHashTable(hashTableStructure* table) {
 	}
 	table->newWrite = 0;
 }
-/*
-const int PvSize = 0x1000000 * 2;
-void initializePVTable(PVTableStructure* table) {
-	table->numberOfEntries = PvSize / sizeof(PVEntryStructure);
-	table->numberOfEntries -= 2;
-	if (table->pTable != NULL)
-		free(table->pTable);
-	table->pTable = (PVEntryStructure*)malloc(table->numberOfEntries * sizeof(PVEntryStructure));
-	clearPVTable(table);
-}
-*/
+
 void initializeHashTable(hashTableStructure* table, const int megaBytes) {
 
-	int HashSize = 0x100000 * megaBytes;
-	table->numberOfEntries = HashSize / sizeof(hashEntryStructure);
+	int hashSize = 0x100000 * megaBytes;
+	table->numberOfEntries = hashSize / sizeof(hashEntryStructure);
 	table->numberOfEntries -= 2;
 
 	if (table->pTable != NULL) {
 		free(table->pTable);
 	}
 
-	table->pTable = (hashEntryStructure*)malloc(table->numberOfEntries * sizeof(hashEntryStructure));
+	table->pTable = (hashEntryStructure *) malloc(table->numberOfEntries * sizeof(hashEntryStructure));
 	if (table->pTable == NULL) {
 		printf("Hash Allocation Failed, trying %dmega bytes...\n", megaBytes / 2);
 		initializeHashTable(table, megaBytes / 2);
 	}
 	else {
 		clearHashTable(table);
-		//printf("HashTable init complete with %d entries\n", table->numberOfEntries);
+		printf("HashTable init complete with %d entries\n", table->numberOfEntries);
 	}
 
 }
@@ -2616,7 +2597,7 @@ void makeNullMove(boardStructure* position) {
 	}
 	if (!squareAttacked(position->kingSquare[position->side], position->side ^ 1, position)) {} 
 	else {
-		std::cout << "king not in check in null move\n";
+		std::cout << "king in check in null move\n";
 	}
 #endif
 
@@ -2717,6 +2698,14 @@ const int queenOpenFile = 5;
 const int queenSemiOpenFile = 3;
 const int bishopPair = 30;
 
+u64 blackPassedMask[64];
+u64 whitePassedMask[64];
+u64 isolatedMask[64];
+
+u64 fileBBMask[8];
+u64 rankBBMask[8];
+
+
 const int pawnTable[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
@@ -2796,13 +2785,165 @@ int mirror64[64] = {
 
 #define MIRROR64(sq) (mirror64[(sq)])
 
-int evaluatePosition(const boardStructure *position) {
+void mirrorBoard(boardStructure* position) {
+
+	int tempPiecesArray[64];
+	int tempSide = position->side ^ 1;
+	int SwapPiece[13] = { empty, bK, bP, bN, bB, bR, bQ, wK, wP, wN, wB, wR, wQ };
+	int tempCastlePerm = 0;
+	int tempEnPas = noSquare;
+
+	int sq;
+	int tp;
+
+	if (position->castlePermission & whiteKingCastle) tempCastlePerm |= blackKingCastle;
+	if (position->castlePermission & whiteQueenCastle) tempCastlePerm |= blackQueenCastle;
+
+	if (position->castlePermission & blackKingCastle) tempCastlePerm |= whiteKingCastle;
+	if (position->castlePermission & blackQueenCastle) tempCastlePerm |= whiteQueenCastle;
+
+	if (position->enPassant != noSquare) {
+		tempEnPas = SQ120(mirror64[SQ64(position->enPassant)]);
+	}
+
+	for (sq = 0; sq < 64; sq++) {
+		tempPiecesArray[sq] = position->pieces[SQ120(mirror64[sq])];
+	}
+
+	resetBoard(position);
+
+	for (sq = 0; sq < 64; sq++) {
+		tp = SwapPiece[tempPiecesArray[sq]];
+		position->pieces[SQ120(sq)] = tp;
+	}
+
+	position->side = tempSide;
+	position->castlePermission = tempCastlePerm;
+	position->enPassant = tempEnPas;
+
+	position->positionKey = generatePositionKey(position);
+
+	updateListsMaterial(position);
+
+	//ASSERT(CheckBoard(pos));
+}
+
+void initializeEvaluationMasks() {
+	int square;
+	int tempSquare;
+	int rank;
+	int file;
+
+	for (square = 0; square < 8; square++) {
+		fileBBMask[square] = 0ULL;
+		rankBBMask[square] = 0ULL;
+	}
+
+	for (rank = rank8; rank >= rank1; rank--) {
+		for (file = fileA; file <= fileH; file++) {
+			square = rank * 8 + file;
+			fileBBMask[file] |= (1ULL << square);
+			rankBBMask[rank] |= (1ULL << square);
+		}
+	}
+
+	for (square = 0; square < 64; square++) {
+		isolatedMask[square] = 0ULL;
+		whitePassedMask[square] = 0ULL;
+		blackPassedMask[square] = 0ULL;
+	}
+
+	for (square = 0; square < 64; square++) {
+		tempSquare = square + 8;
+
+		while (tempSquare < 64) {
+			whitePassedMask[square] |= (1ULL << tempSquare);
+			tempSquare += 8;
+		}
+
+		tempSquare = square - 8;
+		while (tempSquare >= 0) {
+			blackPassedMask[square] |= (1ULL << tempSquare);
+			tempSquare -= 8;
+		}
+
+		if (filesBoard[SQ120(square)] > fileA) {
+			isolatedMask[square] |= fileBBMask[filesBoard[SQ120(square)] - 1];
+
+			tempSquare = square + 7;
+			while (tempSquare < 64) {
+				whitePassedMask[square] |= (1ULL << tempSquare);
+				tempSquare += 8;
+			}
+
+			tempSquare = square - 9;
+			while (tempSquare >= 0) {
+				blackPassedMask[square] |= (1ULL << tempSquare);
+				tempSquare -= 8;
+			}
+		}
+
+		if (filesBoard[SQ120(square)] < fileH) {
+			isolatedMask[square] |= fileBBMask[filesBoard[SQ120(square)] + 1];
+
+			tempSquare = square + 9;
+			while (tempSquare < 64) {
+				whitePassedMask[square] |= (1ULL << tempSquare);
+				tempSquare += 8;
+			}
+
+			tempSquare = square - 7;
+			while (tempSquare >= 0) {
+				blackPassedMask[square] |= (1ULL << tempSquare);
+				tempSquare -= 8;
+			}
+		}
+	}
+}
+
+// sjeng 11.2
+//8/6R1/2k5/6P1/8/8/4nP2/6K1 w - - 1 41 
+static bool materialDraw(const boardStructure* position) {
+
+	//ASSERT(CheckBoard(position));
+
+	if (!position->pieceNumber[wR] && !position->pieceNumber[bR] && !position->pieceNumber[wQ] && !position->pieceNumber[bQ]) {
+		if (!position->pieceNumber[bB] && !position->pieceNumber[wB]) {
+			if (position->pieceNumber[wN] < 3 && position->pieceNumber[bN] < 3) { return true; }
+		}
+		else if (!position->pieceNumber[wN] && !position->pieceNumber[bN]) {
+			if (abs(position->pieceNumber[wB] - position->pieceNumber[bB]) < 2) { return true; }
+		}
+		else if ((position->pieceNumber[wN] < 3 && !position->pieceNumber[wB]) || (position->pieceNumber[wB] == 1 && !position->pieceNumber[wN])) {
+			if ((position->pieceNumber[bN] < 3 && !position->pieceNumber[bB]) || (position->pieceNumber[bB] == 1 && !position->pieceNumber[bN])) { return true; }
+		}
+	}
+	else if (!position->pieceNumber[wQ] && !position->pieceNumber[bQ]) {
+		if (position->pieceNumber[wR] == 1 && position->pieceNumber[bR] == 1) {
+			if ((position->pieceNumber[wN] + position->pieceNumber[wB]) < 2 && (position->pieceNumber[bN] + position->pieceNumber[bB]) < 2) { return true; }
+		}
+		else if (position->pieceNumber[wR] == 1 && !position->pieceNumber[bR]) {
+			if ((position->pieceNumber[wN] + position->pieceNumber[wB] == 0) && (((position->pieceNumber[bN] + position->pieceNumber[bB]) == 1) || ((position->pieceNumber[bN] + position->pieceNumber[bB]) == 2))) { return true; }
+		}
+		else if (position->pieceNumber[bR] == 1 && !position->pieceNumber[wR]) {
+			if ((position->pieceNumber[bN] + position->pieceNumber[bB] == 0) && (((position->pieceNumber[wN] + position->pieceNumber[wB]) == 1) || ((position->pieceNumber[wN] + position->pieceNumber[wB]) == 2))) { return true; }
+		}
+	}
+	return false;
+}
+
+#define ENDGAME_MAT (1 * pieceValue[wR] + 2 * pieceValue[wN] + 2 * pieceValue[wP] + pieceValue[wK])
+
+static int evaluatePosition(const boardStructure *position) {
 
 	int piece;
 	int pieceNumber;
 	int square;
 	int score = position->material[white] - position->material[black];
 	
+	if (!position->pieceNumber[wP] && !position->pieceNumber[bP] && materialDraw(position) == true) {
+		return 0;
+	}
 
 	piece = wP;
 	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
@@ -2816,17 +2957,17 @@ int evaluatePosition(const boardStructure *position) {
 		}
 #endif
 		score += pawnTable[SQ64(square)];
-		/*
-		if ((IsolatedMask[SQ64(sq)] & pos->pawns[WHITE]) == 0) {
+		
+		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("wP Iso:%s\n",PrSq(sq));
-			score += PawnIsolated;
+			score += pawnIsolated;
 		}
 
-		if ((WhitePassedMask[SQ64(sq)] & pos->pawns[BLACK]) == 0) {
+		if ((whitePassedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("wP Passed:%s\n",PrSq(sq));
-			score += PawnPassed[RanksBrd[sq]];
+			score += pawnPassed[ranksBoard[square]];
 		}
-		*/
+		
 
 	}
 
@@ -2843,17 +2984,17 @@ int evaluatePosition(const boardStructure *position) {
 #endif
 		score -= pawnTable[MIRROR64(SQ64(square))];
 
-		/*
-		if ((IsolatedMask[SQ64(sq)] & pos->pawns[BLACK]) == 0) {
+		
+		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("bP Iso:%s\n",PrSq(sq));
-			score -= PawnIsolated;
+			score -= pawnIsolated;
 		}
 
-		if ((BlackPassedMask[SQ64(sq)] & pos->pawns[WHITE]) == 0) {
+		if ((blackPassedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("bP Passed:%s\n",PrSq(sq));
-			score -= PawnPassed[7 - RanksBrd[sq]];
+			score -= pawnPassed[7 - ranksBoard[square]];
 		}
-		*/
+		
 	}
 
 	piece = wN;
@@ -2927,14 +3068,14 @@ int evaluatePosition(const boardStructure *position) {
 		/*
 		ASSERT(FileRankValid(FilesBrd[square]));
 		*/
-		/*
-		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
-			score += RookOpenFile;
+		
+		if (!(position->bitBoardPawns[none] & fileBBMask[filesBoard[square]])) {
+			score += rookOpenFile;
 		}
-		else if (!(position->pawns[WHITE] & FileBBMask[FilesBrd[square]])) {
-			score += RookSemiOpenFile;
+		else if (!(position->bitBoardPawns[white] & fileBBMask[filesBoard[square]])) {
+			score += rookSemiOpenFile;
 		}
-		*/
+		
 	}
 
 	piece = bR;
@@ -2951,13 +3092,13 @@ int evaluatePosition(const boardStructure *position) {
 		score -= rookTable[MIRROR64(SQ64(square))];
 		/*
 		ASSERT(FileRankValid(FilesBrd[square]));
-		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
-			score -= RookOpenFile;
-		}
-		else if (!(position->pawns[BLACK] & FileBBMask[FilesBrd[square]])) {
-			score -= RookSemiOpenFile;
-		}
 		*/
+		if (!(position->bitBoardPawns[none] & fileBBMask[filesBoard[square]])) {
+			score -= rookOpenFile;
+		}
+		else if (!(position->bitBoardPawns[black] & fileBBMask[filesBoard[square]])) {
+			score -= rookSemiOpenFile;
+		}
 	}
 
 	piece = wQ;
@@ -2973,13 +3114,13 @@ int evaluatePosition(const boardStructure *position) {
 #endif
 		/*
 		ASSERT(FileRankValid(FilesBrd[square]));
-		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
-			score += QueenOpenFile;
-		}
-		else if (!(position->pawns[WHITE] & FileBBMask[FilesBrd[square]])) {
-			score += QueenSemiOpenFile;
-		}
 		*/
+		if  (!(position->bitBoardPawns[none] & fileBBMask[filesBoard[square]])) {
+			score += queenOpenFile;
+		}
+		else if (!(position->bitBoardPawns[white] & fileBBMask[filesBoard[square]])) {
+			score += queenSemiOpenFile;
+		}
 	}
 
 	piece = bQ;
@@ -2995,13 +3136,13 @@ int evaluatePosition(const boardStructure *position) {
 #endif
 		/*
 		ASSERT(FileRankValid(FilesBrd[square]));
-		if (!(position->pawns[BOTH] & FileBBMask[FilesBrd[square]])) {
-			score -= QueenOpenFile;
-		}
-		else if (!(position->pawns[BLACK] & FileBBMask[FilesBrd[square]])) {
-			score -= QueenSemiOpenFile;
-		}
 		*/
+		if (!(position->bitBoardPawns[none] & fileBBMask[filesBoard[square]])) {
+			score -= queenOpenFile;
+		}
+		else if (!(position->bitBoardPawns[black] & fileBBMask[filesBoard[square]])) {
+			score -= queenSemiOpenFile;
+		}
 	}
 	//8/p6k/6p1/5p2/P4K2/8/5pB1/8 b - - 2 62 
 	piece = wK;
@@ -3014,14 +3155,14 @@ int evaluatePosition(const boardStructure *position) {
 		std::cout << "square in invalid position in eval func\n";
 	}
 #endif
-	/*
-	if ((position->material[BLACK] <= ENDGAME_MAT)) {
-		score += KingE[SQ64(square)];
+	
+	if ((position->material[black] <= ENDGAME_MAT)) {
+		score += kingEndGame[SQ64(square)];
 	}
 	else {
-		score += KingO[SQ64(square)];
+		score += kingOpening[SQ64(square)];
 	}
-	*/
+	
 
 	piece = bK;
 	square = position->pieceList[piece][0];
@@ -3033,14 +3174,14 @@ int evaluatePosition(const boardStructure *position) {
 		std::cout << "square in invalid position in eval func\n";
 	}
 #endif
-	/*
-	if ((position->material[WHITE] <= ENDGAME_MAT)) {
-		score -= KingE[MIRROR64(SQ64(square))];
+	
+	if ((position->material[white] <= ENDGAME_MAT)) {
+		score -= kingEndGame[MIRROR64(SQ64(square))];
 	}
 	else {
-		score -= KingO[MIRROR64(SQ64(square))];
+		score -= kingOpening[MIRROR64(SQ64(square))];
 	}
-	*/
+	
 
 	if (position->pieceNumber[wB] >= 2) score += bishopPair;
 	if (position->pieceNumber[bB] >= 2) score -= bishopPair;
@@ -3059,11 +3200,8 @@ int evaluatePosition(const boardStructure *position) {
 static int probePVMove(const boardStructure* position) {
 
 	int index = position->positionKey % position->hashTable->numberOfEntries;
-#ifdef DEBUG
-	if (index < 0 && index > position->hashTable->numberOfEntries - 1) {
-		std::cout << "invalid index in probe pv move\n";
-	}
-#endif
+	//ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
+
 	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
 		return position->hashTable->pTable[index].move;
 	}
@@ -3125,8 +3263,8 @@ static int getPVLine(const int depth, boardStructure* position) {
 
 }
 
-
-int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, int beta, int depth) {
+/*
+static bool probeHashEntry(boardStructure* position, int* move, int* score, int alpha, int beta, int depth) {
 
 	int index = position->positionKey % position->hashTable->numberOfEntries;
 
@@ -3189,6 +3327,62 @@ int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, i
 					std::cout << "score invalid in hash entry prober\n";
 				}
 #endif
+			case HFALPHA: 
+				if (*score <= alpha) {
+				*score = alpha;
+				return true;
+			}
+				break;
+			case HFBETA: 
+			if (*score >= beta) {
+				*score = beta;
+				return true;
+			}
+				break;
+			case HFEXACT:
+				return true;
+				break;
+			default: 
+				std::cout << "invalid flag in prober in the switch thingy I'm getting sick of writing these you'll probably never read this one\n";
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+*/
+
+static bool probeHashEntry(boardStructure* position, int* move, int* score, int alpha, int beta, int depth) {
+
+	int index = position->positionKey % position->hashTable->numberOfEntries;
+
+/*
+	ASSERT(index >= 0 && index <= position->hashTable->numEntries - 1);
+	ASSERT(depth >= 1 && depth < MAXDEPTH);
+	ASSERT(alpha < beta);
+	ASSERT(alpha >= -INFINITE && alpha <= INFINITE);
+	ASSERT(beta >= -INFINITE && beta <= INFINITE);
+	ASSERT(position->ply >= 0 && position->ply < MAXDEPTH);
+*/
+
+	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
+		*move = position->hashTable->pTable[index].move;
+		if (position->hashTable->pTable[index].depth >= depth) {
+			position->hashTable->hit++;
+			/*
+			ASSERT(position->hashTable->pTable[index].depth >= 1 && position->hashTable->pTable[index].depth < MAXDEPTH);
+			ASSERT(position->hashTable->pTable[index].flags >= HFALPHA && position->hashTable->pTable[index].flags <= HFEXACT);
+			*/
+
+			*score = position->hashTable->pTable[index].score;
+			if (*score > ISMATE) *score -= position->ply;
+			else if (*score < -ISMATE) *score += position->ply;
+
+			switch (position->hashTable->pTable[index].flags) {
+
+				//ASSERT(*score >= -INFINITE && *score <= INFINITE);
+
 			case HFALPHA: if (*score <= alpha) {
 				*score = alpha;
 				return true;
@@ -3203,7 +3397,7 @@ int probeHashEntry(boardStructure* position, int* move, int* score, int alpha, i
 				return true;
 				break;
 			default: 
-				std::cout << "invalid flag in prober in the switch thingy I'm getting sick of writing these you'll probably never read this one\n";
+				//ASSERT(false);
 				break;
 			}
 		}
@@ -3222,7 +3416,7 @@ void storePVMove(const boardStructure* position, const int move) {
 }
 */
 
-
+/*
 static void storeHashEntry (boardStructure* position, const int move, int score, const int flags, const int depth) {
 
 	int index = position->positionKey % position->hashTable->numberOfEntries;
@@ -3254,7 +3448,7 @@ static void storeHashEntry (boardStructure* position, const int move, int score,
 	}
 #endif
 
-	if (position->hashTable->pTable[index].positionKey == 0) {
+	if ( position->hashTable->pTable[index].positionKey == 0) {
 		position->hashTable->newWrite++;
 	}
 	else {
@@ -3262,8 +3456,10 @@ static void storeHashEntry (boardStructure* position, const int move, int score,
 	}
 
 	
-	if (score > ISMATE) score += position->ply;
-	else if (score < -ISMATE) score -= position->ply;
+	if (score > ISMATE)
+		score += position->ply;
+	else if (score < -ISMATE)
+		score -= position->ply;
 	
 
 	position->hashTable->pTable[index].move = move;
@@ -3272,23 +3468,36 @@ static void storeHashEntry (boardStructure* position, const int move, int score,
 	position->hashTable->pTable[index].score = score;
 	position->hashTable->pTable[index].depth = depth;
 }
+*/
 
-
-static int probePvMove(const boardStructure* position) {
+static void storeHashEntry(boardStructure* position, const int move, int score, const int flags, const int depth) {
 
 	int index = position->positionKey % position->hashTable->numberOfEntries;
-#ifdef DEBUG
-	if (index < 0 && index > position->hashTable->numberOfEntries - 1) {
-		std::cout << "invalid index in probe pv move\n";
+
+	/*
+	ASSERT(index >= 0 && index <= position->hashTable->numEntries - 1);
+	ASSERT(depth >= 1 && depth < MAXDEPTH);
+	ASSERT(flags >= HFALPHA && flags <= HFEXACT);
+	ASSERT(score >= -INFINITE && score <= INFINITE);
+	ASSERT(position->ply >= 0 && position->ply < MAXDEPTH);
+	*/
+
+	if (position->hashTable->pTable[index].positionKey == 0) {
+		position->hashTable->newWrite++;
 	}
-#endif
-	if (position->hashTable->pTable[index].positionKey == position->positionKey) {
-		return position->hashTable->pTable[index].move;
+	else {
+		position->hashTable->overWrite++;
 	}
 
-	return NOMOVE;
+	if (score > ISMATE) score += position->ply;
+	else if (score < -ISMATE) score -= position->ply;
+
+	position->hashTable->pTable[index].move = move;
+	position->hashTable->pTable[index].positionKey = position->positionKey;
+	position->hashTable->pTable[index].flags = flags;
+	position->hashTable->pTable[index].score = score;
+	position->hashTable->pTable[index].depth = depth;
 }
-
 
 
 void printBitBoard(u64 bitBoardToPrint) {
@@ -3544,7 +3753,7 @@ void readInput (searchInfoStructure* info) {
 	char input[256] = "", * endc;
 
 	if (inputWaiting()) {
-		info->stopped = TRUE;
+		info->stopped = true;
 		do {
 			bytes = _read(_fileno(stdin), input, 256);
 		} while (bytes < 0);
@@ -3553,7 +3762,7 @@ void readInput (searchInfoStructure* info) {
 
 		if (strlen(input) > 0) {
 			if (!strncmp(input, "quit", 4)) {
-				info->quit = TRUE;
+				info->quit = true;
 			}
 		}
 		return;
@@ -3563,26 +3772,24 @@ void readInput (searchInfoStructure* info) {
 static void checkUp (searchInfoStructure* info) {
  
 	// .. check if time up, or interrupt from GUI
-	if (info->timeSet == TRUE && getTimeMs() > info->stopTime) {
-		info->stopped = TRUE;
+	if (info->timeSet == true && getTimeMs() > info->stopTime) {
+		info->stopped = true;
 	}
 
 	readInput(info);
 }
 
-
-
 static void pickNextMove(int moveNumber, moveListStructure* list) {
 
 	moveStructure temp;
-	int index = 0;
+	int i = 0;
 	int bestScore = 0;
 	int bestNumber = moveNumber;
 
-	for (index = moveNumber; index < list->moveCount; ++index) { //this could probably be optimized greatly, but that could be said for everything here probably
-		if (list->moves[index].score > bestScore) {
-			bestScore = list->moves[index].score;
-			bestNumber = index;
+	for (i = moveNumber; i < list->moveCount; i++) { //this could probably be optimized greatly, but that could be said for everything here probably
+		if (list->moves[i].score > bestScore) {
+			bestScore = list->moves[i].score;
+			bestNumber = i;
 		}
 	}
 #ifdef DEBUG
@@ -3638,19 +3845,17 @@ static void clearForSearch(boardStructure* position, searchInfoStructure* info) 
 			position->searchKillers[i][i2] = 0;
 		}
 	}
-	/*
+
 	position->hashTable->overWrite = 0;
 	position->hashTable->hit = 0;
 	position->hashTable->cut = 0;
 	position->ply = 0;
-	*/
 
-
+	info->nullCut = 0;
 	info->stopped = 0;
 	info->nodes = 0;
 	info->fh = 0;
 	info->fhf = 0;
-	
 
 }
 
@@ -3799,50 +4004,50 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 		return evaluatePosition(position);
 	}
 
-	int Score = evaluatePosition(position);
+	int score = evaluatePosition(position);
 
 	//ASSERT(Score > -INFINITE && Score < INFINITE);
 
-	if (Score >= beta) {
+	if (score >= beta) {
 		return beta;
 	}
 
-	if (Score > alpha) {
-		alpha = Score;
+	if (score > alpha) {
+		alpha = score;
 	}
 
 	moveListStructure list[1];
 	generateAllCaptures(position, list);
 
-	int MoveNum = 0;
-	int Legal = 0;
-	Score = -INFINITEC;
+	int moveNumber = 0;
+	int legal = 0;
+	score = -INFINITEC;
 
-	for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
 
-		pickNextMove(MoveNum, list);
+		pickNextMove(moveNumber, list);
 
-		if (!makeMove(position, list->moves[MoveNum].move)) {
+		if (!makeMove(position, list->moves[moveNumber].move)) {
 			continue;
 		}
 
-		Legal++;
-		Score = -quiescence(-beta, -alpha, position, info);
+		legal++;
+		score = -quiescence(-beta, -alpha, position, info);
 		takeMove(position);
 
-		if (info->stopped == TRUE) {
+		if (info->stopped == true) {
 			return 0;
 		}
 
-		if (Score > alpha) {
-			if (Score >= beta) {
-				if (Legal == 1) {
+		if (score > alpha) {
+			if (score >= beta) {
+				if (legal == 1) {
 					info->fhf++;
 				}
 				info->fh++;
 				return beta;
 			}
-			alpha = Score;
+			alpha = score;
 		}
 	}
 
@@ -3850,7 +4055,7 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 
 	return alpha;
 }
-
+/*
 static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, bool doNull) {
 	
 #ifdef DEBUG
@@ -3892,19 +4097,17 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 		depth++;
 	}
 	
-	
-    
 	int score = -INFINITEC;
 	int PVMove = NOMOVE;
 	
 	
-	//something about this is fucked, good luck
-	/*
-	if (probeHashEntry(position, &PVMove, &score, alpha, beta, depth) == true) {
+	bool gamer = probeHashEntry(position, &PVMove, &score, alpha, beta, depth);
+	
+	if (gamer == true) {
 		position->hashTable->cut++;
 		return score;
 	}
-	*/
+	
 	
 	if (doNull && !inCheck && position->ply && (position->normalPieces[position->side] > 0) && depth >= 4) {
 		makeNullMove(position);
@@ -3921,6 +4124,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	}
 	
 	
+	
 
 	moveListStructure list[1];
 	generateAllMoves(position, list);
@@ -3929,18 +4133,21 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	int legal = 0;
 	int oldAlpha = alpha;
 	int bestMove = NOMOVE;
+	
 	int bestScore = -INFINITEC;
-
+	score = -INFINITEC;
+	
 	
 	if (PVMove != NOMOVE) {
 		for (moveNumber = 0; moveNumber < list->moveCount; moveNumber) {
 			if (list->moves[moveNumber].move == PVMove) {
 				list->moves[moveNumber].score = 2000000;
-				printf("Pv move found \n");
+				printf("PV move found \n");
 				break;
 			}
 		}
 	}
+	
 	
 	
 	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
@@ -3974,12 +4181,11 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 						position->searchKillers[0][position->ply] = list->moves[moveNumber].move;
 					}
 
-					//storeHashEntry(position, bestMove, beta, HFBETA, depth);
-
+					storeHashEntry(position, bestMove, beta, HFBETA, depth);
 					return beta;
 				}
 				alpha = score;
-				bestMove = list->moves[moveNumber].move;
+
 				if (!(list->moves[moveNumber].move & MFLAGCAP)) {
 					position->searchHistory[position->pieces[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth;
 				}
@@ -4004,12 +4210,153 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	
 	if (alpha != oldAlpha) {
 		storeHashEntry(position, bestMove, bestScore, HFEXACT, depth);
-		//storePVMove(position, bestMove);
 	}
 	else {
 		storeHashEntry(position, bestMove, alpha, HFALPHA, depth);
 	}
 	
+
+	return alpha;
+}
+*/
+
+static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, int doNull) {
+
+	/*
+	ASSERT(CheckBoard(position));
+	ASSERT(beta > alpha);
+	ASSERT(depth >= 0);
+	*/
+
+	if (depth <= 0) {
+		return quiescence(alpha, beta, position, info);
+		// return EvalPosition(position);
+	}
+
+	if ((info->nodes & 2047) == 0) {
+		checkUp(info);
+	}
+
+	info->nodes++;
+
+	if ((isRepetition(position) || position->fiftyMove >= 100) && position->ply) {
+		return 0;
+	}
+
+	if (position->ply > MAXDEPTH - 1) {
+		return evaluatePosition(position);
+	}
+
+	int InCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
+
+	if (InCheck == TRUE) {
+		depth++;
+	}
+
+	int Score = -INFINITEC;
+	int PvMove = NOMOVE;
+
+	if (probeHashEntry(position, &PvMove, &Score, alpha, beta, depth) == true) {
+		position->hashTable->cut++;
+		return Score;
+	}
+
+	if (doNull && !InCheck && position->ply && (position->normalPieces[position->side] > 0) && depth >= 4) {
+		makeNullMove(position);
+		Score = -alphaBeta(-beta, -beta + 1, depth - 4, position, info, false);
+		takeNullMove(position);
+		if (info->stopped == true) {
+			return 0;
+		}
+
+		if (Score >= beta && abs(Score) < ISMATE) {
+			info->nullCut++;
+			return beta;
+		}
+	}
+
+	moveListStructure list[1];
+	generateAllMoves(position, list);
+
+	int MoveNum = 0;
+	int Legal = 0;
+	int OldAlpha = alpha;
+	int BestMove = NOMOVE;
+
+	int BestScore = -INFINITEC;
+
+	Score = -INFINITEC;
+
+	if (PvMove != NOMOVE) {
+		for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+			if (list->moves[MoveNum].move == PvMove) {
+				list->moves[MoveNum].score = 2000000;
+				//printf("Pv move found \n");
+				break;
+			}
+		}
+	}
+
+	for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+
+		pickNextMove(MoveNum, list);
+
+		if (!makeMove(position, list->moves[MoveNum].move)) {
+			continue;
+		}
+
+		Legal++;
+		Score = -alphaBeta(-beta, -alpha, depth - 1, position, info, true);
+		takeMove(position);
+
+		if (info->stopped == true) {
+			return 0;
+		}
+		if (Score > BestScore) {
+			BestScore = Score;
+			BestMove = list->moves[MoveNum].move;
+			if (Score > alpha) {
+				if (Score >= beta) {
+					if (Legal == 1) {
+						info->fhf++;
+					}
+					info->fh++;
+
+					if (!(list->moves[MoveNum].move & MFLAGCAP)) {
+						position->searchKillers[1][position->ply] = position->searchKillers[0][position->ply];
+						position->searchKillers[0][position->ply] = list->moves[MoveNum].move;
+					}
+
+					storeHashEntry(position, BestMove, beta, HFBETA, depth);
+
+					return beta;
+				}
+				alpha = Score;
+
+				if (!(list->moves[MoveNum].move & MFLAGCAP)) {
+					position->searchHistory[position->pieces[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth;
+				}
+			}
+		}
+	}
+
+	if (Legal == 0) {
+		if (InCheck) {
+			return -INFINITEC + position->ply;
+		}
+		else {
+			return 0;
+		}
+	}
+
+	//ASSERT(alpha >= OldAlpha);
+
+	if (alpha != OldAlpha) {
+		storeHashEntry(position, BestMove, BestScore, HFEXACT, depth);
+	}
+	else {
+		storeHashEntry(position, BestMove, alpha, HFALPHA, depth);
+	}
 
 	return alpha;
 }
@@ -4027,27 +4374,6 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 	clearForSearch(position, info);
 
 	/*
-	for (currentDepth = 1; currentDepth <= info->depth; currentDepth++) {
-		
-		bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, true);
-
-
-		pvMoves = pvMoves = getPVLine(currentDepth, position);
-		bestMove = position->PVArray[0];
-
-		printf("depth:%d score:%d move:%s nodes:%ld ", currentDepth, bestScore, printMove(bestMove), info->nodes);
-
-		pvMoves = getPVLine(currentDepth, position);
-		printf("pv");
-		for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
-			printf(" %s", printMove(position->PVArray[pvNumber]));
-		}
-		printf("\n");
-		printf("ordering:%.2f\n", (info->fhf / info->fh));
-	}
-	*/
-	
-	/*
 	if (engineOptions->useBook == true) {
 		bestMove = getBookMove(position);
 	}
@@ -4057,10 +4383,9 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 	//printf("search depth:%d\n",info->depth);
 	
 	if (bestMove == NOMOVE) {
-	//iterative deepening
 		for (currentDepth = 1; currentDepth <= info->depth; currentDepth++) {
-			// alpha	 beta
 			rootDepth = currentDepth;
+			//                     alpha      beta
 			bestScore = alphaBeta(-INFINITEC, INFINITEC, currentDepth, position, info, true);
 
 			if (info->stopped == true) {
@@ -4069,15 +4394,14 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 
 			pvMoves = getPVLine(currentDepth, position);
 			bestMove = position->PVArray[0];
-			if (info->GAME_MODE == UCIMODE) {
-				printf("info depth %d score cp %d nodes %ld nps %d time %d ",
-					currentDepth, bestScore, info->nodes, (info->nodes / ((getTimeMs() - info->startTime)+ 1) * 1000), getTimeMs() - info->startTime);
+			
+			int nodesPerSecond = 0;
+			if ((getTimeMs() - info->startTime) != 0) {
+				nodesPerSecond = info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
 			}
-			else if (info->GAME_MODE == XBOARDMODE && info->POST_THINKING == true) {
-				printf("%d %d %d %ld ",
-					currentDepth, bestScore, (getTimeMs() - info->startTime) / 10, info->nodes);
-			}
-			else if (info->POST_THINKING == true) {
+			printf("info depth %d score cp %d nodes %ld nps %d time %d ", currentDepth, bestScore, info->nodes, nodesPerSecond, getTimeMs() - info->startTime);
+			
+			if (info->POST_THINKING == true) {
 				//int time = getTimeMs() - info->startTime;
 				//long nodesPerSecond = info->nodes / (getTimeMs() - info->startTime);
 				//printf("depth %d score %d nodes %ld nps %ld time %d(ms) \n",
@@ -4086,32 +4410,20 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 				//  printf("score %d depth %d nodes %ld time %d(ms) ",
 				//	bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
 			}
-			if (info->GAME_MODE == UCIMODE /* || info->POST_THINKING == true*/) {
+			if (info->GAME_MODE == UCIMODE) {
 				pvMoves = getPVLine(currentDepth, position);
-				if (!info->GAME_MODE == XBOARDMODE) {
-					printf("pv");
-				}
-				for (pvNumber = 0; pvNumber < pvMoves; ++pvNumber) {
+				printf("pv");
+				for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
 					printf(" %s", printMove(position->PVArray[pvNumber]));
 				}
 				printf("\n");
 			}
 
-			//printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d Ordering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
+			printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d Ordering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
 		}
 	}
 
-	if (info->GAME_MODE == UCIMODE) {
-		printf("bestmove %s\n", printMove(bestMove));
-	}
-	else if (info->GAME_MODE == XBOARDMODE) {
-		printf("move %s\n", printMove(bestMove));
-		makeMove(position, bestMove);
-	}
-	else {
-		printf("best move is: %s\n", printMove(bestMove));
-		makeMove(position, bestMove);
-	}
+	printf("bestmove %s\n", printMove(bestMove));
 	
 }
 int parseMove(const char* ptrChar, boardStructure* position) {
@@ -4209,12 +4521,10 @@ void parseGo(std::string line3, searchInfoStructure* info, boardStructure* posit
 	int depth = -1, movestogo = 30, movetime = -1;
 	int time = -1, inc = 0;
 	char* ptr = NULL;
-	info->timeSet = FALSE;
+	info->timeSet = false;
 
 	const char* line2 = line3.c_str();
-
 	char line[sizeof(line3)];
-
 	for (int i = 0; i < sizeof(line3); i++) {
 		line[i] = line2[i];
 	}
@@ -4279,8 +4589,9 @@ void parseGo(std::string line3, searchInfoStructure* info, boardStructure* posit
 
 void initializeAll() {
 
-	computeMoveBoards();
+	//computeMoveBoards();
 	initializeFilesAndRanksBoard();
+	initializeEvaluationMasks();
 	initializeSquare120ToSquare64();
 	initializeBitMasks();
 	initializeHashKeys();
@@ -4422,6 +4733,8 @@ int main()
 			cout << "full input: " << input << "\n";
 		}
 	} while (keepRunning);
+
+	free(currentBoard->hashTable->pTable);
 	return 0;
 }
 
