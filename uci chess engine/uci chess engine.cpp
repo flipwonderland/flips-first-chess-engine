@@ -4428,7 +4428,7 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 			std::cout << " score cp " << bestScore;
 			std::cout << " nodes " << info->nodes;
 			std::cout << " nps " << nodesPerSecond;
-			std::cout << " time " << info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
+			std::cout << " time " << getTimeMs() - info->startTime;
 			pvMoves = getPVLine(currentDepth, position);
 			std::cout << " pv";
 			for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
