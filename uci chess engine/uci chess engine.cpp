@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <cstdlib>
+
+#define _VECTOR_
 
 #include "stdlib.h"
 #include "stdio.h"
@@ -203,7 +206,6 @@ typedef struct {
 	int nullCut;
 
 	int GAME_MODE;
-	bool POST_THINKING;
 
 } searchInfoStructure;
 
@@ -4420,31 +4422,25 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info) 
 			if ((getTimeMs() - info->startTime) != 0) {
 				nodesPerSecond = info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
 			}
-			printf("info depth %d score cp %d nodes %ld nps %d time %d ", currentDepth, bestScore, info->nodes, nodesPerSecond, getTimeMs() - info->startTime);
-			
-			if (info->POST_THINKING == true) {
-				//int time = getTimeMs() - info->startTime;
-				//long nodesPerSecond = info->nodes / (getTimeMs() - info->startTime);
-				//printf("depth %d score %d nodes %ld nps %ld time %d(ms) \n",
-				printf("depth %d score %d nodes %ld time %d(ms) \n",
-					currentDepth, bestScore, info->nodes/*, nodesPerSecond*/, getTimeMs() - info->startTime);
-				//  printf("score %d depth %d nodes %ld time %d(ms) ",
-				//	bestScore, currentDepth, info->nodes, getTimeMs() - info->startTime);
+			//printf("info depth %d score cp %d nodes %ld nps %d time %d ", currentDepth, bestScore, info->nodes, nodesPerSecond, getTimeMs() - info->startTime);
+			std::cout << "info ";
+			std::cout << "depth " << currentDepth;
+			std::cout << " score cp " << bestScore;
+			std::cout << " nodes " << info->nodes;
+			std::cout << " nps " << nodesPerSecond;
+			std::cout << " time " << info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
+			pvMoves = getPVLine(currentDepth, position);
+			std::cout << " pv";
+			for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
+				std::cout << " " << printMove(position->PVArray[pvNumber]);
 			}
-			if (info->GAME_MODE == UCIMODE) {
-				pvMoves = getPVLine(currentDepth, position);
-				printf("pv");
-				for (pvNumber = 0; pvNumber < pvMoves; pvNumber++) {
-					printf(" %s", printMove(position->PVArray[pvNumber]));
-				}
-				printf("\n");
-			}
+			std::cout << std::endl;
 
 			printf("Hits:%d Overwrite:%d NewWrite:%d Cut:%d Ordering %.2f NullCut:%d\n",position->hashTable->hit,position->hashTable->overWrite,position->hashTable->newWrite,position->hashTable->cut, (info->fhf/info->fh)*100,info->nullCut);
 		}
 	}
 
-	printf("bestmove %s\n", printMove(bestMove));
+	std::cout << "bestmove " << printMove(bestMove) << "\n";
 	
 }
 int parseMove(const char* ptrChar, boardStructure* position) {
@@ -4497,10 +4493,12 @@ int parseMove(const char* ptrChar, boardStructure* position) {
 	return NOMOVE;
 }
 
+
+
 void parsePosition(std::string lineInStr, boardStructure* position) {
 
 	lineInStr += 9;
-
+	
 	const char* ptrChar = lineInStr.c_str();
 	const char* lineIn = lineInStr.c_str();
 
@@ -4537,18 +4535,22 @@ void parsePosition(std::string lineInStr, boardStructure* position) {
 #endif
 }
 
-void parseGo(std::string line3, searchInfoStructure* info, boardStructure* position) {
+
+
+
+void parseGo( std::string line3, searchInfoStructure* info, boardStructure* position) {
 
 	int depth = -1, movestogo = 30, movetime = -1;
 	int time = -1, inc = 0;
-	char* ptr = NULL;
+	const char* ptr = NULL;
 	info->timeSet = false;
-
+	
 	const char* line2 = line3.c_str();
 	char line[sizeof(line3)];
 	for (int i = 0; i < sizeof(line3); i++) {
 		line[i] = line2[i];
 	}
+	
 
 	if ((ptr = strstr(line, "infinite"))) {
 		;
@@ -4607,6 +4609,89 @@ void parseGo(std::string line3, searchInfoStructure* info, boardStructure* posit
 	searchPosition(position, info);
 }
 
+/*
+
+void uciLoop(boardStructure* currentBoard, searchInfoStructure* info) {
+	
+	info->GAME_MODE = UCIMODE;
+	
+	std::string cmd;
+	
+	int hashTableSizeMB = 64;
+
+	std::cout << "uciok" << "\n";
+
+	while (true) {
+		memset(&line[0], 0, sizeof(line));
+		fflush(stdout);
+		if (!fgets(line, INPUTBUFFER, stdin))
+			
+
+		if (line[0] == '\n')
+			continue;
+
+		if (!strncmp(line, "isready", 7)) {
+			printf("readyok\n");
+			continue;
+		}
+		else if (!strncmp(line, "position", 8)) {
+			parsePosition(line, currentBoard);
+		}
+		else if (!strncmp(line, "ucinewgame", 10)) {
+			//parsePosition("position startpos\n", currentBoard);
+		}
+		else if (!strncmp(line, "go", 2)) {
+			printf("Seen Go..\n");
+			parseGo(line, info, currentBoard);
+		}
+		else if (!strncmp(line, "quit", 4)) {
+			info->quit = true;
+			break;
+		}
+		else if (!strncmp(line, "uci", 3)) {
+			printf("id name %s\n", NAME);
+			printf("id author flipwonderland (duh) w/ help from Bluefever!\n");
+			printf("uciok\n");
+		}
+		else if (!strncmp(line, "debug", 4)) {
+			//DebugAnalysisTest(pos, info);
+			break;
+		}
+		else if (!strncmp(line, "setoption name Hash value ", 26)) {
+			sscanf_s(line, "%*s %*s %*s %*s %d", &hashTableSizeMB);
+			if (hashTableSizeMB < 4) hashTableSizeMB = 4;
+			printf("Set Hash to %d MB\n", hashTableSizeMB);
+			initializeHashTable(currentBoard->hashTable, hashTableSizeMB);
+		}
+		else if (!strncmp(line, "setoption name Book value ", 26)) {
+			
+			char* ptrTrue = NULL;
+			ptrTrue = strstr(line, "true");
+			if (ptrTrue != NULL) {
+				EngineOptions->UseBook = TRUE;
+			}
+			else {
+				EngineOptions->UseBook = FALSE;
+			}
+			
+		}
+		if (info->quit)
+			break;
+	}
+}
+*/
+
+bool saveStringToFile(const std::string& text, const std::string& filename) {
+	std::ofstream outFile(filename);
+	if (!outFile.is_open()) {
+		std::cout << "Error opening file!" << "\n";
+		return false;
+	}
+	outFile << text;
+	outFile.close();
+	return true;
+}
+
 
 void initializeAll() {
 
@@ -4625,12 +4710,47 @@ bool keepRunning = true;
 bool boardLoaded = false;
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
 //I think I could just do that by making a nn that changes the move order possibly, because with ab pruning if the best move is first the search will be extremely fast
-int main()
+int main(int argc, char* argv[])
 {
 	using std::cout;
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
+	
+	
+	/*
+	boardStructure currentBoard[1];
+	searchInfoStructure info[1];
+	info->quit = false;
+	currentBoard->hashTable->pTable = NULL;
+	initializeHashTable(currentBoard->hashTable, 64);
+	
+	setbuf(stdin, NULL);
+	setbuf(stdout, NULL);
 
+	int ArgNum = 0;
+
+	char line[256];
+	
+	while (TRUE) {
+		memset(&line[0], 0, sizeof(line));
+
+		fflush(stdout);
+		if (!fgets(line, 256, stdin))
+			continue;
+		if (line[0] == '\n')
+			continue;
+		if (!strncmp(line, "uci", 3)) {
+			uciLoop(currentBoard, info);
+			if (info->quit == TRUE) break;
+			continue;
+		}
+	}
+	
+	free(currentBoard->hashTable->pTable);
+	return 0;
+	*/
+	
+	
 	initializeAll();
 
 	boardStructure currentBoard[1];
@@ -4649,7 +4769,8 @@ int main()
 		//std::getline(cin >> std::ws, input);
 		std::string command = inputParser(input, 0);
 
-		if (command == "uci")/*should turn this into a switch*/ {
+
+		if (command == "uci") {//should turn this into a switch
 			uci = true;
 			//clearGameState();
 			cout << "id name flipgine" << "\n";
@@ -4657,51 +4778,6 @@ int main()
 			cout << "uciok" << "\n";
 		}
 		else if (command == "debug") {
-			//printBitBoard(currentBoard.whitePawnBitBoard);
-			parseFen(WAC2, currentBoard);
-			//printSquareBoard(currentBoard);
-			//cout << "\n";
-
-			//generateAllMoves(currentBoard, list);
-
-			//printMoveList(list);
-			
-			//perftTest(4, currentBoard);
-			char inputMove[6];
-			int Move = NOMOVE;
-			int PVNum = 0;
-			int max = 0;
-
-			while (true) {
-				printSquareBoard(currentBoard);
-				printf("enter a move> ");
-				fgets(inputMove, 6, stdin);
-
-				if (inputMove[0] == 'q') {
-					break;
-				} else if (inputMove[0] == 't') {
-					takeMove(currentBoard);
-				}
-				else if (inputMove[0] == 's') {
-					info->depth = 7;
-					searchPosition(currentBoard, info);
-				}
-				else {
-					Move = parseMove(inputMove, currentBoard);
-					if (Move != NOMOVE) {
-						makeMove(currentBoard, Move);
-						/*
-						if (isRepitition(currentBoard)) {
-							std::cout << "repititon made\n";
-						}
-						*/
-					}
-					else {
-						cout << "move not parsed\n";
-					}
-				}
-				fflush(stdin);
-			}
 
 		}
 		else if (command == "isready") {
@@ -4709,19 +4785,18 @@ int main()
 			if (inputParser(input, 1) == "hi") cout << "I see you! \n";
 			cout << "readyok" << "\n";
 		}
-		else if (command == "setoption name") /*gotta fix this, this is 2 tokens in one*/ {
+		else if (command == "setoption name")  {//gotta fix this, this is 2 tokens in one
 			// if I figure out how to do multithreading I'll put a command here
 		}
 		else if (command == "register") {
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-
 			//clearGameState(); //this might create unexpected behavior if the gui does not send this every time
 			parsePosition("position startpos\n", currentBoard);
 			cout << "new game ready to be loaded!" << "\n";
 		}
-		else if (command == "position") /*position [fen | startpos]  moves  ....*/ {
+		else if (command == "position") {// position [fen | startpos]  moves  .... 
 			parsePosition(input, currentBoard);
 		}
 		else if (command == "go") {
@@ -4749,14 +4824,17 @@ int main()
 			perftTest(perftAmount, currentBoard);
 		}
 		else {
+			/*
 			cout << "unknown command, try again. command: " << command << "\n";
 			cout << "second command: " << inputParser(input, 1) << "\n";
 			cout << "full input: " << input << "\n";
+			*/
 		}
 	} while (keepRunning);
 
 	free(currentBoard->hashTable->pTable);
 	return 0;
+	
 }
 
 

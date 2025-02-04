@@ -1,5 +1,6 @@
 #include "stdlib.h"
 
+#define NAME "flipgine v1 :D"
 //#define DEBUG
 #define PERFORMANCEMODE
 
@@ -22,7 +23,7 @@ typedef unsigned long long u64;
 //#define MAX_GAME_MOVES 17697
 //this would be better, I'd run into issues if someone played a longer game which is possible but I'm gonna save on ram and do this instead
 #define MAXPOSITIONMOVES 218 // this is the max number of moves that we would expect to be in a single position
-#define MAXDEPTH 512
+#define MAXDEPTH 64
 
 #define DRAW 0
 #define INFINITEC 30000
