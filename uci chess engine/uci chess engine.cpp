@@ -1961,11 +1961,14 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[wP]; pieceNumber++) {
 			square = position->pieceList[wP][pieceNumber];
+			
 
+#ifdef DEBUG
 			if (!squareOnBoard(square)) {
 				std::cout << "pawn was off board in generate moves function\n";
 				break;
 			}
+#endif 
 
 			if (position->pieces[square + 10] == empty) {
 				addWhitePawnMove(position, square, square + 10, list);
@@ -2012,10 +2015,12 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[bP]; pieceNumber++) {
 			square = position->pieceList[bP][pieceNumber];
 
+#ifdef DEBUG
 			if (!squareOnBoard(square)) {
 				std::cout << "pawn was off board in generate moves function\n";
 				break;
 			}
+#endif 
 
 			if (position->pieces[square - 10] == empty) {
 				addBlackPawnMove(position, square, square - 10, list);
@@ -2061,17 +2066,21 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 	pieceIndex = loopSlidingIndex[side];
 	piece = loopSlidingPiece[pieceIndex];
 	pieceIndex++;
-
+ 
 	while (piece != 0) {
+#ifdef DEBUG
 		if (!pieceValid(piece)) {
 			std::cout << "piece invalid on move list generator\n";
 			break;
 		}
+#endif 
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 			square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
 			if (!squareOnBoard(square)) {
 				std::cout << "non sliding piece not on board\n";
 			}
+#endif
 			for (index = 0; index < numberOfDirections[piece]; index++) {
 				direction = pieceDirection[piece][index];
 				targetSquare = square + direction;
@@ -2099,15 +2108,19 @@ static void generateAllMoves(const boardStructure* position, moveListStructure* 
 	pieceIndex++;
 
 	while (piece != 0) {
+#ifdef DEBUG
 		if (!pieceValid(piece)) {
 			std::cout << "piece invalid on move list generator\n";
 			break;
 		}
+#endif
 		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 			square = position->pieceList[piece][pieceNumber];
+#ifdef DEBUG
 			if (!squareOnBoard(square)) {
 				std::cout << "non sliding piece not on board\n";
 			}
+#endif
 			for (index = 0; index < numberOfDirections[piece]; index++) {
 				direction = pieceDirection[piece][index];
 				targetSquare = square + direction;
@@ -2386,9 +2399,11 @@ static void takeMove(boardStructure* position) {
 
 	int captured = CAPTURED(move);
 	if (captured != empty) {
+#ifdef DEBUG
 		if (!pieceValid(captured)) {
 			std::cout << "piece captured was not valid\n";
 		}
+#endif
 		addPiece(to, position, captured);
 	}
 
@@ -2513,9 +2528,11 @@ static bool makeMove(boardStructure* position, int move) {
 	position->fiftyMove++;
 
 	if (captured != empty) {
+#ifdef DEBUG
 		if (!pieceValid(captured)) {
 			std::cout << "piece captured was not valid\n";
 		}
+#endif
 		clearPiece(to, position);
 		position->fiftyMove = 0;
 	}
@@ -2539,15 +2556,19 @@ static bool makeMove(boardStructure* position, int move) {
 		if (move & MFLAGPS) {
 			if (side == white) {
 				position->enPassant = from + 10;
+#ifdef DEBUG
 				if (ranksBoard[position->enPassant] != rank3) {
 					std::cout << "en passant on an invalid rank\n";
 				}
+#endif
 			}
 			else {
 				position->enPassant = from - 10;
+#ifdef DEBUG
 				if (ranksBoard[position->enPassant] != rank6) {
 					std::cout << "en passant on an invalid rank\n";
 				}
+#endif
 			}
 			HASH_EP;
 		}
