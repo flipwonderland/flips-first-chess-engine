@@ -914,7 +914,7 @@ void moveCollector(std::string input, int movePlace) {
 }
 */
 
-bool normalPiece[13] = { false, true, false, true, true, true, true, true, false, true, true, true, true };
+bool normalPiece[13] = { false, false, false, true, true, true, true, false, false, true, true, true, true };
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
@@ -3672,7 +3672,7 @@ static void perft(int depth, boardStructure* position) {
 	int moveNumber = 0;
 	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
 
-		if (!makeMove(position, list->moves[moveNumber].move)) { //essential if the move is legal
+		if (!makeMove(position, list->moves[moveNumber].move)) { //essentially if the move is legal
 			continue;
 		}
 		perft(depth - 1, position); //ahh! recursion! this is probably nessecary in this case but usually you want to avoid it
@@ -3694,9 +3694,8 @@ static void perftTest(int depth, boardStructure* position) {
 	int start = getTimeMs();
 
 	printSquareBoard(position);
-	printf("\nStarting Test To Depth:%d\n", depth);
+	printf("\nStarting Test To Depth:%d \n", depth);
 	leafNodes = 0;
-	//int start = GetTimeMs();
 	moveListStructure list[1];
 	generateAllMoves(position, list);
 
@@ -3716,8 +3715,6 @@ static void perftTest(int depth, boardStructure* position) {
 	int timeDifferential = getTimeMs() - start;
 	int nodesPerSecond = (leafNodes / timeDifferential) * 1000;
 	printf("\nTest Complete : %ld nodes visited in %dms, NPS: %d\n", leafNodes, timeDifferential, nodesPerSecond);
-
-	return;
 }
 
 // http://home.arcor.de/dreamlike/chess/
@@ -4742,7 +4739,7 @@ int main(int argc, char* argv[])
 	
 	initializeAll();
 
-	int hashTableMegaBytes = 64;
+	int hashTableMegaBytes = 1024;
 
 
 	boardStructure currentBoard[1];
