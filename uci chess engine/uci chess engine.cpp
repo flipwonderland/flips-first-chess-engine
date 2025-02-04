@@ -190,7 +190,7 @@ typedef struct {
 	int depth;
 	int depthset;
 	int movesToGo;
-	int timeSet;
+	bool timeSet;
 
 	bool infinite;
 	long nodes;
@@ -4139,7 +4139,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	
 	
 	if (PVMove != NOMOVE) {
-		for (moveNumber = 0; moveNumber < list->moveCount; moveNumber) {
+		for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
 			if (list->moves[moveNumber].move == PVMove) {
 				list->moves[moveNumber].score = 2000000;
 				printf("PV move found \n");
@@ -4240,36 +4240,36 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	info->nodes++;
 
 	if ((isRepetition(position) || position->fiftyMove >= 100) && position->ply) {
-		return 0;
+		return DRAW;
 	}
 
 	if (position->ply > MAXDEPTH - 1) {
 		return evaluatePosition(position);
 	}
 
-	int InCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
+	int inCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
 
-	if (InCheck == TRUE) {
+	if (inCheck == true) {
 		depth++;
 	}
 
-	int Score = -INFINITEC;
-	int PvMove = NOMOVE;
+	int score = -INFINITEC;
+	int pvMove = NOMOVE;
 
-	if (probeHashEntry(position, &PvMove, &Score, alpha, beta, depth) == true) {
+	if (probeHashEntry(position, &pvMove, &score, alpha, beta, depth)) {
 		position->hashTable->cut++;
-		return Score;
+		return score;
 	}
 
-	if (doNull && !InCheck && position->ply && (position->normalPieces[position->side] > 0) && depth >= 4) {
+	if (doNull && !inCheck && position->ply && (position->normalPieces[position->side] > 0) && depth >= 4) {
 		makeNullMove(position);
-		Score = -alphaBeta(-beta, -beta + 1, depth - 4, position, info, false);
+		score = -alphaBeta(-beta, -beta + 1, depth - 4, position, info, false);
 		takeNullMove(position);
 		if (info->stopped == true) {
 			return 0;
 		}
 
-		if (Score >= beta && abs(Score) < ISMATE) {
+		if (score >= beta && abs(score) < ISMATE) {
 			info->nullCut++;
 			return beta;
 		}
@@ -4278,70 +4278,70 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	moveListStructure list[1];
 	generateAllMoves(position, list);
 
-	int MoveNum = 0;
-	int Legal = 0;
-	int OldAlpha = alpha;
-	int BestMove = NOMOVE;
+	int moveNumber = 0;
+	int legal = 0;
+	int oldAlpha = alpha;
+	int bestMove = NOMOVE;
 
-	int BestScore = -INFINITEC;
+	int bestScore = -INFINITEC;
 
-	Score = -INFINITEC;
-
-	if (PvMove != NOMOVE) {
-		for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
-			if (list->moves[MoveNum].move == PvMove) {
-				list->moves[MoveNum].score = 2000000;
-				//printf("Pv move found \n");
+	score = -INFINITEC;
+	
+	if (pvMove != NOMOVE) {
+		for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
+			if (list->moves[moveNumber].move == pvMove) {
+				list->moves[moveNumber].score = 2000000;
 				break;
 			}
 		}
 	}
+	
 
-	for (MoveNum = 0; MoveNum < list->moveCount; ++MoveNum) {
+	for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
 
-		pickNextMove(MoveNum, list);
+		pickNextMove(moveNumber, list);
 
-		if (!makeMove(position, list->moves[MoveNum].move)) {
+		if (!makeMove(position, list->moves[moveNumber].move)) {
 			continue;
 		}
 
-		Legal++;
-		Score = -alphaBeta(-beta, -alpha, depth - 1, position, info, true);
+		legal++;
+		score = -alphaBeta(-beta, -alpha, depth - 1, position, info, true);
 		takeMove(position);
 
 		if (info->stopped == true) {
 			return 0;
 		}
-		if (Score > BestScore) {
-			BestScore = Score;
-			BestMove = list->moves[MoveNum].move;
-			if (Score > alpha) {
-				if (Score >= beta) {
-					if (Legal == 1) {
+		if (score > bestScore) {
+			bestScore = score;
+			bestMove = list->moves[moveNumber].move;
+			if (score > alpha) {
+				if (score >= beta) {
+					if (legal == 1) {
 						info->fhf++;
 					}
 					info->fh++;
 
-					if (!(list->moves[MoveNum].move & MFLAGCAP)) {
+					if (!(list->moves[moveNumber].move & MFLAGCAP)) {
 						position->searchKillers[1][position->ply] = position->searchKillers[0][position->ply];
-						position->searchKillers[0][position->ply] = list->moves[MoveNum].move;
+						position->searchKillers[0][position->ply] = list->moves[moveNumber].move;
 					}
 
-					storeHashEntry(position, BestMove, beta, HFBETA, depth);
+					storeHashEntry(position, bestMove, beta, HFBETA, depth);
 
 					return beta;
 				}
-				alpha = Score;
+				alpha = score;
 
-				if (!(list->moves[MoveNum].move & MFLAGCAP)) {
-					position->searchHistory[position->pieces[FROMSQ(BestMove)]][TOSQ(BestMove)] += depth;
+				if (!(list->moves[moveNumber].move & MFLAGCAP)) {
+					position->searchHistory[position->pieces[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth;
 				}
 			}
 		}
 	}
 
-	if (Legal == 0) {
-		if (InCheck) {
+	if (legal == 0) {
+		if (inCheck) {
 			return -INFINITEC + position->ply;
 		}
 		else {
@@ -4351,11 +4351,11 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 
 	//ASSERT(alpha >= OldAlpha);
 
-	if (alpha != OldAlpha) {
-		storeHashEntry(position, BestMove, BestScore, HFEXACT, depth);
+	if (alpha != oldAlpha) {
+		storeHashEntry(position, bestMove, bestScore, HFEXACT, depth);
 	}
 	else {
-		storeHashEntry(position, BestMove, alpha, HFALPHA, depth);
+		storeHashEntry(position, bestMove, alpha, HFALPHA, depth);
 	}
 
 	return alpha;
