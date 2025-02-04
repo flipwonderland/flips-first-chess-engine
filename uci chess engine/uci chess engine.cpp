@@ -914,7 +914,7 @@ void moveCollector(std::string input, int movePlace) {
 }
 */
 
-bool normalPiece[13] = { false, false, false, true, true, true, true, false, false, true, true, true, true };
+bool normalPiece[13] = { true, false, false, true, true, true, true, true, false, true, true, true, true };
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
 int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
@@ -4270,7 +4270,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 		return score;
 	}
 
-	if (doNull && !inCheck && position->ply && (position->normalPieces[position->side] > 0) && depth >= 4) {
+	if (doNull && !inCheck && position->ply && (position->normalPieces[position->side] > 1) && depth >= 4) {
 		makeNullMove(position);
 		score = -alphaBeta(-beta, -beta + 1, depth - 4, position, info, false);
 		takeNullMove(position);
