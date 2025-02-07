@@ -3744,7 +3744,7 @@ static void perftTest(int depth, boardStructure* position) {
 	printf("\nTest Complete : %ld nodes visited in %dms, NPS: %d\n", leafNodes, timeDifferential, nodesPerSecond);
 }
 
-/*
+
 static void checkUp (searchInfoStructure* info) {
  
 	// .. check if time up, or interrupt from GUI
@@ -3753,7 +3753,7 @@ static void checkUp (searchInfoStructure* info) {
 	}
 
 }
-*/
+
 
 static void pickNextMove(int moveNumber, moveListStructure* list) {
 
@@ -3829,7 +3829,7 @@ static void clearForSearch(boardStructure* position, searchInfoStructure* info, 
 	table->currentAge++;
 
 	info->nullCut = 0;
-	info->stopped = 0;
+	info->stopped = false;
 	info->nodes = 0;
 	info->fh = 0;
 	info->fhf = 0;
@@ -3968,11 +3968,11 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 	ASSERT(CheckBoard(position));
 	ASSERT(beta > alpha);
 	*/
-	/*
+	
 	if ((info->nodes & 2047) == 0) {
 		checkUp(info);
 	}
-	*/
+	
 	info->nodes++;
 
 	if (isRepetition(position) || position->fiftyMove >= 100) {
@@ -4212,11 +4212,11 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 		// return EvalPosition(position);
 	}
 
-	/*
+	
 	if ((info->nodes & 2047) == 0) {
 		checkUp(info);
 	}
-	*/
+	
 
 	info->nodes++;
 
@@ -4228,7 +4228,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 		return evaluatePosition(position);
 	}
 
-	int inCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
+	bool inCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
 
 	if (inCheck == true) {
 		depth++;
@@ -4381,8 +4381,8 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 				nodesPerSecond = info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
 			}
 			//printf("info depth %d score cp %d nodes %ld nps %d time %d ", currentDepth, bestScore, info->nodes, nodesPerSecond, getTimeMs() - info->startTime);
-			std::cout << "info ";
-			std::cout << "depth " << currentDepth;
+			std::cout << "info";
+			std::cout << " depth " << currentDepth;
 			std::cout << " score cp " << bestScore;
 			std::cout << " nodes " << info->nodes;
 			std::cout << " nps " << nodesPerSecond;
@@ -4527,13 +4527,7 @@ thrd_t launchSearchThread(boardStructure* position, searchInfoStructure* info, h
 
 }
 
-void joinSearchThread(searchInfoStructure* info) {
 
-	info->stopped = true;
-
-	thrd_join(mainSearchThread, NULL);
-
-}
 
 
 static void parseGo( std::string line3, searchInfoStructure* info, boardStructure* position, hashTableStructure *table) {
@@ -4601,11 +4595,19 @@ static void parseGo( std::string line3, searchInfoStructure* info, boardStructur
 		info->depth = MAXDEPTH;
 	}
 	
-	//printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
-	//	time, info->startTime, info->stopTime, info->depth, info->timeSet); 
+	printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
+		time, info->startTime, info->stopTime, info->depth, info->timeSet); 
 	
 	//searchPosition(position, info, table);
 	mainSearchThread = launchSearchThread(position, info, table);
+
+}
+
+void joinSearchThread(searchInfoStructure* info) {
+
+	thrd_join(mainSearchThread, NULL);
+	
+	info->stopped = true;
 
 }
 
@@ -4817,17 +4819,15 @@ int main(int argc, char* argv[])
 			parseGo("go infinite", info, currentBoard, hashTable);
 		}
 		else if (command == "stop") {
-			info->stopped = true; //this shouldn't have to be here but it does have to be, figure out why 
 			joinSearchThread(info);
 		}
 		else if (command == "ponderhit") {
 
 		}
 		else if (command == "quit") {
-			info->stopped = true; //this shouldn't have to be here but it does have to be, figure out why 
 			joinSearchThread(info);
 			keepRunning = false;
-			//info->quit = true;
+			info->quit = true;
 		}
 		else if (command == "legalCheck") {
 			if (boardLoaded) {
