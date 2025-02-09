@@ -2730,6 +2730,11 @@ u64 blackPassedMask[64];
 u64 whitePassedMask[64];
 u64 isolatedMask[64];
 
+u64 whiteConnectedMask[64];
+u64 blackConnectedMask[64];
+u64 whiteDoubledMask[64];
+u64 blackDoubledMask[64];
+
 u64 fileBBMask[8];
 u64 rankBBMask[8];
 
@@ -2790,7 +2795,7 @@ const int kingEndGame[64] = {
 };
 
 const int kingOpening[64] = {
-	0	,	5	,	5	,	-10	,	-10	,	0	,	10	,	5	,
+	0	,	5	,	10	,	-10	,	-10	,	0	,	20	,	10	,
 	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,
 	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,	-50	,
 	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,
@@ -2879,6 +2884,11 @@ void initializeEvaluationMasks() {
 		isolatedMask[square] = 0ULL;
 		whitePassedMask[square] = 0ULL;
 		blackPassedMask[square] = 0ULL;
+
+		whiteConnectedMask[square] = 0ULL;
+		blackConnectedMask[square] = 0ULL;
+		whiteDoubledMask[square] = 0ULL;
+		blackDoubledMask[square] = 0ULL;
 	}
 
 	for (square = 0; square < 64; square++) {
@@ -2987,12 +2997,12 @@ static int evaluatePosition(const boardStructure *position) {
 		score += pawnTable[SQ64(square)];
 		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
-			//printf("wP Iso:%s\n",PrSq(sq));
+			//printf("wP Iso:%s\n",printSquare(square));
 			score += pawnIsolated;
 		}
 
 		if ((whitePassedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
-			//printf("wP Passed:%s\n",PrSq(sq));
+			//printf("wP Passed:%s\n",printSquare(square));
 			score += pawnPassed[ranksBoard[square]];
 		}
 		
@@ -3014,12 +3024,12 @@ static int evaluatePosition(const boardStructure *position) {
 
 		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
-			//printf("bP Iso:%s\n",PrSq(sq));
+			//printf("bP Iso:%s\n",printSquare(square));
 			score -= pawnIsolated;
 		}
 
 		if ((blackPassedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
-			//printf("bP Passed:%s\n",PrSq(sq));
+			//printf("bP Passed:%s\n",printSquare(square));
 			score -= pawnPassed[7 - ranksBoard[square]];
 		}
 		
