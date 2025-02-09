@@ -2746,9 +2746,9 @@ void printBitBoard(u64 bitBoardToPrint) {
 }
 
 
-const int pawnIsolated = -10;
-const int pawnDoubled = -30;
-const int pawnDoubledIsolated = -300;
+const int pawnIsolated = -5;
+const int pawnDoubled = -10;
+const int pawnDoubledIsolated = -25;
 const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
 const int pawnConnectedPassed[8] = { 0, 30, 55, 130, 250, 275, 350, 600 };
@@ -2928,20 +2928,18 @@ void initializeEvaluationMasks() {
 
 		while (tempSquare < 64) {
 			whitePassedMask[square] |= (1ULL << tempSquare);
-			blackDoubledMask[square] |= (1ULL << tempSquare);
+			whiteDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare += 8;
 		}
 
 		tempSquare = square - 8;
 		while (tempSquare >= 0) {
 			blackPassedMask[square] |= (1ULL << tempSquare);
-			whiteDoubledMask[square] |= (1ULL << tempSquare);
+			blackDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare -= 8;
 		}
 
 		if (filesBoard[SQ120(square)] > fileA) {
-			isolatedMask[square] |= fileBBMask[filesBoard[SQ120(square)] - 1];
-
 			tempSquare = square + 7;
 			while (tempSquare < 64) {
 				whitePassedMask[square] |= (1ULL << tempSquare);
@@ -2956,8 +2954,6 @@ void initializeEvaluationMasks() {
 		}
 
 		if (filesBoard[SQ120(square)] < fileH) {
-			isolatedMask[square] |= fileBBMask[filesBoard[SQ120(square)] + 1];
-
 			tempSquare = square + 9;
 			while (tempSquare < 64) {
 				whitePassedMask[square] |= (1ULL << tempSquare);
@@ -2970,45 +2966,63 @@ void initializeEvaluationMasks() {
 				tempSquare -= 8;
 			}
 		}
-		/*
-		if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
-		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
-			return true;
-			}
-		} else {
-		if (position->pieces[square + 11] == bP || position->pieces[square + 9] == bP) {
-			return true;
-		}
-		}*/
+		
 
-		file = square / 8;
-		rank = square % 8;
+		file = square % 8;
+		rank = square / 8;
 
-		if (rank != 7) {
+		if (file != 7) {
 			tempSquare = square + 9;
-			whiteConnectedMask[square] |= (1ULL << tempSquare);
-			tempSquare = square - 7;
 			blackConnectedMask[square] |= (1ULL << tempSquare);
-
-
+			tempSquare = square - 7;
+			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			
 		}
 
-		if (rank != 0) {
+		if (file != 0) {
 			tempSquare = square + 7;
-			whiteConnectedMask[square] |= (1ULL << tempSquare);
-			tempSquare = square - 9;
 			blackConnectedMask[square] |= (1ULL << tempSquare);
+			tempSquare = square - 9;
+			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			
 		}
 	}
 
 	for (square = 0; square < 64; square++) {
-		//whiteConnectedMask[64];
-		//u64 blackConnectedMask[64];
-		//u64 whiteDoubledMask[64];
-		//u64 blackDoubledMask[64];
-		//whiteConnectedMask[square] |= (1ULL << square);
-		//std::cout << "white connected mask for square " << square << "\n";
-		//printBitBoard(whiteConnectedMask[square]);
+		file = square % 8;
+		rank = square / 8;
+		if (file != 0) {
+			tempSquare = square - 1;
+			isolatedMask[square] |= (1ULL << tempSquare);
+			while (tempSquare < 63) {
+				tempSquare += 8;
+				isolatedMask[square] |= (1ULL << tempSquare);
+			}
+			while (tempSquare > 0) {
+				tempSquare -= 8;
+				isolatedMask[square] |= (1ULL << tempSquare);
+			}
+		}
+		if (file != 7) {
+			tempSquare = square + 1;
+			isolatedMask[square] |= (1ULL << tempSquare);
+			while (tempSquare < 63) {
+				tempSquare += 8;
+				isolatedMask[square] |= (1ULL << tempSquare);
+			}
+			while (tempSquare > 0) {
+				tempSquare -= 8;
+				isolatedMask[square] |= (1ULL << tempSquare);
+			}
+		}
+	}
+	
+
+
+	for (square = 0; square < 64; square++) {
+		
+		//std::cout << "isolated mask for square " << square << "\n";
+		//printBitBoard(isolatedMask[square]);
 		//blackConnectedMask[square] |= (1ULL << square);
 		//std::cout << "black connected mask for square " << square << "\n";
 		//printBitBoard(blackConnectedMask[square]);
@@ -3062,7 +3076,13 @@ static int evaluatePosition(const boardStructure *position) {
 	if (!position->pieceNumber[wP] && !position->pieceNumber[bP] && materialDraw(position) == true) {
 		return 0;
 	}
+	
+	bool whiteIsolated = false;
+	bool blackIsolated = false;
 
+	bool whitePassed = false;
+	bool blackPassed = false;
+	
 	piece = wP;
 	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
 		square = position->pieceList[piece][pieceNumber];
@@ -3076,16 +3096,54 @@ static int evaluatePosition(const boardStructure *position) {
 #endif
 		score += pawnTable[SQ64(square)];
 		
+		
+		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("wP Iso:%s\n",printSquare(square));
+			//score += pawnIsolated;
+			whiteIsolated = true;
+		}
+
+		if ((whiteDoubledMask[SQ64(square)] & position->bitBoardPawns[white]) != 0) {
+			if (whiteIsolated) {
+				//printf("wP Doubled Isolated:%s\n", printSquare(square));
+				score += pawnDoubledIsolated;
+				whiteIsolated = false;
+			}
+			else {
+				//printf("wP Doubled:%s\n", printSquare(square));
+				score += pawnDoubled;
+			}
+		}
+
+		if (whiteIsolated) {
 			score += pawnIsolated;
+			whiteIsolated = false;
 		}
 
 		if ((whitePassedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("wP Passed:%s\n",printSquare(square));
-			score += pawnPassed[ranksBoard[square]];
+			//score += pawnPassed[ranksBoard[square]];
+			whitePassed = true;
 		}
 		
+		if ((whiteConnectedMask[SQ64(square)] & position->bitBoardPawns[white]) != 0) {
+			if (whitePassed) {
+				//printf("wP Connected Passed:%s\n",printSquare(square));
+				score += pawnConnectedPassed[ranksBoard[square]];
+				whitePassed = false;
+			}
+			else {
+				//printf("wP Connected:%s\n", printSquare(square));
+				score += pawnConnected[ranksBoard[square]];
+			}
+		}
+
+		if (whitePassed) {
+			//printf("wP Passed:%s\n",printSquare(square));
+			score += pawnPassed[ranksBoard[square]];
+			whitePassed = false;
+		}
 
 	}
 
@@ -3105,12 +3163,49 @@ static int evaluatePosition(const boardStructure *position) {
 		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("bP Iso:%s\n",printSquare(square));
-			score -= pawnIsolated;
+			//score -= pawnIsolated;
+			blackIsolated = true;
 		}
+
+		if ((blackDoubledMask[SQ64(square)] & position->bitBoardPawns[black]) != 0) {
+			if (blackIsolated) {
+				//printf("bP Doubled Isolated:%s\n", printSquare(square));
+				score -= pawnDoubledIsolated;
+				blackIsolated = false;
+			}
+			else {
+				score -= pawnDoubled;
+			}
+		}
+
+		if (blackIsolated) {
+			score -= pawnIsolated;
+			blackIsolated = false;
+		}
+
 
 		if ((blackPassedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("bP Passed:%s\n",printSquare(square));
+			//score -= pawnPassed[7 - ranksBoard[square]];
+			blackPassed = true;
+		}
+
+		if ((blackConnectedMask[SQ64(square)] & position->bitBoardPawns[black]) != 0) {
+			if (blackPassed) {
+				//printf("bP Connected Passed:%s\n", printSquare(square));
+				score -= pawnConnectedPassed[7 - ranksBoard[square]];
+				blackPassed = false;
+			}
+			else {
+				//printf("bP Connected:%s\n", printSquare(square));
+				score -= pawnConnected[7 - ranksBoard[square]];
+			}
+		}
+
+		if (blackPassed) {
+			//printf("bP Passed:%s\n",printSquare(square));
 			score -= pawnPassed[7 - ranksBoard[square]];
+			blackPassed = false;
 		}
 		
 	}
