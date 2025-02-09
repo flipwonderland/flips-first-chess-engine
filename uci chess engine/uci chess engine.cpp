@@ -2718,10 +2718,42 @@ static int moveExists(boardStructure* position, const int move) {
 	return false;
 }
 
+void printBitBoard(u64 bitBoardToPrint) {
+
+	u64 shift = 1ULL;
+
+	int rank;
+	int file;
+	int square = 0;
+
+	std::cout << "\n";
+	for (rank = 7; rank >= 0; rank--) {
+		for (file = 0; file <= 7; file++) {
+			square = (rank * 8) + file;
+
+			if ((shift << square) & bitBoardToPrint) {
+				std::cout << "X";
+			}
+			else {
+				std::cout << "-";
+			}
+		}
+
+		std::cout << " " << square;
+		std::cout << "\n";
+	}
+
+}
+
+
 const int pawnIsolated = -10;
+const int pawnDoubled = -30;
+const int pawnDoubledIsolated = -300;
 const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
-const int rookOpenFile = 10;
-const int rookSemiOpenFile = 5;
+const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
+const int pawnConnectedPassed[8] = { 0, 30, 55, 130, 250, 275, 350, 600 };
+const int rookOpenFile = 15;
+const int rookSemiOpenFile = 10;
 const int queenOpenFile = 5;
 const int queenSemiOpenFile = 3;
 const int bishopPair = 30;
@@ -2896,12 +2928,14 @@ void initializeEvaluationMasks() {
 
 		while (tempSquare < 64) {
 			whitePassedMask[square] |= (1ULL << tempSquare);
+			blackDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare += 8;
 		}
 
 		tempSquare = square - 8;
 		while (tempSquare >= 0) {
 			blackPassedMask[square] |= (1ULL << tempSquare);
+			whiteDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare -= 8;
 		}
 
@@ -2936,6 +2970,52 @@ void initializeEvaluationMasks() {
 				tempSquare -= 8;
 			}
 		}
+		/*
+		if (side == white) { //will have to change this when I go to a 64 board square, otherwise the pawns with wrap around the board
+		if (position->pieces[square - 11] == wP || position->pieces[square - 9] == wP) {
+			return true;
+			}
+		} else {
+		if (position->pieces[square + 11] == bP || position->pieces[square + 9] == bP) {
+			return true;
+		}
+		}*/
+
+		file = square / 8;
+		rank = square % 8;
+
+		if (rank != 7) {
+			tempSquare = square + 9;
+			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			tempSquare = square - 7;
+			blackConnectedMask[square] |= (1ULL << tempSquare);
+
+
+		}
+
+		if (rank != 0) {
+			tempSquare = square + 7;
+			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			tempSquare = square - 9;
+			blackConnectedMask[square] |= (1ULL << tempSquare);
+		}
+	}
+
+	for (square = 0; square < 64; square++) {
+		//whiteConnectedMask[64];
+		//u64 blackConnectedMask[64];
+		//u64 whiteDoubledMask[64];
+		//u64 blackDoubledMask[64];
+		//whiteConnectedMask[square] |= (1ULL << square);
+		//std::cout << "white connected mask for square " << square << "\n";
+		//printBitBoard(whiteConnectedMask[square]);
+		//blackConnectedMask[square] |= (1ULL << square);
+		//std::cout << "black connected mask for square " << square << "\n";
+		//printBitBoard(blackConnectedMask[square]);
+		//std::cout << "white doubled mask for square " << square << "\n";
+		//printBitBoard(whiteDoubledMask[square]);
+		//std::cout << "black doubled mask for square " << square << "\n";
+		//printBitBoard(blackDoubledMask[square]);
 	}
 }
 
@@ -3546,31 +3626,6 @@ static void storeHashEntry(boardStructure* position, hashTableStructure* table, 
 	table->pTable[index].score = score;
 	table->pTable[index].depth = depth;
 	table->pTable[index].age = table->currentAge;
-}
-
-
-void printBitBoard(u64 bitBoardToPrint) {
-
-	u64 shift = 1ULL;
-
-	int rank;
-	int file;
-	int square = 0;
-
-	std::cout << "\n";
-	for (rank = 7; rank >= 0; rank--) {
-		for (file = 0; file <= 7; file++) {
-			square = (rank * 8) + file;
-
-			if ((shift << square) & bitBoardToPrint) {
-				std::cout << "X";
-			} else {
-				std::cout << "-";
-			}
-		}
-		std::cout << "\n";
-	}
-
 }
 
 
@@ -4849,6 +4904,16 @@ int main(int argc, char* argv[])
 		else if (command == "perft") {
 			int perftAmount = std::stoi((inputParser(input, 1)));
 			perftTest(perftAmount, currentBoard);
+		}
+		else if (command == "d") {
+			printSquareBoard(currentBoard);
+		}
+		else if (command == "mirror") {
+			int firstEval = evaluatePosition(currentBoard);
+			mirrorBoard(currentBoard);
+			if (firstEval != evaluatePosition(currentBoard)) {
+				cout << "mirror test failed";
+			}
 		}
 		else {
 			/*
