@@ -2745,13 +2745,12 @@ void printBitBoard(u64 bitBoardToPrint) {
 
 }
 
-
 const int pawnIsolated = -5;
 const int pawnDoubled = -10;
 const int pawnDoubledIsolated = -25;
 const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
-const int pawnConnectedPassed[8] = { 0, 30, 55, 130, 250, 275, 350, 600 };
+const int pawnConnectedPassed[8] = { 0, 30, 55, 80, 150, 200, 300, 600 };
 const int rookOpenFile = 15;
 const int rookSemiOpenFile = 10;
 const int queenOpenFile = 5;
@@ -4557,7 +4556,11 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 		}
 	}
 
-	std::cout << "bestmove " << printMove(bestMove) << std::endl;
+	if (bestMove != NOMOVE) {
+		std::string bestMoveStr = printMove(bestMove);
+		std::cout << "bestmove " << bestMoveStr << "\n";
+
+	}
 	
 }
 
@@ -4765,9 +4768,10 @@ static void parseGo( std::string line3, searchInfoStructure* info, boardStructur
 
 void joinSearchThread(searchInfoStructure* info) {
 
+	info->stopped = true; 
+	
 	thrd_join(mainSearchThread, NULL);
 	
-	info->stopped = true;
 
 }
 
@@ -4925,6 +4929,7 @@ int main(int argc, char* argv[])
 
 	searchInfoStructure info[1];
 	info->quit = false;
+	info->stopped = false;
 	//moveListStructure list[1];
 
 	do {
@@ -4978,11 +4983,11 @@ int main(int argc, char* argv[])
 			parseFen(STARTFEN, currentBoard);
 			parseGo("go infinite", info, currentBoard, hashTable);
 		}
-		else if (command == "stop") {
-			joinSearchThread(info);
-		}
 		else if (command == "ponderhit") {
 
+		}
+		else if (command == "stop") {
+			joinSearchThread(info);
 		}
 		else if (command == "quit") {
 			joinSearchThread(info);
