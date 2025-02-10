@@ -4365,6 +4365,8 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	ASSERT(beta > alpha);
 	ASSERT(depth >= 0);
 	*/
+	
+
 
 	if (depth <= 0) {
 		return quiescence(alpha, beta, position, info);
@@ -4388,8 +4390,12 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	}
 
 	bool inCheck = squareAttacked(position->kingSquare[position->side], position->side ^ 1, position);
+	bool enemyInCheck = squareAttacked(position->kingSquare[position->side ^ 1], position->side, position);
 
-	if (inCheck == true) {
+	if (inCheck) {
+		depth++;
+	}
+	if (enemyInCheck) {
 		depth++;
 	}
 
