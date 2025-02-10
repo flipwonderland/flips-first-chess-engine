@@ -4558,7 +4558,7 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 
 	if (bestMove != NOMOVE) {
 		std::string bestMoveStr = printMove(bestMove);
-		std::cout << "bestmove " << bestMoveStr << "\n";
+		std::cout << "bestmove " << bestMoveStr << std::endl;
 
 	}
 	
