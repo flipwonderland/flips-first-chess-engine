@@ -2770,7 +2770,7 @@ u64 fileBBMask[8];
 u64 rankBBMask[8];
 
 
-const int pawnTable[64] = {
+const int pawnTableOpening[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
 5	,	0	,	0	,	5	,	5	,	0	,	0	,	5	,
@@ -2778,6 +2778,17 @@ const int pawnTable[64] = {
 5	,	5	,	5	,	10	,	10	,	5	,	5	,	5	,
 10	,	10	,	10	,	20	,	20	,	10	,	10	,	10	,
 20	,	20	,	20	,	30	,	30	,	20	,	20	,	20	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+};
+
+const int pawnTableEndgame[64] = {
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
+10	,	10	,	10	,	10	,	10	,	10	,	10	,	10	,
+10	,	10	,	10	,	10	,   10	,	10	,	10	,	10	,
+20	,	20	,	20	,	20	,	20	,	20	,	20	,	20	,
+30	,	30	,	30	,	30	,	30	,	30	,	30	,	30	,
+50	,	50	,	50	,	50	,	50	,	50	,	50	,	50	,
+80	,	80	,	80  ,	80	,	80	,	80	,	80	,	80	,
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 };
 
@@ -3092,8 +3103,13 @@ static int evaluatePosition(const boardStructure *position) {
 		if (SQ64(square) < 0 || SQ64(square) > 63) {
 			std::cout << "square in invalid position in eval func\n";
 		}
-#endif
-		score += pawnTable[SQ64(square)];
+#endif	
+		if ((position->material[black] <= ENDGAME_MAT)) {
+			score += pawnTableEndgame[SQ64(square)];
+		}
+		else {
+			score += pawnTableOpening[SQ64(square)];
+		}
 		
 		
 		
@@ -3157,7 +3173,12 @@ static int evaluatePosition(const boardStructure *position) {
 			std::cout << "square in invalid position in eval func\n";
 		}
 #endif
-		score -= pawnTable[MIRROR64(SQ64(square))];
+		if ((position->material[white] <= ENDGAME_MAT)) {
+			score -= pawnTableEndgame[SQ64(square)];
+		}
+		else {
+			score -= pawnTableOpening[SQ64(square)];
+		}
 
 		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
