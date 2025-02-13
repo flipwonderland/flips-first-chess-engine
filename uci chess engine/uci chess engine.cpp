@@ -4473,7 +4473,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	if (pvMove != NOMOVE) {
 		for (moveNumber = 0; moveNumber < list->moveCount; moveNumber++) {
 			if (list->moves[moveNumber].move == pvMove) {
-				list->moves[moveNumber].score = 2000000;
+				list->moves[moveNumber].score += 2000000;
 				break;
 			}
 		}
@@ -4582,10 +4582,24 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 			if ((getTimeMs() - info->startTime) != 0) {
 				nodesPerSecond = info->nodes / ((getTimeMs() - info->startTime) + 1) * 1000;
 			}
+			bool mate = false;
+			bool myMate = false;
+			if (bestScore > (INFINITEC - MAXDEPTH)) {
+				mate = true;
+				myMate = true;
+			}
+			else if (bestScore < (-INFINITEC + MAXDEPTH)) {
+				mate = true;
+			}
 			//printf("info depth %d score cp %d nodes %ld nps %d time %d ", currentDepth, bestScore, info->nodes, nodesPerSecond, getTimeMs() - info->startTime);
 			std::cout << "info";
 			std::cout << " depth " << currentDepth;
-			std::cout << " score cp " << bestScore;
+			if (!mate)
+				std::cout << " score cp " << bestScore;
+			else if (myMate)
+				std::cout << " #" << INFINITEC - bestScore;
+			else
+				std::cout << " #-" << INFINITEC + bestScore;
 			std::cout << " nodes " << info->nodes;
 			std::cout << " nps " << nodesPerSecond;
 			std::cout << " time " << getTimeMs() - info->startTime;
