@@ -3076,22 +3076,31 @@ static bool materialDraw(const boardStructure* position) {
 
 #define ENDGAME_MAT (1 * pieceValue[wR] + 2 * pieceValue[wN] + 2 * pieceValue[wP] + pieceValue[wK])
 
-static int evaluatePosition(const boardStructure *position) {
+static int evaluatePosition(const boardStructure* position) {
 
 	int piece;
 	int pieceNumber;
 	int square;
 	int score = position->material[white] - position->material[black];
-	
+
 	if (!position->pieceNumber[wP] && !position->pieceNumber[bP] && materialDraw(position) == true) {
 		return 0;
 	}
-	
+
 	bool whiteIsolated = false;
 	bool blackIsolated = false;
 
 	bool whitePassed = false;
 	bool blackPassed = false;
+
+	bool endGame;
+
+	if (position->material[black] + position->material[white] <= ENDGAME_MAT * 2) {
+		endGame = true;
+	}
+	else {
+		endGame = false;
+	}
 	
 	piece = wP;
 	for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; pieceNumber++) {
@@ -3104,12 +3113,16 @@ static int evaluatePosition(const boardStructure *position) {
 			std::cout << "square in invalid position in eval func\n";
 		}
 #endif	
-		if ((position->material[black] <= ENDGAME_MAT)) {
+		
+		if (endGame) {
 			score += pawnTableEndgame[SQ64(square)];
 		}
-		else {
+		else if (!endGame) {
 			score += pawnTableOpening[SQ64(square)];
 		}
+		
+		
+		//score += pawnTableOpening[SQ64(square)];
 		
 		
 		
@@ -3172,13 +3185,16 @@ static int evaluatePosition(const boardStructure *position) {
 		if (MIRROR64(SQ64(square)) < 0 || MIRROR64(SQ64(square)) > 63) {
 			std::cout << "square in invalid position in eval func\n";
 		}
-#endif
-		if ((position->material[white] <= ENDGAME_MAT)) {
-			score -= pawnTableEndgame[SQ64(square)];
+#endif	
+		
+		if (endGame) {
+			score -= pawnTableEndgame[MIRROR64(SQ64(square))];
 		}
 		else {
-			score -= pawnTableOpening[SQ64(square)];
+			score -= pawnTableOpening[MIRROR64(SQ64(square))];
 		}
+		
+		//score -= pawnTableOpening[SQ64(square)];
 
 		
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
@@ -3389,7 +3405,7 @@ static int evaluatePosition(const boardStructure *position) {
 	}
 #endif
 	
-	if ((position->material[black] <= ENDGAME_MAT)) {
+	if (endGame) {
 		score += kingEndGame[SQ64(square)];
 	}
 	else {
@@ -3408,7 +3424,7 @@ static int evaluatePosition(const boardStructure *position) {
 	}
 #endif
 	
-	if ((position->material[white] <= ENDGAME_MAT)) {
+	if (endGame) {
 		score -= kingEndGame[MIRROR64(SQ64(square))];
 	}
 	else {
@@ -5039,8 +5055,11 @@ int main(int argc, char* argv[])
 			int firstEval = evaluatePosition(currentBoard);
 			mirrorBoard(currentBoard);
 			if (firstEval != evaluatePosition(currentBoard)) {
-				cout << "mirror test failed";
+				cout << "mirror test failed\n";
+				cout << "start eval: " << firstEval << "\n";
+				cout << "second eval: " << evaluatePosition(currentBoard) << "\n";
 			}
+			mirrorBoard(currentBoard);
 		}
 		else {
 			/*
