@@ -2783,12 +2783,12 @@ const int pawnTableOpening[64] = {
 
 const int pawnTableEndgame[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
+-40	,	-40	,	-40	,	-40	,	-40	,	-40	,	-40	,	-40	,
+-40	,	-40	,	-40	,	-40	,   -40	,	-40	,	-40	,	-40	,
+-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,	-30	,
 -10	,	-10	,	-10	,	-10	,	-10	,	-10	,	-10	,	-10	,
--10	,	-10	,	-10	,	-10	,   -10	,	-10	,	-10	,	-10	,
-10	,	10	,	10	,	10	,	10	,	10	,	10	,	10	,
-20	,	20	,	20	,	20	,	20	,	20	,	20	,	20	,
-30	,	30	,	30	,	30	,	30	,	30	,	30	,	30	,
-50	,	50	,	50  ,	50	,	50	,	50	,	50	,	50	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
+20	,	20	,	20  ,	20	,	20	,	20	,	20	,	20	,
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 };
 
@@ -4597,9 +4597,9 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 			if (!mate)
 				std::cout << " score cp " << bestScore;
 			else if (myMate)
-				std::cout << " #" << INFINITEC - bestScore;
+				std::cout << " score mate " << INFINITEC - bestScore;
 			else
-				std::cout << " #-" << INFINITEC + bestScore;
+				std::cout << " score mate -" << INFINITEC + bestScore;
 			std::cout << " nodes " << info->nodes;
 			std::cout << " nps " << nodesPerSecond;
 			std::cout << " time " << getTimeMs() - info->startTime;
