@@ -127,6 +127,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="board.cpp" />
+    <ClCompile Include="eval.cpp" />
+    <ClCompile Include="fen.cpp" />
+    <ClCompile Include="minmax.cpp" />
+    <ClCompile Include="perft.cpp" />
+    <ClCompile Include="hashkey.cpp" />
+    <ClCompile Include="hashtable.cpp" />
+    <ClCompile Include="init.cpp" />
+    <ClCompile Include="input.cpp" />
+    <ClCompile Include="movegen.cpp" />
+    <ClCompile Include="output.cpp" />
+    <ClCompile Include="search.cpp" />
+    <ClCompile Include="tests.cpp" />
+    <ClCompile Include="threads.cpp" />
     <ClCompile Include="tinycthread.cpp" />
     <ClCompile Include="uci chess engine.cpp">
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4996</DisableSpecificWarnings>
