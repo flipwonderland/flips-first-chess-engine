@@ -1,6 +1,18 @@
 #include "defs.h"
 #include "util.h"
 
+#include <cstdlib>
+#include <iostream>
+
+//these are from the bluefever software series
+#define RAND_64 (	(u64)rand() | \
+					(u64)rand() << 15 | \
+					(u64)rand() << 30 | \
+					(u64)rand() << 45 | \
+					((u64)rand() & 0xf) << 60	)
+
+
+
 void initializeSquare120ToSquare64() {
 	int i;
 	int file;
@@ -413,12 +425,12 @@ void initializeHashTable(hashTableStructure* table, const int megabytes) {
 
 	table->pTable = (hashEntryStructure*)malloc(table->numberOfEntries * sizeof(hashEntryStructure));
 	if (table->pTable == NULL) {
-		printf("Hash Allocation Failed, trying %d mega bytes...\n", megabytes / 2);
+		std::cout << "Hash Allocation Failed, trying " << megabytes / 2 <<  " mega bytes...\n";
 		initializeHashTable(table, megabytes / 2);
 	}
 	else {
 		clearHashTable(table);
-		printf("HashTable init complete with %d entries\n", table->numberOfEntries);
+		std::cout << "HashTable init complete with " << table->numberOfEntries << " entries\n";
 	}
 
 }

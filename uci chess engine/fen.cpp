@@ -1,6 +1,9 @@
 #include "defs.h"
 
-static void parseFen(const char* fen, boardStructure* position) {
+#include <iostream>
+#include <cstdlib>
+
+void parseFen(const char* fen, boardStructure* position) {
 	int i;
 	int rank = rank8;
 	int file = fileA;
@@ -141,7 +144,7 @@ static void parseFen(const char* fen, boardStructure* position) {
 
 }
 
-static int parseMove(const char* ptrChar, boardStructure* position) {
+int parseMove(const char* ptrChar, boardStructure* position) {
 
 	//ASSERT(CheckBoard(position));
 
@@ -191,7 +194,7 @@ static int parseMove(const char* ptrChar, boardStructure* position) {
 	return NOMOVE;
 }
 
-static void parsePosition(std::string lineInStr, boardStructure* position) {
+void parsePosition(std::string lineInStr, boardStructure* position) {
 
 	lineInStr += 9;
 

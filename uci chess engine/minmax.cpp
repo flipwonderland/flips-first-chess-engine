@@ -1,4 +1,5 @@
 #include "defs.h"
+#include <cstdlib>
 
 static void checkUp(searchInfoStructure* info) {
 
@@ -112,7 +113,7 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 	return alpha;
 }
 
-static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int doNull) {
+int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int doNull) {
 
 	/*
 	ASSERT(CheckBoard(position));

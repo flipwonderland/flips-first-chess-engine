@@ -1,10 +1,7 @@
+#ifndef DEFS_H
 #define DEFS_H
 
-#include "stdlib.h"
-#include "stdio.h"
 #include "util.h"
-
-#include <iostream>
 #include <string>
 
 #define NAME "flipgine v1 :D"
@@ -66,6 +63,8 @@
 #define HASH_CA (position->positionKey ^= (castleKeys[(position->castlePermission)]))
 #define HASH_SIDE (position->positionKey ^= (sideKey))
 #define HASH_EP (position->positionKey ^= (pieceKeys[empty][(position->enPassant)]))
+
+#define MIRROR64(sq) (mirror64[(sq)])
 
 
 
@@ -254,88 +253,59 @@ hashTableStructure hashTable[1];
 extern int filesBoard[BRD_SQ_NUM];
 extern int ranksBoard[BRD_SQ_NUM];
 
-extern std::string startingFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-extern std::string inputFenString{};
 
-extern bool normalPiece[13] = { true, false, false, true, true, true, true, true, false, true, true, true, true };
-extern bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
-extern bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
-extern int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
-extern int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
+extern bool normalPiece[13];
+extern bool majorPiece[13];
+extern bool minorPiece[13];
+extern int pieceColor[13];
+extern int pieceValue[13];
 
-extern const int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
-extern const int rookDirection[4] = { -1, -10,	1, 10 };
-extern const int bishopDirection[8] = { -9, -11, 11, 9 };
-extern const int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
-//									  empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
-extern const bool isPiecePawn[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
-extern const bool isPieceKnight[13] = { false, false, false, true, false, false, false, false, false, true, false, false, false };
-extern const bool isPieceKing[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
-extern const bool isPieceRookQueen[13] = { false, false, false, false, false, true, true, false, false, false, false, true, true };
-extern const bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
-extern const bool pieceSlides[13] = { false, false, false, false, true, true, true, false, false, false, true, true, true };
+extern int knightDirection[8];
+extern int rookDirection[4];
+extern int bishopDirection[8];
+extern int kingDirection[8];
 
-extern const char pieceCharacter[] = ".KPNBRQkpnbrq";
-extern const char sideCharacter[] = "wb-";
-extern const char rankCharacter[] = "12345678";
-extern const char fileCharacter[] = "abcdefgh";
+extern bool isPiecePawn[13];
+extern bool isPieceKnight[13];
+extern bool isPieceKing[13];
+extern bool isPieceRookQueen[13];
+extern bool isPieceBishopQueen[13];
+extern bool pieceSlides[13];
+
+extern char pieceCharacter[14];
+extern char sideCharacter[4];
+extern char rankCharacter[9];
+extern char fileCharacter[9];
+
 extern char printCastle;
 
-extern const int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
-extern const int loopSlidingIndex[2] = { 0, 4 };
+extern int loopSlidingPiece[8];
+extern int loopSlidingIndex[2];
 
-extern const int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
-extern const int loopNonSlidingIndex[2] = { 0, 3 };
+extern int loopNonSlidingPiece[6];
+extern int loopNonSlidingIndex[2];
 
-extern const int pieceDirection[13][8] = {
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }, //empty
-	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
-	{ 0, 0, 0, 0, 0, 0, 0, 0 } , //wp
-	{ -8, -19,	-21, -12, 8, 19, 21, 12 }, //wn
-	{ -9, -11, 11, 9, 0, 0, 0, 0 } ,//wb
-	{ -1, -10,	1, 10, 0, 0, 0, 0 },//wr
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },//wq
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bk
-	{ 0, 0, 0, 0, 0, 0, 0, 0 },//bp
-	{ -8, -19,	-21, -12, 8, 19, 21, 12 },//bn
-	{ -9, -11, 11, 9, 0, 0, 0, 0 },//bb
-	{ -1, -10,	1, 10, 0, 0, 0, 0 },//br
-	{ -1, -10,	1, 10, -9, -11, 11, 9 }//bq
-};
+extern int pieceDirection[13][8];
 
 /*
 { -8, -19,	-21, -12, 8, 19, 21, 12 } n
 { -9, -11, 11, 9, 0, 0, 0, 0 } b
 { -1, -10,	1, 10, 0, 0, 0, 0 } r
 */
-extern const int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
+extern int numberOfDirections[13];
 
-extern const int castlePermSheet[120] = {
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-	15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+extern int castlePermSheet[120];
+
+extern int mirror64[64];
+
+
+//got these from bluefever softwares series
+//it is also here https://www.chessprogramming.org/Looking_for_Magics
+int bitTable[64] = {
+	63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35,
+	62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8
 };
 
-extern const int pawnIsolated = -5;
-extern const int pawnDoubled = -10;
-extern const int pawnDoubledIsolated = -25;
-extern const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
-extern const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
-extern const int pawnConnectedPassed[8] = { 0, 15, 20, 40, 100, 150, 250, 600 };
-extern const int rookOpenFile = 15;
-extern const int rookSemiOpenFile = 10;
-extern const int queenOpenFile = 5;
-extern const int queenSemiOpenFile = 3;
-extern const int bishopPair = 30;
 
 extern u64 blackPassedMask[64];
 extern u64 whitePassedMask[64];
@@ -365,6 +335,11 @@ extern u64 clearMask[64];
 extern int sq120ToSq64[BRD_SQ_NUM];
 extern int sq64ToSq120[64];
 
+
+//bitboards
+extern int popFirstBit(u64* bb);
+extern int countBits(u64 b);
+
 //board
 extern bool squareIs120(const int square);
 extern bool squareOnBoard(const int square);
@@ -376,32 +351,67 @@ extern bool pieceValid(const int piece);
 extern void updateListsMaterial(boardStructure* position);
 extern bool checkBoard(const boardStructure* position);
 extern void resetBoard(boardStructure* position);
+extern void mirrorBoard(boardStructure* position);
+
 
 //eval
 extern int evaluatePosition(const boardStructure* position);
 
 //fen
+extern void parseFen(const char* fen, boardStructure* position);
+extern int parseMove(const char* ptrChar, boardStructure* position);
+extern void parsePosition(std::string lineInStr, boardStructure* position);
 
 //minmax
+extern int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int doNull);
+
+//misc
+extern int getTimeMs();
 
 //perft
+extern void perftTest(int depth, boardStructure* position);
 
 //hashkey
 extern u64 generatePositionKey(const boardStructure* position);
 
 //hashtable
+extern void clearHashTable(hashTableStructure* table);
+extern bool probeHashEntry(boardStructure* position, hashTableStructure* table, int* move, int* score, int alpha, int beta, int depth);
+extern void storeHashEntry(boardStructure* position, hashTableStructure* table, const int move, int score, const int flags, const int depth);
+extern int probePVMove(const boardStructure* position, const hashTableStructure* table);
 
 //init
+extern void initializeHashTable(hashTableStructure* table, const int megabytes);
 extern void initializeAll();
 
 //input
+extern void parseGo(std::string line3, searchInfoStructure* info, boardStructure* position, hashTableStructure* table);
+extern std::string inputParser(std::string input, const int desiredToken);
 
 //movegen
+extern bool squareAttacked(const int square, const int side, const boardStructure* position);
+extern void generateAllMoves(const boardStructure* position, moveListStructure* list);
+extern void generateAllCaptures(const boardStructure* position, moveListStructure* list);
+extern void takeMove(boardStructure* position);
+extern bool makeMove(boardStructure* position, int move);
+extern void makeNullMove(boardStructure* position);
+extern void takeNullMove(boardStructure* position);
+extern int moveExists(boardStructure* position, const int move);
 
 //output
+extern void printMoveList(const moveListStructure* list);
+extern char* printMove(const int move);
+extern void printBitBoard(u64 bitBoardToPrint);
+extern void printSquareBoard(const boardStructure* position);
+extern char* printSquare(const int square);
 
 //search
+extern bool isRepetition(const boardStructure* position);
+extern int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table);
+extern void searchPosition(boardStructure* position, searchInfoStructure* info, hashTableStructure* table);
+extern void joinSearchThread(searchInfoStructure* info);
 
 //tests
+extern void testMoveBoard(int moveTable, int boardArray);
 
-//threads
+#endif

@@ -1,6 +1,9 @@
 #include "defs.h"
+#include "tinycthread.h"
+#include "iostream"
+#include <cstdlib>
 
-static bool isRepetition(const boardStructure* position) {
+bool isRepetition(const boardStructure* position) {
 
 	int i;
 
@@ -50,133 +53,7 @@ static void clearForSearch(boardStructure* position, searchInfoStructure* info, 
 
 }
 
-static void generateAllCaptures(const boardStructure* position, moveListStructure* list) {
-
-	//ASSERT(CheckBoard(position));
-
-	list->moveCount = 0;
-
-	int piece = empty;
-	int side = position->side;
-	int square = 0; int tempSquare = 0;
-	int pieceNumber = 0;
-	int direction = 0;
-	int index = 0;
-	int pieceIndex = 0;
-
-	if (side == white) {
-
-		for (pieceNumber = 0; pieceNumber < position->pieceNumber[wP]; ++pieceNumber) {
-			square = position->pieceList[wP][pieceNumber];
-			//ASSERT(squareOnBoard(square));
-
-			if (!SQOFFBOARD_MOVEGEN(square + 9) && pieceColor[position->pieces[square + 9]] == black) {
-				addWhitePawnCaptureMove(position, square, square + 9, position->pieces[square + 9], list);
-			}
-			if (!SQOFFBOARD_MOVEGEN(square + 11) && pieceColor[position->pieces[square + 11]] == black) {
-				addWhitePawnCaptureMove(position, square, square + 11, position->pieces[square + 11], list);
-			}
-
-			if (position->enPassant != noSquare) {
-				if (square + 9 == position->enPassant) {
-					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 9, empty, empty, MFLAGEP), list);
-				}
-				if (square + 11 == position->enPassant) {
-					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 11, empty, empty, MFLAGEP), list);
-				}
-			}
-		}
-
-	}
-	else {
-
-		for (pieceNumber = 0; pieceNumber < position->pieceNumber[bP]; ++pieceNumber) {
-			square = position->pieceList[bP][pieceNumber];
-			//ASSERT(squareOnBoard(square));
-
-			if (!SQOFFBOARD_MOVEGEN(square - 9) && pieceColor[position->pieces[square - 9]] == white) {
-				addBlackPawnCaptureMove(position, square, square - 9, position->pieces[square - 9], list);
-			}
-
-			if (!SQOFFBOARD_MOVEGEN(square - 11) && pieceColor[position->pieces[square - 11]] == white) {
-				addBlackPawnCaptureMove(position, square, square - 11, position->pieces[square - 11], list);
-			}
-			if (position->enPassant != noSquare) {
-				if (square - 9 == position->enPassant) {
-					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 9, empty, empty, MFLAGEP), list);
-				}
-				if (square - 11 == position->enPassant) {
-					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 11, empty, empty, MFLAGEP), list);
-				}
-			}
-		}
-	}
-
-	/* Loop for slide pieces */
-	pieceIndex = loopSlidingIndex[side];
-	piece = loopSlidingPiece[pieceIndex++];
-	while (piece != 0) {
-		//ASSERT(PieceValid(piece));
-
-		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
-			square = position->pieceList[piece][pieceNumber];
-			//ASSERT(squareOnBoard(square));
-
-			for (index = 0; index < numberOfDirections[piece]; ++index) {
-				direction = pieceDirection[piece][index];
-				tempSquare = square + direction;
-
-				while (!SQOFFBOARD_MOVEGEN(tempSquare)) {
-					// BLACK ^ 1 == WHITE       WHITE ^ 1 == BLACK
-					if (position->pieces[tempSquare] != empty) {
-						if (pieceColor[position->pieces[tempSquare]] == (side ^ 1)) {
-							addCaptureMove(position, MOVE_MOVEGEN(square, tempSquare, position->pieces[tempSquare], empty, 0), list);
-						}
-						break;
-					}
-					tempSquare += direction;
-				}
-			}
-		}
-
-		piece = loopSlidingPiece[pieceIndex++];
-	}
-
-	/* Loop for non slide */
-	pieceIndex = loopNonSlidingIndex[side];
-	piece = loopNonSlidingPiece[pieceIndex++];
-
-	while (piece != 0) {
-		//ASSERT(pieceValid(piece));
-
-		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
-			square = position->pieceList[piece][pieceNumber];
-			//ASSERT(squareOnBoard(square));
-
-			for (index = 0; index < numberOfDirections[piece]; ++index) {
-				direction = pieceDirection[piece][index];
-				tempSquare = square + direction;
-
-				if (SQOFFBOARD_MOVEGEN(tempSquare)) {
-					continue;
-				}
-
-				// BLACK ^ 1 == WHITE       WHITE ^ 1 == BLACK
-				if (position->pieces[tempSquare] != empty) {
-					if (pieceColor[position->pieces[tempSquare]] == (side ^ 1)) {
-						addCaptureMove(position, MOVE_MOVEGEN(square, tempSquare, position->pieces[tempSquare], empty, 0), list);
-					}
-					continue;
-				}
-			}
-		}
-
-		piece = loopNonSlidingPiece[pieceIndex++];
-	}
-	//ASSERT(MoveListOk(list, position));
-}
-
-static void searchPosition(boardStructure* position, searchInfoStructure* info, hashTableStructure* table) {
+void searchPosition(boardStructure* position, searchInfoStructure* info, hashTableStructure* table) {
 
 	int rootDepth;
 	int bestMove = NOMOVE;
@@ -252,3 +129,117 @@ static void searchPosition(boardStructure* position, searchInfoStructure* info, 
 
 }
 
+thrd_t mainSearchThread;
+
+int searchPositionThread(void* data) {
+
+	searchThreadDataStructure* searchData = (searchThreadDataStructure*)data;
+	//boardStructure* position = malloc(sizeof(boardStructure));
+	boardStructure* position = new(boardStructure);
+	memcpy(position, searchData->originalPosition, sizeof(boardStructure));
+
+	searchPosition(position, searchData->info, searchData->transpositionTable);
+
+	delete(position);
+	//std::cout << "freed\n";
+
+	return 0;
+
+}
+
+thrd_t launchSearchThread(boardStructure* position, searchInfoStructure* info, hashTableStructure* table) {
+
+	searchThreadDataStructure* pSearchData = new(searchThreadDataStructure);
+
+	pSearchData->originalPosition = position;
+	pSearchData->info = info;
+	pSearchData->transpositionTable = table;
+
+
+	thrd_t th;
+	thrd_create(&th, &searchPositionThread, (void*)pSearchData);
+
+	return th;
+
+}
+
+
+void joinSearchThread(searchInfoStructure* info) {
+	
+	info->stopped = true;
+	thrd_join(mainSearchThread, NULL);
+
+}
+
+void parseGo(std::string line3, searchInfoStructure* info, boardStructure* position, hashTableStructure* table) {
+
+	int depth = -1, movestogo = 30, movetime = -1;
+	int time = -1, inc = 0;
+	const char* ptr = NULL;
+	info->timeSet = false;
+
+	const char* line2 = line3.c_str();
+	char line[sizeof(line3)];
+	for (int i = 0; i < sizeof(line3); i++) {
+		line[i] = line2[i];
+	}
+
+
+	if ((ptr = strstr(line, "infinite"))) {
+		;
+	}
+
+	if ((ptr = strstr(line, "binc")) && position->side == black) {
+		inc = atoi(ptr + 5);
+	}
+
+	if ((ptr = strstr(line, "winc")) && position->side == white) {
+		inc = atoi(ptr + 5);
+	}
+
+	if ((ptr = strstr(line, "wtime")) && position->side == white) {
+		time = atoi(ptr + 6);
+	}
+
+	if ((ptr = strstr(line, "btime")) && position->side == black) {
+		time = atoi(ptr + 6);
+	}
+
+	if ((ptr = strstr(line, "movestogo"))) {
+		movestogo = atoi(ptr + 10);
+	}
+
+	if ((ptr = strstr(line, "movetime"))) {
+		movetime = atoi(ptr + 9);
+	}
+
+	if ((ptr = strstr(line, "depth"))) {
+		depth = atoi(ptr + 6);
+	}
+
+	if (movetime != -1) {
+		time = movetime;
+		movestogo = 1;
+	}
+
+	info->startTime = getTimeMs();
+	info->depth = depth;
+
+	if (time != -1) {
+		info->timeSet = true;
+		time /= movestogo;
+		time -= 50;
+		info->stopTime = info->startTime + time + inc;
+	}
+
+	if (depth == -1) {
+		info->depth = MAXDEPTH;
+	}
+
+	printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
+		time, info->startTime, info->stopTime, info->depth, info->timeSet);
+
+	//searchPosition(position, info, table);
+	mainSearchThread = launchSearchThread(position, info, table);
+
+}

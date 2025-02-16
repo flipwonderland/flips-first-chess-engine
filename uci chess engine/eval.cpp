@@ -2,6 +2,18 @@
 #include "defs.h"
 
 
+const int pawnIsolated = -5;
+const int pawnDoubled = -10;
+const int pawnDoubledIsolated = -25;
+const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
+const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
+const int pawnConnectedPassed[8] = { 0, 15, 20, 40, 100, 150, 250, 600 };
+const int rookOpenFile = 15;
+const int rookSemiOpenFile = 10;
+const int queenOpenFile = 5;
+const int queenSemiOpenFile = 3;
+const int bishopPair = 30;
+
 const int pawnTableOpening[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
@@ -79,61 +91,7 @@ const int kingOpening[64] = {
 	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70	,	-70
 };
 
-int mirror64[64] = {
-56	,	57	,	58	,	59	,	60	,	61	,	62	,	63	,
-48	,	49	,	50	,	51	,	52	,	53	,	54	,	55	,
-40	,	41	,	42	,	43	,	44	,	45	,	46	,	47	,
-32	,	33	,	34	,	35	,	36	,	37	,	38	,	39	,
-24	,	25	,	26	,	27	,	28	,	29	,	30	,	31	,
-16	,	17	,	18	,	19	,	20	,	21	,	22	,	23	,
-8	,	9	,	10	,	11	,	12	,	13	,	14	,	15	,
-0	,	1	,	2	,	3	,	4	,	5	,	6	,	7
-};
 
-#define MIRROR64(sq) (mirror64[(sq)])
-
-static void mirrorBoard(boardStructure* position) {
-
-	int tempPiecesArray[64];
-	int tempSide = position->side ^ 1;
-	int SwapPiece[13] = { empty, bK, bP, bN, bB, bR, bQ, wK, wP, wN, wB, wR, wQ };
-	int tempCastlePerm = 0;
-	int tempEnPas = noSquare;
-
-	int sq;
-	int tp;
-
-	if (position->castlePermission & whiteKingCastle) tempCastlePerm |= blackKingCastle;
-	if (position->castlePermission & whiteQueenCastle) tempCastlePerm |= blackQueenCastle;
-
-	if (position->castlePermission & blackKingCastle) tempCastlePerm |= whiteKingCastle;
-	if (position->castlePermission & blackQueenCastle) tempCastlePerm |= whiteQueenCastle;
-
-	if (position->enPassant != noSquare) {
-		tempEnPas = SQ120(mirror64[SQ64(position->enPassant)]);
-	}
-
-	for (sq = 0; sq < 64; sq++) {
-		tempPiecesArray[sq] = position->pieces[SQ120(mirror64[sq])];
-	}
-
-	resetBoard(position);
-
-	for (sq = 0; sq < 64; sq++) {
-		tp = SwapPiece[tempPiecesArray[sq]];
-		position->pieces[SQ120(sq)] = tp;
-	}
-
-	position->side = tempSide;
-	position->castlePermission = tempCastlePerm;
-	position->enPassant = tempEnPas;
-
-	position->positionKey = generatePositionKey(position);
-
-	updateListsMaterial(position);
-
-	//ASSERT(CheckBoard(pos));
-}
 
 // sjeng 11.2
 //8/6R1/2k5/6P1/8/8/4nP2/6K1 w - - 1 41 

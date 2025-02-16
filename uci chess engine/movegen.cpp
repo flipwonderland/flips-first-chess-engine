@@ -1,6 +1,8 @@
 #include "defs.h"
 
-static bool squareAttacked(const int square, const int side, const boardStructure* position) { //marker here to hunt for bugs
+#include <iostream>
+
+bool squareAttacked(const int square, const int side, const boardStructure* position) { //marker here to hunt for bugs
 
 	int piece;
 	int i;
@@ -269,9 +271,133 @@ static void addBlackPawnCaptureMove(const boardStructure* position, const int fr
 	}
 }
 
+void generateAllCaptures(const boardStructure* position, moveListStructure* list) {
 
+	//ASSERT(CheckBoard(position));
 
-static void generateAllMoves(const boardStructure* position, moveListStructure* list) {
+	list->moveCount = 0;
+
+	int piece = empty;
+	int side = position->side;
+	int square = 0; int tempSquare = 0;
+	int pieceNumber = 0;
+	int direction = 0;
+	int index = 0;
+	int pieceIndex = 0;
+
+	if (side == white) {
+
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[wP]; ++pieceNumber) {
+			square = position->pieceList[wP][pieceNumber];
+			//ASSERT(squareOnBoard(square));
+
+			if (!SQOFFBOARD_MOVEGEN(square + 9) && pieceColor[position->pieces[square + 9]] == black) {
+				addWhitePawnCaptureMove(position, square, square + 9, position->pieces[square + 9], list);
+			}
+			if (!SQOFFBOARD_MOVEGEN(square + 11) && pieceColor[position->pieces[square + 11]] == black) {
+				addWhitePawnCaptureMove(position, square, square + 11, position->pieces[square + 11], list);
+			}
+
+			if (position->enPassant != noSquare) {
+				if (square + 9 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 9, empty, empty, MFLAGEP), list);
+				}
+				if (square + 11 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square + 11, empty, empty, MFLAGEP), list);
+				}
+			}
+		}
+
+	}
+	else {
+
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[bP]; ++pieceNumber) {
+			square = position->pieceList[bP][pieceNumber];
+			//ASSERT(squareOnBoard(square));
+
+			if (!SQOFFBOARD_MOVEGEN(square - 9) && pieceColor[position->pieces[square - 9]] == white) {
+				addBlackPawnCaptureMove(position, square, square - 9, position->pieces[square - 9], list);
+			}
+
+			if (!SQOFFBOARD_MOVEGEN(square - 11) && pieceColor[position->pieces[square - 11]] == white) {
+				addBlackPawnCaptureMove(position, square, square - 11, position->pieces[square - 11], list);
+			}
+			if (position->enPassant != noSquare) {
+				if (square - 9 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 9, empty, empty, MFLAGEP), list);
+				}
+				if (square - 11 == position->enPassant) {
+					addEnPassantMove(position, MOVE_MOVEGEN(square, square - 11, empty, empty, MFLAGEP), list);
+				}
+			}
+		}
+	}
+
+	/* Loop for slide pieces */
+	pieceIndex = loopSlidingIndex[side];
+	piece = loopSlidingPiece[pieceIndex++];
+	while (piece != 0) {
+		//ASSERT(PieceValid(piece));
+
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+			square = position->pieceList[piece][pieceNumber];
+			//ASSERT(squareOnBoard(square));
+
+			for (index = 0; index < numberOfDirections[piece]; ++index) {
+				direction = pieceDirection[piece][index];
+				tempSquare = square + direction;
+
+				while (!SQOFFBOARD_MOVEGEN(tempSquare)) {
+					// BLACK ^ 1 == WHITE       WHITE ^ 1 == BLACK
+					if (position->pieces[tempSquare] != empty) {
+						if (pieceColor[position->pieces[tempSquare]] == (side ^ 1)) {
+							addCaptureMove(position, MOVE_MOVEGEN(square, tempSquare, position->pieces[tempSquare], empty, 0), list);
+						}
+						break;
+					}
+					tempSquare += direction;
+				}
+			}
+		}
+
+		piece = loopSlidingPiece[pieceIndex++];
+	}
+
+	/* Loop for non slide */
+	pieceIndex = loopNonSlidingIndex[side];
+	piece = loopNonSlidingPiece[pieceIndex++];
+
+	while (piece != 0) {
+		//ASSERT(pieceValid(piece));
+
+		for (pieceNumber = 0; pieceNumber < position->pieceNumber[piece]; ++pieceNumber) {
+			square = position->pieceList[piece][pieceNumber];
+			//ASSERT(squareOnBoard(square));
+
+			for (index = 0; index < numberOfDirections[piece]; ++index) {
+				direction = pieceDirection[piece][index];
+				tempSquare = square + direction;
+
+				if (SQOFFBOARD_MOVEGEN(tempSquare)) {
+					continue;
+				}
+
+				// BLACK ^ 1 == WHITE       WHITE ^ 1 == BLACK
+				if (position->pieces[tempSquare] != empty) {
+					if (pieceColor[position->pieces[tempSquare]] == (side ^ 1)) {
+						addCaptureMove(position, MOVE_MOVEGEN(square, tempSquare, position->pieces[tempSquare], empty, 0), list);
+					}
+					continue;
+				}
+			}
+		}
+
+		piece = loopNonSlidingPiece[pieceIndex++];
+	}
+	//ASSERT(MoveListOk(list, position));
+}
+
+void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 
 #ifdef DEBUG
 	if (!checkBoard(position)) {
@@ -926,7 +1052,7 @@ static bool makeMove(boardStructure* position, int move) {
 	return true;
 }
 
-static void makeNullMove(boardStructure* position) {
+void makeNullMove(boardStructure* position) {
 
 #ifdef DEBUG
 	if (checkBoard(position)) {}
@@ -1009,7 +1135,7 @@ void takeNullMove(boardStructure* position) {
 #endif
 }
 
-static int moveExists(boardStructure* position, const int move) {
+int moveExists(boardStructure* position, const int move) {
 
 	moveListStructure list[1];
 	generateAllMoves(position, list);

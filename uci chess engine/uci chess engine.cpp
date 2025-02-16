@@ -1,13 +1,7 @@
-#include <cstdlib>
-#include <iostream>
 #include <string>
+#include <iostream>
 
-#include "string.h"
-#include "stdlib.h"
-#include "stdio.h"
 #include "util.h"
-#include "math.h"
-
 #include "defs.h"
 
 

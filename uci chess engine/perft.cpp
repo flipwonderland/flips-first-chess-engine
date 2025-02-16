@@ -1,4 +1,5 @@
 #include "defs.h"
+#include <iostream>
 
 //perft testing here
 long leafNodes;
@@ -33,7 +34,7 @@ static void perft(int depth, boardStructure* position) {
 }
 
 
-static void perftTest(int depth, boardStructure* position) {
+void perftTest(int depth, boardStructure* position) {
 
 #ifdef DEBUG
 	if (!checkBoard(position)) {
@@ -44,7 +45,7 @@ static void perftTest(int depth, boardStructure* position) {
 	int start = getTimeMs();
 
 	printSquareBoard(position);
-	printf("\nStarting Test To Depth:%d \n", depth);
+	std::cout << "\n Starting Test To Depth:" << depth << "\n";
 	leafNodes = 0;
 	moveListStructure list[1];
 	generateAllMoves(position, list);

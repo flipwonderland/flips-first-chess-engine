@@ -1,6 +1,85 @@
 #include "defs.h"
 #include "util.h"
 
+#include <iostream>
+
+
+int mirror64[64] = {
+56	,	57	,	58	,	59	,	60	,	61	,	62	,	63	,
+48	,	49	,	50	,	51	,	52	,	53	,	54	,	55	,
+40	,	41	,	42	,	43	,	44	,	45	,	46	,	47	,
+32	,	33	,	34	,	35	,	36	,	37	,	38	,	39	,
+24	,	25	,	26	,	27	,	28	,	29	,	30	,	31	,
+16	,	17	,	18	,	19	,	20	,	21	,	22	,	23	,
+8	,	9	,	10	,	11	,	12	,	13	,	14	,	15	,
+0	,	1	,	2	,	3	,	4	,	5	,	6	,	7
+};
+
+int castlePermSheet[120] = {
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+};
+
+int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
+
+int pieceDirection[13][8] = {
+	{ 0, 0, 0, 0, 0, 0, 0, 0 }, //empty
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
+	{ 0, 0, 0, 0, 0, 0, 0, 0 } , //wp
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 }, //wn
+	{ -9, -11, 11, 9, 0, 0, 0, 0 } ,//wb
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },//wr
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },//wq
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bk
+	{ 0, 0, 0, 0, 0, 0, 0, 0 },//bp
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 },//bn
+	{ -9, -11, 11, 9, 0, 0, 0, 0 },//bb
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },//br
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }//bq
+};
+
+int filesBoard[BRD_SQ_NUM];
+int ranksBoard[BRD_SQ_NUM];
+
+bool normalPiece[13] = { true, false, false, true, true, true, true, true, false, true, true, true, true };
+bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
+bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
+int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
+int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
+
+int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
+int rookDirection[4] = { -1, -10,	1, 10 };
+int bishopDirection[8] = { -9, -11, 11, 9 };
+int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
+//							  empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
+bool isPiecePawn[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
+bool isPieceKnight[13] = { false, false, false, true, false, false, false, false, false, true, false, false, false };
+bool isPieceKing[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
+bool isPieceRookQueen[13] = { false, false, false, false, false, true, true, false, false, false, false, true, true };
+bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
+bool pieceSlides[13] = { false, false, false, false, true, true, true, false, false, false, true, true, true };
+
+char pieceCharacter[14] = ".KPNBRQkpnbrq";
+char sideCharacter[4] = "wb-";
+char rankCharacter[9] = "12345678";
+char fileCharacter[9] = "abcdefgh";
+
+int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
+int loopSlidingIndex[2] = { 0, 4 };
+
+int loopNonSlidingIndex[2] = { 0, 3 };
+int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
+
 bool squareIs120(const int square) {
 	return (square >= 0 && square < 120);
 }
@@ -309,4 +388,47 @@ void resetBoard(boardStructure* position) {
 	position->positionKey = 0ULL;
 
 
+}
+
+void mirrorBoard(boardStructure* position) {
+
+	int tempPiecesArray[64];
+	int tempSide = position->side ^ 1;
+	int SwapPiece[13] = { empty, bK, bP, bN, bB, bR, bQ, wK, wP, wN, wB, wR, wQ };
+	int tempCastlePerm = 0;
+	int tempEnPas = noSquare;
+
+	int sq;
+	int tp;
+
+	if (position->castlePermission & whiteKingCastle) tempCastlePerm |= blackKingCastle;
+	if (position->castlePermission & whiteQueenCastle) tempCastlePerm |= blackQueenCastle;
+
+	if (position->castlePermission & blackKingCastle) tempCastlePerm |= whiteKingCastle;
+	if (position->castlePermission & blackQueenCastle) tempCastlePerm |= whiteQueenCastle;
+
+	if (position->enPassant != noSquare) {
+		tempEnPas = SQ120(mirror64[SQ64(position->enPassant)]);
+	}
+
+	for (sq = 0; sq < 64; sq++) {
+		tempPiecesArray[sq] = position->pieces[SQ120(mirror64[sq])];
+	}
+
+	resetBoard(position);
+
+	for (sq = 0; sq < 64; sq++) {
+		tp = SwapPiece[tempPiecesArray[sq]];
+		position->pieces[SQ120(sq)] = tp;
+	}
+
+	position->side = tempSide;
+	position->castlePermission = tempCastlePerm;
+	position->enPassant = tempEnPas;
+
+	position->positionKey = generatePositionKey(position);
+
+	updateListsMaterial(position);
+
+	//ASSERT(CheckBoard(pos));
 }

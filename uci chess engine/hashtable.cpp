@@ -17,7 +17,7 @@ void clearHashTable(hashTableStructure* table) {
 }
 
 
-static int probePVMove(const boardStructure* position, const hashTableStructure* table) {
+int probePVMove(const boardStructure* position, const hashTableStructure* table) {
 
 	int index = position->positionKey % table->numberOfEntries;
 	//ASSERT(index >= 0 && index <= pos->HashTable->numEntries - 1);
@@ -29,7 +29,7 @@ static int probePVMove(const boardStructure* position, const hashTableStructure*
 	return NOMOVE;
 }
 
-static int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table) {
+int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table) {
 
 #ifdef DEBUG
 	if (!(depth < MAXDEPTH) || !(depth >= 1)) {
@@ -65,7 +65,7 @@ static int getPVLine(const int depth, boardStructure* position, const hashTableS
 
 }
 
-static bool probeHashEntry(boardStructure* position, hashTableStructure* table, int* move, int* score, int alpha, int beta, int depth) {
+ bool probeHashEntry(boardStructure* position, hashTableStructure* table, int* move, int* score, int alpha, int beta, int depth) {
 
 	int index = position->positionKey % table->numberOfEntries;
 
@@ -118,7 +118,7 @@ static bool probeHashEntry(boardStructure* position, hashTableStructure* table, 
 	return false;
 }
 
-static void storeHashEntry(boardStructure* position, hashTableStructure* table, const int move, int score, const int flags, const int depth) {
+void storeHashEntry(boardStructure* position, hashTableStructure* table, const int move, int score, const int flags, const int depth) {
 
 	int index = position->positionKey % table->numberOfEntries;
 
