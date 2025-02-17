@@ -127,11 +127,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="old chess gen.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    <ClCompile Include="bitboards.cpp" />
+    <ClCompile Include="board.cpp" />
+    <ClCompile Include="eval.cpp" />
+    <ClCompile Include="fen.cpp" />
+    <ClCompile Include="minmax.cpp" />
+    <ClCompile Include="misc.cpp" />
+    <ClCompile Include="perft.cpp" />
+    <ClCompile Include="hashkey.cpp" />
+    <ClCompile Include="hashtable.cpp" />
+    <ClCompile Include="init.cpp" />
+    <ClCompile Include="input.cpp" />
+    <ClCompile Include="movegen.cpp" />
+    <ClCompile Include="output.cpp" />
+    <ClCompile Include="search.cpp" />
+    <ClCompile Include="tests.cpp" />
+    <ClCompile Include="tinycthread.cpp" />
+    <ClCompile Include="uci chess engine.cpp">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4996</DisableSpecificWarnings>
     </ClCompile>
-    <ClCompile Include="util.h" />
-    <ClCompile Include="uci chess engine.cpp" />
+    <ClCompile Include="util.h">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
+      <FavorSizeOrSpeed Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Neither</FavorSizeOrSpeed>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</WholeProgramOptimization>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="defs.h" />
+    <ClInclude Include="tinycthread.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
