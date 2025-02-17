@@ -14,6 +14,9 @@ const int queenOpenFile = 5;
 const int queenSemiOpenFile = 3;
 const int bishopPair = 30;
 
+int victimScore[13] = { 0, 600, 100, 300, 200, 400, 500, 600, 100, 300, 200, 400, 500 };
+
+
 const int pawnTableOpening[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,

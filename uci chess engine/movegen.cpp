@@ -767,8 +767,7 @@ static void movePiece(const int from, const int to, boardStructure* position) {
 	}
 #endif
 }
-
-static void takeMove(boardStructure* position) {
+void takeMove(boardStructure* position) {
 #ifdef DEBUG
 	if (!checkBoard(position)) {
 		std::cout << "check board failed at the start of take move\n";
@@ -883,7 +882,7 @@ static void takeMove(boardStructure* position) {
 #endif
 }
 
-static bool makeMove(boardStructure* position, int move) {
+bool makeMove(boardStructure* position, int move) {
 
 #ifdef DEBUG
 	if (!checkBoard(position)) {

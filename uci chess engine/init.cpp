@@ -64,7 +64,7 @@ void initializeHashKeys() {
 }
 
 
-
+int mvvLvaScores[13][13];
 
 void initilizeMvvLva() { //most valuable victim, least valuable attacker
 	int attacker;
@@ -108,7 +108,8 @@ static void initializeFilesAndRanksBoard() {
 
 //precomputed move table
 //got this idea from sebastian lauges vid cause I had no idea what to do
-
+bool moveTableDiagonal[64][64];
+bool moveTableCardinal[64][64];
 
 //doesn't matter if this is slow, it'll only be ran once at startup
 void computeMoveBoards() {
@@ -273,6 +274,16 @@ void computeMoveBoards() {
 	}
 }
 
+
+u64 blackPassedMask[64];
+u64 whitePassedMask[64];
+u64 isolatedMask[64];
+
+u64 whiteConnectedMask[64];
+u64 blackConnectedMask[64];
+u64 whiteDoubledMask[64];
+u64 blackDoubledMask[64];
+
 void initializeEvaluationMasks() {
 	int square;
 	int tempSquare;
@@ -398,7 +409,7 @@ void initializeEvaluationMasks() {
 	}
 
 
-
+	/*
 	for (square = 0; square < 64; square++) {
 
 		//std::cout << "isolated mask for square " << square << "\n";
@@ -411,7 +422,12 @@ void initializeEvaluationMasks() {
 		//std::cout << "black doubled mask for square " << square << "\n";
 		//printBitBoard(blackDoubledMask[square]);
 	}
+	*/
 }
+
+u64 pieceKeys[13][BRD_SQ_NUM];
+u64 sideKey;
+u64 castleKeys[16];
 
 void initializeHashTable(hashTableStructure* table, const int megabytes) {
 

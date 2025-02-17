@@ -248,7 +248,7 @@ typedef struct {
 } searchThreadDataStructure;
 
 //IMPORTANT do not lose lol
-hashTableStructure hashTable[1];
+extern hashTableStructure hashTable[1];
 
 extern int filesBoard[BRD_SQ_NUM];
 extern int ranksBoard[BRD_SQ_NUM];
@@ -301,11 +301,7 @@ extern int mirror64[64];
 
 //got these from bluefever softwares series
 //it is also here https://www.chessprogramming.org/Looking_for_Magics
-int bitTable[64] = {
-	63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35,
-	62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8
-};
-
+extern int bitTable[64];
 
 extern u64 blackPassedMask[64];
 extern u64 whitePassedMask[64];
@@ -322,7 +318,7 @@ extern u64 rankBBMask[8];
 extern bool moveTableDiagonal[64][64];
 extern bool moveTableCardinal[64][64];
 
-extern const int victimScore[13] = { 0, 600, 100, 300, 200, 400, 500, 600, 100, 300, 200, 400, 500 };
+extern int victimScore[13];
 extern int mvvLvaScores[13][13];
 
 extern u64 pieceKeys[13][BRD_SQ_NUM];

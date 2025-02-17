@@ -8,6 +8,9 @@
 bool uci = false;
 bool keepRunning = true;
 bool boardLoaded = false;
+
+hashTableStructure hashTable[1];
+
 //what would be cool is if I could somehow make it learn every time you play it so I can set it up to learn against other engines with cutechess
 //I think I could just do that by making a nn that changes the move order possibly, because with ab pruning if the best move is first the search will be extremely fast
 int main(int argc, char* argv[])

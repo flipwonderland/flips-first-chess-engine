@@ -51,6 +51,9 @@ int pieceDirection[13][8] = {
 int filesBoard[BRD_SQ_NUM];
 int ranksBoard[BRD_SQ_NUM];
 
+int sq120ToSq64[BRD_SQ_NUM];
+int sq64ToSq120[64];
+
 bool normalPiece[13] = { true, false, false, true, true, true, true, true, false, true, true, true, true };
 bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
 bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
@@ -73,6 +76,8 @@ char pieceCharacter[14] = ".KPNBRQkpnbrq";
 char sideCharacter[4] = "wb-";
 char rankCharacter[9] = "12345678";
 char fileCharacter[9] = "abcdefgh";
+
+char printCastle;
 
 int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
 int loopSlidingIndex[2] = { 0, 4 };

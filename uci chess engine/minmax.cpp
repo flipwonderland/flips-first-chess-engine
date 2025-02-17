@@ -250,6 +250,7 @@ int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchIn
 		}
 	}
 
+
 	//ASSERT(alpha >= OldAlpha);
 
 	if (alpha != oldAlpha) {
