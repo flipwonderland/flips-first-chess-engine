@@ -1,22 +1,21 @@
 #include "util.h"
 #include "defs.h"
 
+#include <iostream>
 
-const int pawnIsolated = -5;
+const int pawnIsolated = -10;
 const int pawnDoubled = -10;
 const int pawnDoubledIsolated = -25;
 const int pawnPassed[8] = { 0, 5, 10, 20, 35, 60, 100, 200 };
 const int pawnConnected[8] = { 0, 0, 10, 15, 35, 40, 60, 200 };
-const int pawnConnectedPassed[8] = { 0, 15, 20, 40, 100, 150, 250, 600 };
-const int rookOpenFile = 15;
-const int rookSemiOpenFile = 10;
+const int pawnConnectedPassed[8] = { 0, 15, 20, 40, 100, 150, 250, 350 };
+const int rookOpenFile = 10;
+const int rookSemiOpenFile = 5;
 const int queenOpenFile = 5;
 const int queenSemiOpenFile = 3;
 const int bishopPair = 30;
 
-int victimScore[13] = { 0, 600, 100, 300, 200, 400, 500, 600, 100, 300, 200, 400, 500 };
-
-
+/*
 const int pawnTableOpening[64] = {
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
@@ -36,6 +35,17 @@ const int pawnTableEndgame[64] = {
 -10	,	-10	,	-10	,	-10	,	-10	,	-10	,	-10	,	-10	,
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 20	,	20	,	20  ,	20	,	20	,	20	,	20	,	20	,
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+};
+*/
+const int pawnTable[64] = {
+0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
+10	,	10	,	0	,	-10	,	-10	,	0	,	10	,	10	,
+5	,	0	,	0	,	5	,	5	,	0	,	0	,	5	,
+0	,	0	,	10	,	20	,	20	,	10	,	0	,	0	,
+5	,	5	,	5	,	10	,	10	,	5	,	5	,	5	,
+10	,	10	,	10	,	20	,	20	,	10	,	10	,	10	,
+20	,	20	,	20	,	30	,	30	,	20	,	20	,	20	,
 0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 };
 
@@ -95,9 +105,6 @@ const int kingOpening[64] = {
 };
 
 
-
-// sjeng 11.2
-//8/6R1/2k5/6P1/8/8/4nP2/6K1 w - - 1 41 
 static bool materialDraw(const boardStructure* position) {
 
 	//ASSERT(CheckBoard(position));
@@ -139,7 +146,7 @@ int evaluatePosition(const boardStructure* position) {
 	if (!position->pieceNumber[wP] && !position->pieceNumber[bP] && materialDraw(position) == true) {
 		return 0;
 	}
-
+	
 	bool whiteIsolated = false;
 	bool blackIsolated = false;
 
@@ -166,65 +173,43 @@ int evaluatePosition(const boardStructure* position) {
 			std::cout << "square in invalid position in eval func\n";
 		}
 #endif	
-
+		/*
 		if (endGame) {
 			score += pawnTableEndgame[SQ64(square)];
 		}
 		else if (!endGame) {
 			score += pawnTableOpening[SQ64(square)];
 		}
+		*/
 
-
-		//score += pawnTableOpening[SQ64(square)];
-
+		score += pawnTable[SQ64(square)];
 
 
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("wP Iso:%s\n",printSquare(square));
-			//score += pawnIsolated;
-			whiteIsolated = true;
+			score += pawnIsolated;
+			//whiteIsolated = true;
 		}
-
-		if ((whiteDoubledMask[SQ64(square)] & position->bitBoardPawns[white]) != 0) {
-			if (whiteIsolated) {
-				//printf("wP Doubled Isolated:%s\n", printSquare(square));
-				score += pawnDoubledIsolated;
-				whiteIsolated = false;
-			}
-			else {
-				//printf("wP Doubled:%s\n", printSquare(square));
-				score += pawnDoubled;
-			}
-		}
-
+		/*
 		if (whiteIsolated) {
 			score += pawnIsolated;
 			whiteIsolated = false;
 		}
+		*/
 
 		if ((whitePassedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("wP Passed:%s\n",printSquare(square));
-			//score += pawnPassed[ranksBoard[square]];
-			whitePassed = true;
+			score += pawnPassed[ranksBoard[square]];
+			//whitePassed = true;
 		}
 
-		if ((whiteConnectedMask[SQ64(square)] & position->bitBoardPawns[white]) != 0) {
-			if (whitePassed) {
-				//printf("wP Connected Passed:%s\n",printSquare(square));
-				score += pawnConnectedPassed[ranksBoard[square]];
-				whitePassed = false;
-			}
-			else {
-				//printf("wP Connected:%s\n", printSquare(square));
-				score += pawnConnected[ranksBoard[square]];
-			}
-		}
-
+		/*
 		if (whitePassed) {
 			//printf("wP Passed:%s\n",printSquare(square));
 			score += pawnPassed[ranksBoard[square]];
 			whitePassed = false;
 		}
+		*/
 
 	}
 
@@ -239,63 +224,45 @@ int evaluatePosition(const boardStructure* position) {
 			std::cout << "square in invalid position in eval func\n";
 		}
 #endif	
-
+		/*
 		if (endGame) {
 			score -= pawnTableEndgame[MIRROR64(SQ64(square))];
 		}
 		else {
 			score -= pawnTableOpening[MIRROR64(SQ64(square))];
 		}
+		*/
 
-		//score -= pawnTableOpening[SQ64(square)];
+		score -= pawnTable[MIRROR64(SQ64(square))];
 
 
 		if ((isolatedMask[SQ64(square)] & position->bitBoardPawns[black]) == 0) {
 			//printf("bP Iso:%s\n",printSquare(square));
-			//score -= pawnIsolated;
-			blackIsolated = true;
+			score -= pawnIsolated;
+			//blackIsolated = true;
 		}
 
-		if ((blackDoubledMask[SQ64(square)] & position->bitBoardPawns[black]) != 0) {
-			if (blackIsolated) {
-				//printf("bP Doubled Isolated:%s\n", printSquare(square));
-				score -= pawnDoubledIsolated;
-				blackIsolated = false;
-			}
-			else {
-				score -= pawnDoubled;
-			}
-		}
-
+		/*
 		if (blackIsolated) {
 			score -= pawnIsolated;
 			blackIsolated = false;
 		}
+		*/
 
 
 		if ((blackPassedMask[SQ64(square)] & position->bitBoardPawns[white]) == 0) {
 			//printf("bP Passed:%s\n",printSquare(square));
-			//score -= pawnPassed[7 - ranksBoard[square]];
-			blackPassed = true;
+			score -= pawnPassed[7 - ranksBoard[square]];
+			//blackPassed = true;
 		}
 
-		if ((blackConnectedMask[SQ64(square)] & position->bitBoardPawns[black]) != 0) {
-			if (blackPassed) {
-				//printf("bP Connected Passed:%s\n", printSquare(square));
-				score -= pawnConnectedPassed[7 - ranksBoard[square]];
-				blackPassed = false;
-			}
-			else {
-				//printf("bP Connected:%s\n", printSquare(square));
-				score -= pawnConnected[7 - ranksBoard[square]];
-			}
-		}
-
+		/*
 		if (blackPassed) {
 			//printf("bP Passed:%s\n",printSquare(square));
 			score -= pawnPassed[7 - ranksBoard[square]];
 			blackPassed = false;
 		}
+		*/
 
 	}
 

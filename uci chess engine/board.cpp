@@ -30,22 +30,35 @@ int castlePermSheet[120] = {
 	15, 15, 15, 15, 15, 15, 15, 15, 15, 15
 };
 
-int numberOfDirections[13] = { 0, 8, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8 };
+const int numberOfDirections[13] = { 0, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8, 8 };
 
 int pieceDirection[13][8] = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0 }, //empty
-	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
 	{ 0, 0, 0, 0, 0, 0, 0, 0 } , //wp
 	{ -8, -19,	-21, -12, 8, 19, 21, 12 }, //wn
 	{ -9, -11, 11, 9, 0, 0, 0, 0 } ,//wb
 	{ -1, -10,	1, 10, 0, 0, 0, 0 },//wr
 	{ -1, -10,	1, 10, -9, -11, 11, 9 },//wq
-	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bk
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }, //wk
 	{ 0, 0, 0, 0, 0, 0, 0, 0 },//bp
 	{ -8, -19,	-21, -12, 8, 19, 21, 12 },//bn
 	{ -9, -11, 11, 9, 0, 0, 0, 0 },//bb
 	{ -1, -10,	1, 10, 0, 0, 0, 0 },//br
-	{ -1, -10,	1, 10, -9, -11, 11, 9 }//bq
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },//bq
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }//bk
+};
+
+u64 avoidWrap[8] =
+{
+   0xfefefefefefefe00, //north east
+   0xfefefefefefefefe, //east
+   0x00fefefefefefefe, //south east
+   0x00ffffffffffffff, //south
+   0x007f7f7f7f7f7f7f, //south west
+   0x7f7f7f7f7f7f7f7f, //west
+   0x7f7f7f7f7f7f7f00, //north west
+   0xffffffffffffff00, //north
+
 };
 
 int filesBoard[BRD_SQ_NUM];
@@ -54,36 +67,31 @@ int ranksBoard[BRD_SQ_NUM];
 int sq120ToSq64[BRD_SQ_NUM];
 int sq64ToSq120[64];
 
-bool normalPiece[13] = { true, false, false, true, true, true, true, true, false, true, true, true, true };
-bool majorPiece[13] = { false, true, false, false, false, true, true, true, false, false, false, true, true };
-bool minorPiece[13] = { false, false, false, true, true, false, false, false, false, true, true, false, false };
-int pieceColor[13] = { none, white, white, white, white, white, white, black, black, black, black, black, black };
-int pieceValue[13] = { 0, 100000, 100, 300, 315, 500, 900, 100000, 100, 300, 315, 500, 900 };
+bool normalPiece[13] = { false, false, true, true, true, true, true, false, true, true, true, true, true };
+bool majorPiece[13] =  { false, false, false, false, true, true, true, false, false, false, true, true, true };
+bool minorPiece[13] =  { false, false, true, true, false, false, false, false, true, true, false, false, false };
+int pieceColor[13] =   { none, white, white, white, white, white, white, black, black, black, black, black, black };
+int pieceValue[13] =   { 0, 100, 325, 325, 550, 1000, 20000, 100, 325, 325, 550, 1000, 20000 };
 
 int knightDirection[8] = { -8, -19,	-21, -12, 8, 19, 21, 12 };
-int rookDirection[4] = { -1, -10,	1, 10 };
-int bishopDirection[8] = { -9, -11, 11, 9 };
-int kingDirection[8] = { -1, -10,	1, 10, -9, -11, 11, 9 };
-//							  empty  wk    wp     wn     wb     wr     wq     bk     bp    bn     bb    br      bq
-bool isPiecePawn[13] = { false, false, true, false, false, false, false, false, true, false, false, false, false };
-bool isPieceKnight[13] = { false, false, false, true, false, false, false, false, false, true, false, false, false };
-bool isPieceKing[13] = { false, true, false, false, false, false, false, true, false, false, false, false, false };
-bool isPieceRookQueen[13] = { false, false, false, false, false, true, true, false, false, false, false, true, true };
-bool isPieceBishopQueen[13] = { false, false, false, false, true, false, true, false, false, false, true, false, true };
-bool pieceSlides[13] = { false, false, false, false, true, true, true, false, false, false, true, true, true };
+int rookDirection[4] =   { -1, -10,	1, 10 };
+int bishopDirection[4] = { -9, -11, 11, 9 };
+int kingDirection[8] =   { -1, -10,	1, 10, -9, -11, 11, 9 };
 
-char pieceCharacter[14] = ".KPNBRQkpnbrq";
+bool isPiecePawn[13] =        { false, true, false, false, false, false, false, true, false, false, false, false, false };
+bool isPieceKnight[13] =      { false, false, true, false, false, false, false, false, true, false, false, false, false };
+bool isPieceKing[13] =        { false, false, false, false, false, false, true, false, false, false, false, false, true};
+bool isPieceRookQueen[13] =   { false, false, false, false, true, true, false, false, false, false, true, true, false};
+bool isPieceBishopQueen[13] = { false, false, false, true, false , true, false, false, false, true, false, true, false };
+bool pieceSlides[13] =        { false, false, false , false, false, true, false, false, false, true, true, true, false};
+
+char pieceCharacter[14] = ".PNBRQKpnbrqk";
 char sideCharacter[4] = "wb-";
 char rankCharacter[9] = "12345678";
 char fileCharacter[9] = "abcdefgh";
 
 char printCastle;
 
-int loopSlidingPiece[8] = { wB, wR, wQ, 0, bB, bR, bQ, 0 };
-int loopSlidingIndex[2] = { 0, 4 };
-
-int loopNonSlidingIndex[2] = { 0, 3 };
-int loopNonSlidingPiece[6] = { wN, wK, 0, bN, bK };
 
 bool squareIs120(const int square) {
 	return (square >= 0 && square < 120);
@@ -361,16 +369,19 @@ void resetBoard(boardStructure* position) {
 
 		position->material[i] = 0;
 	}
+
 	for (i = 0; i < 3; i++) {
 
-		position->bitBoardKings[i] = 0ULL;
 		position->bitBoardPawns[i] = 0ULL;
+		
+		/*
+		position->bitBoardKings[i] = 0ULL;
 		position->bitBoardBishops[i] = 0ULL;
 		position->bitBoardKnights[i] = 0ULL;
 		position->bitBoardRooks[i] = 0ULL;
 		position->bitBoardQueens[i] = 0ULL;
-
-
+		*/
+		
 
 	}
 
@@ -437,3 +448,4 @@ void mirrorBoard(boardStructure* position) {
 
 	//ASSERT(CheckBoard(pos));
 }
+

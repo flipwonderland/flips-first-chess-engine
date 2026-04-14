@@ -125,13 +125,15 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Bscmake>
+      <AdditionalOptions>-o3 %(AdditionalOptions)</AdditionalOptions>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bitboards.cpp" />
     <ClCompile Include="board.cpp" />
     <ClCompile Include="eval.cpp" />
     <ClCompile Include="fen.cpp" />
-    <ClCompile Include="minmax.cpp" />
     <ClCompile Include="misc.cpp" />
     <ClCompile Include="perft.cpp" />
     <ClCompile Include="hashkey.cpp" />

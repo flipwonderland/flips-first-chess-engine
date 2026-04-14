@@ -2,6 +2,51 @@
 
 #include <iostream>
 
+
+const int loopSlidingPiece[8] = {
+	 wB, wR, wQ, 0, bB, bR, bQ, 0
+};
+
+const int loopNonSlidingPiece[6] = {
+	 wN, wK, 0, bN, bK, 0
+};
+
+const int loopSlidingIndex[2] = { 0, 4 };
+const int loopNonSlidingIndex[2] = { 0, 3 };
+
+
+const int pieceDirectory[13][8] = {
+	{ 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 0, 0, 0, 0, 0, 0 },
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 },
+	{ -9, -11, 11, 9, 0, 0, 0, 0 },
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },
+	{ 0, 0, 0, 0, 0, 0, 0 },
+	{ -8, -19,	-21, -12, 8, 19, 21, 12 },
+	{ -9, -11, 11, 9, 0, 0, 0, 0 },
+	{ -1, -10,	1, 10, 0, 0, 0, 0 },
+	{ -1, -10,	1, 10, -9, -11, 11, 9 },
+	{ -1, -10,	1, 10, -9, -11, 11, 9 }
+};
+
+const int numberOfDirections[13] = { 0, 0, 8, 4, 4, 8, 8, 0, 8, 4, 4, 8, 8 };
+
+const int victimScore[13] = { 0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600 };
+static int MVV_LVAScores[13][13];
+
+
+void initializeMVVLVA() {
+	int attacker;
+	int victim;
+	for (attacker = wP; attacker <= bK; ++attacker) {
+		for (victim = wP; victim <= bK; ++victim) {
+			MVV_LVAScores[victim][attacker] = victimScore[victim] + 6 - (victimScore[attacker] / 100);
+		}
+	}
+}
+
 bool squareAttacked(const int square, const int side, const boardStructure* position) { //marker here to hunt for bugs
 
 	int piece;
@@ -136,7 +181,7 @@ static void addCaptureMove(const boardStructure* position, int move, moveListStr
 #endif
 
 	list->moves[list->moveCount].move = move;
-	list->moves[list->moveCount].score = mvvLvaScores[CAPTURED(move)][position->pieces[FROMSQ(move)]] + 1000000;
+	list->moves[list->moveCount].score =  MVV_LVAScores[CAPTURED(move)][position->pieces[FROMSQ(move)]] + 1000000;
 	list->moveCount++;
 
 }
@@ -333,7 +378,7 @@ void generateAllCaptures(const boardStructure* position, moveListStructure* list
 		}
 	}
 
-	/* Loop for slide pieces */
+	
 	pieceIndex = loopSlidingIndex[side];
 	piece = loopSlidingPiece[pieceIndex++];
 	while (piece != 0) {
@@ -414,8 +459,8 @@ void generateAllMoves(const boardStructure* position, moveListStructure* list) {
 	int pieceNumber = 0;
 
 	int direction = 0;
-	int index; //wow I'm actually spelling it out I'm ashamed
-	int pieceIndex;
+	int index = 0; //wow I'm actually spelling it out I'm ashamed
+	int pieceIndex = 0;
 
 	if (side == white) {
 

@@ -64,26 +64,6 @@ void initializeHashKeys() {
 }
 
 
-int mvvLvaScores[13][13];
-
-void initilizeMvvLva() { //most valuable victim, least valuable attacker
-	int attacker;
-	int victim;
-	for (attacker = wK; attacker <= bQ; attacker++) {
-		for (victim = wK; victim <= bQ; victim++) {
-			mvvLvaScores[victim][attacker] = victimScore[victim] + 6 - (victimScore[attacker] / 100);
-		}
-	}
-	/*
-		for (attacker = wK; attacker <= bQ; attacker++) {
-			for (victim = wK; victim <= bQ; victim++) {
-				printf("%c x %c = %d\n", m_pieceCharacter[attacker], m_pieceCharacter[victim], mvvLvaScores[victim][attacker]);
-			}
-		}
-	*/
-
-}
-
 static void initializeFilesAndRanksBoard() {
 
 	int i;
@@ -279,10 +259,12 @@ u64 blackPassedMask[64];
 u64 whitePassedMask[64];
 u64 isolatedMask[64];
 
+/*
 u64 whiteConnectedMask[64];
 u64 blackConnectedMask[64];
 u64 whiteDoubledMask[64];
 u64 blackDoubledMask[64];
+*/
 
 void initializeEvaluationMasks() {
 	int square;
@@ -307,11 +289,12 @@ void initializeEvaluationMasks() {
 		isolatedMask[square] = 0ULL;
 		whitePassedMask[square] = 0ULL;
 		blackPassedMask[square] = 0ULL;
-
+		/*
 		whiteConnectedMask[square] = 0ULL;
 		blackConnectedMask[square] = 0ULL;
 		whiteDoubledMask[square] = 0ULL;
 		blackDoubledMask[square] = 0ULL;
+		*/
 	}
 
 	for (square = 0; square < 64; square++) {
@@ -319,14 +302,14 @@ void initializeEvaluationMasks() {
 
 		while (tempSquare < 64) {
 			whitePassedMask[square] |= (1ULL << tempSquare);
-			whiteDoubledMask[square] |= (1ULL << tempSquare);
+			//whiteDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare += 8;
 		}
 
 		tempSquare = square - 8;
 		while (tempSquare >= 0) {
 			blackPassedMask[square] |= (1ULL << tempSquare);
-			blackDoubledMask[square] |= (1ULL << tempSquare);
+			//blackDoubledMask[square] |= (1ULL << tempSquare);
 			tempSquare -= 8;
 		}
 
@@ -364,17 +347,17 @@ void initializeEvaluationMasks() {
 
 		if (file != 7) {
 			tempSquare = square + 9;
-			blackConnectedMask[square] |= (1ULL << tempSquare);
+			//blackConnectedMask[square] |= (1ULL << tempSquare);
 			tempSquare = square - 7;
-			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			//whiteConnectedMask[square] |= (1ULL << tempSquare);
 
 		}
 
 		if (file != 0) {
 			tempSquare = square + 7;
-			blackConnectedMask[square] |= (1ULL << tempSquare);
+			//blackConnectedMask[square] |= (1ULL << tempSquare);
 			tempSquare = square - 9;
-			whiteConnectedMask[square] |= (1ULL << tempSquare);
+			//whiteConnectedMask[square] |= (1ULL << tempSquare);
 
 		}
 	}
@@ -441,7 +424,7 @@ void initializeHashTable(hashTableStructure* table, const int megabytes) {
 
 	table->pTable = (hashEntryStructure*)malloc(table->numberOfEntries * sizeof(hashEntryStructure));
 	if (table->pTable == NULL) {
-		std::cout << "Hash Allocation Failed, trying " << megabytes / 2 <<  " mega bytes...\n";
+		std::cout << "Hash Allocation Failed, trying " << megabytes / 2 <<  " megabytes...\n";
 		initializeHashTable(table, megabytes / 2);
 	}
 	else {
@@ -459,6 +442,6 @@ void initializeAll() {
 	initializeSquare120ToSquare64();
 	initializeBitMasks();
 	initializeHashKeys();
-	initilizeMvvLva();
+	initializeMVVLVA();
 
 }

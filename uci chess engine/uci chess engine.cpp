@@ -32,7 +32,17 @@ int main(int argc, char* argv[])
 	searchInfoStructure info[1];
 	info->quit = false;
 	info->stopped = false;
+	info->threadNumber = 1;
+	int threadsSet = 1;
 	//moveListStructure list[1];
+
+	parsePosition("position startpos\n", currentBoard);
+
+	/*
+	tempHashTest("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+	tempHashTest("r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1");
+	exit(0);
+	*/
 
 	do {
 		std::string input;
@@ -41,7 +51,7 @@ int main(int argc, char* argv[])
 		std::string command = inputParser(input, 0);
 
 
-		if (command == "uci") {//should turn this into a switch
+		if (command == "uci") {
 			uci = true;
 			//clearGameState();
 			cout << "id name flipgine" << "\n";
@@ -52,13 +62,12 @@ int main(int argc, char* argv[])
 
 		}
 		else if (command == "isready") {
-			//see if it's ready to run and then
 			if (inputParser(input, 1) == "hi") cout << "I see you! \n";
 			cout << "readyok" << "\n";
 		}
-		else if (command == "setoption")  {//gotta fix this, this is 2 tokens in one
-			if (inputParser(input, 3) == "hash") {
-				hashTableMegabytes = std::stoi(inputParser(input, 3)); //watch this
+		else if (command == "setoption")  {
+			if (inputParser(input, 1) == "hash") {
+				hashTableMegabytes = std::stoi(inputParser(input, 2));
 				if (hashTableMegabytes < 4)
 					hashTableMegabytes = 4;
 
@@ -66,14 +75,19 @@ int main(int argc, char* argv[])
 				initializeHashTable(hashTable, hashTableMegabytes);
 
 			}
+			if (inputParser(input, 1) == "threads") {
+				int threadsSet = std::stoi(inputParser(input, 2));
+				info->threadNumber = threadsSet;
+				cout << "set threads to: " << threadsSet << "\n";
+			}
 		}
 		else if (command == "register") {
 			//idk if I'm gonna need this one actually
 		}
 		else if (command == "ucinewgame") {
-			clearHashTable(hashTable); //this might create unexpected behavior if the gui does not send this every time
+			clearHashTable(hashTable); //this might create unexpected behavior if the gui does not send this every time (what?)
 			parsePosition("position startpos\n", currentBoard);
-			cout << "new game ready to be loaded!" << "\n";
+			//cout << "new game ready to be loaded!" << "\n";
 		}
 		else if (command == "position") { // position [fen | startpos]  moves  .... 
 			parsePosition(input, currentBoard);
@@ -82,8 +96,8 @@ int main(int argc, char* argv[])
 			parseGo(input, info, currentBoard, hashTable);
 		}
 		else if (command == "run") {
-			parseFen(STARTFEN, currentBoard);
-			parseGo("go infinite", info, currentBoard, hashTable);
+			parseFen(LCT_1, currentBoard);
+			parseGo("go depth 12", info, currentBoard, hashTable);
 		}
 		else if (command == "ponderhit") {
 
@@ -98,6 +112,8 @@ int main(int argc, char* argv[])
 		}
 		else if (command == "legalCheck") {
 			if (boardLoaded) {
+
+
 			}
 			else {
 				cout << "board is not loaded!" << "\n";

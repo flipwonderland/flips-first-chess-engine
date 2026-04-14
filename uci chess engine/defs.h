@@ -13,10 +13,13 @@
 //#define MAX_GAME_MOVES 17697
 //this would be better, I'd run into issues if someone played a longer game which is possible but I'm gonna save on ram and do this instead
 #define MAXPOSITIONMOVES 218 // this is the max number of moves that we would expect to be in a single position
-#define MAXDEPTH 64
+#define MAXDEPTH 99
+#define MAXTHREADS 32
 #define DRAW 0
-#define INFINITEC 30000
-#define ISMATE (INFINITEC - MAXDEPTH)
+
+#define INF_BOUND 32000
+#define AB_BOUND 30000
+#define ISMATE (AB_BOUND - MAXDEPTH)
 #define INTFINITE 2147483647
 
 #define FR2SQ(f, r) ((21 + (f)) + ((r) * 10))
@@ -84,12 +87,18 @@
 #define WAC1 "2rr3k/pp3pp1/1nnqbN1p/3pN3/2pP4/2P3Q1/PPB4P/R4RK1 w - -"
 #define WAC2 "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"
 #define CURRENTTESTFEN "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/P1N2Q1p/1PPBBPPP/R3K2R b KQkq - 0 1"
+#define FINE_70 "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - -"
+#define LCT_1 "r3kb1r/3n1pp1/p6p/2pPp2q/Pp2N3/3B2PP/1PQ2P2/R3K2R w KQkq -"
 
 enum { HFNONE, HFALPHA, HFBETA, HFEXACT };
 
+/*
 enum {
 	empty, wK, wP, wN, wB, wR, wQ, bK, bP, bN, bB, bR, bQ
 };
+*/
+
+enum { empty, wP, wN, wB, wR, wQ, wK, bP, bN, bB, bR, bQ, bK  };
 
 enum {
 	fileA, fileB, fileC, fileD, fileE, fileF, fileG, fileH, fileNone
@@ -125,7 +134,7 @@ enum {
 typedef struct {
 
 	int move; //this move int is exactly what I was doing with my engine before I started following this series
-	int score;//not exactly eval from what I'm aware
+	int score; //the score of the move is how fast it'll get picked in the ab search
 
 } moveStructure;
 
@@ -140,13 +149,16 @@ typedef struct {
 
 
 typedef struct {
-
+	/*
 	u64 positionKey;
 	int move;
 	int score;
 	int depth;
 	int flags;
+	*/
 	int age;
+	u64 smp_key;
+	u64 smp_data;
 
 } hashEntryStructure;
 
@@ -179,13 +191,15 @@ typedef struct {
 
 	int kingSquare[2];
 
-	u64 bitBoardKings[3];
 	u64 bitBoardPawns[3];
+	/*
+	u64 bitBoardKings[3];
 	u64 bitBoardKnights[3];
 	u64 bitBoardBishops[3];
 	u64 bitBoardRooks[3];
 	u64 bitBoardQueens[3];
-
+	*/
+	
 	int material[2];
 
 	int side;
@@ -236,6 +250,8 @@ typedef struct {
 	float fhf;
 	int nullCut;
 
+	int threadNumber;
+
 
 } searchInfoStructure;
 
@@ -247,12 +263,26 @@ typedef struct {
 
 } searchThreadDataStructure;
 
+typedef struct {
+
+	boardStructure* position;
+	searchInfoStructure* info;
+	hashTableStructure* ttable;
+
+	int threadNumber;
+	int depth;
+	int bestMove;
+	int ponderMove;
+
+} searchWorkerDataStructure;
+
 //IMPORTANT do not lose lol
 extern hashTableStructure hashTable[1];
 
+extern u64 avoidWrap[8];
+
 extern int filesBoard[BRD_SQ_NUM];
 extern int ranksBoard[BRD_SQ_NUM];
-
 
 extern bool normalPiece[13];
 extern bool majorPiece[13];
@@ -262,7 +292,7 @@ extern int pieceValue[13];
 
 extern int knightDirection[8];
 extern int rookDirection[4];
-extern int bishopDirection[8];
+extern int bishopDirection[4];
 extern int kingDirection[8];
 
 extern bool isPiecePawn[13];
@@ -279,11 +309,6 @@ extern char fileCharacter[9];
 
 extern char printCastle;
 
-extern int loopSlidingPiece[8];
-extern int loopSlidingIndex[2];
-
-extern int loopNonSlidingPiece[6];
-extern int loopNonSlidingIndex[2];
 
 extern int pieceDirection[13][8];
 
@@ -292,7 +317,6 @@ extern int pieceDirection[13][8];
 { -9, -11, 11, 9, 0, 0, 0, 0 } b
 { -1, -10,	1, 10, 0, 0, 0, 0 } r
 */
-extern int numberOfDirections[13];
 
 extern int castlePermSheet[120];
 
@@ -306,20 +330,18 @@ extern int bitTable[64];
 extern u64 blackPassedMask[64];
 extern u64 whitePassedMask[64];
 extern u64 isolatedMask[64];
-
+/*
 extern u64 whiteConnectedMask[64];
 extern u64 blackConnectedMask[64];
 extern u64 whiteDoubledMask[64];
 extern u64 blackDoubledMask[64];
+*/
 
 extern u64 fileBBMask[8];
 extern u64 rankBBMask[8];
 
 extern bool moveTableDiagonal[64][64];
 extern bool moveTableCardinal[64][64];
-
-extern int victimScore[13];
-extern int mvvLvaScores[13][13];
 
 extern u64 pieceKeys[13][BRD_SQ_NUM];
 extern u64 sideKey;
@@ -358,8 +380,6 @@ extern void parseFen(const char* fen, boardStructure* position);
 extern int parseMove(const char* ptrChar, boardStructure* position);
 extern void parsePosition(std::string lineInStr, boardStructure* position);
 
-//minmax
-extern int alphaBeta(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int doNull);
 
 //misc
 extern int getTimeMs();
@@ -371,10 +391,12 @@ extern void perftTest(int depth, boardStructure* position);
 extern u64 generatePositionKey(const boardStructure* position);
 
 //hashtable
+//extern void tempHashTest(const char* fen);
 extern void clearHashTable(hashTableStructure* table);
 extern bool probeHashEntry(boardStructure* position, hashTableStructure* table, int* move, int* score, int alpha, int beta, int depth);
 extern void storeHashEntry(boardStructure* position, hashTableStructure* table, const int move, int score, const int flags, const int depth);
 extern int probePVMove(const boardStructure* position, const hashTableStructure* table);
+extern int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table);
 
 //init
 extern void initializeHashTable(hashTableStructure* table, const int megabytes);
@@ -385,6 +407,7 @@ extern void parseGo(std::string line3, searchInfoStructure* info, boardStructure
 extern std::string inputParser(std::string input, const int desiredToken);
 
 //movegen
+extern void initializeMVVLVA();
 extern bool squareAttacked(const int square, const int side, const boardStructure* position);
 extern void generateAllMoves(const boardStructure* position, moveListStructure* list);
 extern void generateAllCaptures(const boardStructure* position, moveListStructure* list);

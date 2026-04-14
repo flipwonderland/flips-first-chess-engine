@@ -6,7 +6,7 @@ void testMoveBoard(int moveTable, int boardArray) {
 	if (moveTable == 0) {
 		for (int rank = 7; rank >= 0; rank--) {
 			for (int file = 7; file >= 0; file--) {
-				place = (rank * 8) + file; //what I think is happening is I keep switching between the bottom left and the top left being 0
+				place = (rank * 8) + file; 
 				if (moveTableDiagonal[boardArray][place])
 					std::cout << "1";
 				else

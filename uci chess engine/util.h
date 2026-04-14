@@ -1,6 +1,8 @@
 //#define DEBUG
 #define PERFORMANCEMODE
 
+//#define VERBOSE_OUTPUT
+
 typedef char s8;
 typedef unsigned char u8;
 typedef short s16;
