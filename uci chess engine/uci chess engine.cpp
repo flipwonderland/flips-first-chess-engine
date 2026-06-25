@@ -123,6 +123,12 @@ int main(int argc, char* argv[])
 			int perftAmount = std::stoi((inputParser(input, 1)));
 			perftTest(perftAmount, currentBoard);
 		}
+		else if (command == "perftQ") {
+			quickPerftLib(currentBoard);
+		}
+		else if (command == "perftF") {
+			fullPerftLib(currentBoard);
+		}
 		else if (command == "d") {
 			printSquareBoard(currentBoard);
 		}

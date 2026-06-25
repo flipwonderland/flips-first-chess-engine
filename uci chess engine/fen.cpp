@@ -103,6 +103,7 @@ void parseFen(const char* fen, boardStructure* position) {
 		}
 		else {
 			std::cout << "error, side to move invalid\n";
+			std::cout << "side selected: " << *fen << "\n";
 		}
 
 		for (i = 0; i < 4; i++) {

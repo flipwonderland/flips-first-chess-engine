@@ -192,13 +192,13 @@ typedef struct {
 	int kingSquare[2];
 
 	u64 bitBoardPawns[3];
-	/*
+	
 	u64 bitBoardKings[3];
 	u64 bitBoardKnights[3];
 	u64 bitBoardBishops[3];
 	u64 bitBoardRooks[3];
 	u64 bitBoardQueens[3];
-	*/
+	
 	
 	int material[2];
 
@@ -386,6 +386,8 @@ extern int getTimeMs();
 
 //perft
 extern void perftTest(int depth, boardStructure* position);
+extern void quickPerftLib(boardStructure* position);
+extern void fullPerftLib(boardStructure* position);
 
 //hashkey
 extern u64 generatePositionKey(const boardStructure* position);

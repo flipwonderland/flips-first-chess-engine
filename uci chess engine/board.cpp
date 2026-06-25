@@ -160,7 +160,7 @@ void updateListsMaterial(boardStructure* position) {
 				SETBIT(position->bitBoardPawns[color], SQ64(square));
 				SETBIT(position->bitBoardPawns[none], SQ64(square));
 			}
-			/*
+		
 			if (piece == wK) {
 				SETBIT(position->bitBoardKnights[color], SQ64(square));
 				SETBIT(position->bitBoardKnights[none], SQ64(square));
@@ -193,7 +193,7 @@ void updateListsMaterial(boardStructure* position) {
 				SETBIT(position->bitBoardQueens[color], SQ64(square));
 				SETBIT(position->bitBoardQueens[none], SQ64(square));
 			}
-			*/
+			
 		}
 	}
 }
