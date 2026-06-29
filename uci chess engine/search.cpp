@@ -343,8 +343,7 @@ static void iterativeDeepen(searchWorkerDataStructure* workerData) {
 		if (workerData->threadNumber == 0) {
 			pvMoves = getPVLine(currentDepth, workerData->position, workerData->ttable);
 			workerData->bestMove = workerData->position->PVArray[0];
-			
-			//workerData->ponderMove = workerData->position->PVArray[1];
+			workerData->ponderMove = workerData->position->PVArray[1];
 
 			bool mate = false;
 			bool myMate = false;
@@ -410,7 +409,8 @@ int startWorkerThread(void* data) {
 	iterativeDeepen(workerData);
 	//printf("Thread:%d Ends depth %d\n", workerData->threadNumber, workerData->depth);
 	if (workerData->threadNumber == 0) {	
-		std::cout << "bestmove " << printMove(workerData->bestMove) <</* " ponder " << printMove(workerData->ponderMove) <<*/ std::endl;
+		std::cout << "bestmove " << printMove(workerData->bestMove);
+		std::cout << " ponder " << printMove(workerData->ponderMove) << std::endl; //the way the printmove is set up you can't change the move in the same line because it's const
 	}
 	delete(data);
 	return 0;
