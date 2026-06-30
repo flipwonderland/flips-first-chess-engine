@@ -144,14 +144,6 @@ static int quiescence(int alpha, int beta, int depth, boardStructure* position, 
 		checkUp(info);
 	}
 	*/
-
-	/*
-	int oldAlpha = alpha;
-	int bestMove = NOMOVE;
-	int bestScore = -AB_BOUND;
-	*/
-
-
 	info->nodes++;
 
 	if (isRepetition(position) || position->fiftyMove >= 100) {
@@ -200,11 +192,6 @@ static int quiescence(int alpha, int beta, int depth, boardStructure* position, 
 		*/
 
 		if (score > alpha) {
-			/*
-			bestScore = score;
-			bestMove = list->moves[moveNumber].move;
-			*/
-			alpha = score;
 			
 			if (score >= beta) {
 #ifdef VERBOSE_OUTPUT
@@ -212,23 +199,13 @@ static int quiescence(int alpha, int beta, int depth, boardStructure* position, 
 					info->fhf++;
 				}
 				info->fh++;
-#endif			
-				/*
-				storeHashEntry(position, table, bestMove, beta, HFBETA, depth);
-				*/
-
+#endif						
 				return beta;
 			}
+			alpha = score;
 		}
 	}
-	/*
-	if (alpha != oldAlpha) {
-		storeHashEntry(position, table, bestMove, bestScore, HFEXACT, depth);
-	}
-	else {
-		storeHashEntry(position, table, bestMove, alpha, HFALPHA, depth);
-	}
-	*/
+	
 
 	return alpha;
 }
