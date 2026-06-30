@@ -236,12 +236,11 @@ typedef struct {
 	int startTime;
 	int stopTime;
 	int depth;
-	int depthset;
 	int movesToGo;
 	bool timeSet;
 
 	bool infinite;
-	long nodes;
+	u64 nodes;
 
 	bool quit;
 	bool stopped;
@@ -252,6 +251,7 @@ typedef struct {
 
 	int threadNumber;
 
+	bool printDepth;
 
 } searchInfoStructure;
 
@@ -431,6 +431,7 @@ extern bool isRepetition(const boardStructure* position);
 extern int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table);
 extern void searchPosition(boardStructure* position, searchInfoStructure* info, hashTableStructure* table);
 extern void joinSearchThread(searchInfoStructure* info);
+extern void quickBenchmark(boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int hashTableMegabytes);
 
 //tests
 extern void testMoveBoard(int moveTable, int boardArray);

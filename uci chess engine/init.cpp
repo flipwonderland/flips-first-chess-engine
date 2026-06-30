@@ -427,10 +427,12 @@ void initializeHashTable(hashTableStructure* table, const int megabytes) {
 		std::cout << "Hash Allocation Failed, trying " << megabytes / 2 <<  " megabytes...\n";
 		initializeHashTable(table, megabytes / 2);
 	}
+	/*
 	else {
 		clearHashTable(table);
 		std::cout << "HashTable init complete with " << table->numberOfEntries << " entries\n";
 	}
+	*/
 
 }
 

@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 	using std::cout;
 	using std::cin;
 	cout << "gamer engine made by flipwonderland" << "\n";
-	
+
 	initializeAll();
 
 	int hashTableMegabytes = 1024;
@@ -34,6 +34,7 @@ int main(int argc, char* argv[])
 	info->stopped = false;
 	info->threadNumber = 1;
 	int threadsSet = 1;
+
 	//moveListStructure list[1];
 
 	parsePosition("position startpos\n", currentBoard);
@@ -129,16 +130,27 @@ int main(int argc, char* argv[])
 		else if (command == "perftF") {
 			fullPerftLib(currentBoard);
 		}
+		else if (command == "benchmarkQ") {
+			quickBenchmark(currentBoard, info, hashTable, hashTableMegabytes);
+		}
+		else if (command == "benchmarkF") {
+
+		}
 		else if (command == "d") {
 			printSquareBoard(currentBoard);
 		}
 		else if (command == "mirror") {
 			int firstEval = evaluatePosition(currentBoard);
 			mirrorBoard(currentBoard);
+			bool testFailed = false;
 			if (firstEval != evaluatePosition(currentBoard)) {
 				cout << "mirror test failed\n";
 				cout << "start eval: " << firstEval << "\n";
 				cout << "second eval: " << evaluatePosition(currentBoard) << "\n";
+				testFailed = true;
+			}
+			if (!testFailed) {
+				cout << "mirror test successful!\n";
 			}
 			mirrorBoard(currentBoard);
 		}
