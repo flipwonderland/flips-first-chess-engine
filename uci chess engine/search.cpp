@@ -132,7 +132,7 @@ static void pickNextMove(int moveNumber, moveListStructure* list) {
 	list->moves[bestNumber] = temp;
 }
 
-static int quiescence(int alpha, int beta, boardStructure* position, searchInfoStructure* info) {
+static int quiescence(int alpha, int beta, int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table) {
 
 	/*
 	ASSERT(CheckBoard(position));
@@ -144,6 +144,13 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 		checkUp(info);
 	}
 	*/
+
+	/*
+	int oldAlpha = alpha;
+	int bestMove = NOMOVE;
+	int bestScore = -AB_BOUND;
+	*/
+
 
 	info->nodes++;
 
@@ -183,28 +190,45 @@ static int quiescence(int alpha, int beta, boardStructure* position, searchInfoS
 		}
 
 		legal++;
-		score = -quiescence(-beta, -alpha, position, info);
+		score = -quiescence(-beta, -alpha, depth, position, info, table);
 		takeMove(position);
 
+		/*
 		if (info->stopped == true) {
 			return 0;
 		}
+		*/
 
 		if (score > alpha) {
+			/*
+			bestScore = score;
+			bestMove = list->moves[moveNumber].move;
+			*/
+			alpha = score;
+			
 			if (score >= beta) {
 #ifdef VERBOSE_OUTPUT
 				if (legal == 1) {
 					info->fhf++;
 				}
 				info->fh++;
-#endif
+#endif			
+				/*
+				storeHashEntry(position, table, bestMove, beta, HFBETA, depth);
+				*/
+
 				return beta;
 			}
-			alpha = score;
 		}
 	}
-
-	//ASSERT(alpha >= OldAlpha);
+	/*
+	if (alpha != oldAlpha) {
+		storeHashEntry(position, table, bestMove, bestScore, HFEXACT, depth);
+	}
+	else {
+		storeHashEntry(position, table, bestMove, alpha, HFALPHA, depth);
+	}
+	*/
 
 	return alpha;
 }
@@ -217,6 +241,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	ASSERT(depth >= 0);
 	*/
 
+
 	if ((info->nodes & 2047) == 0) {
 		checkUp(info);
 	}
@@ -224,7 +249,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	info->nodes++;
 
 	if (depth <= 0) {
-		return quiescence(alpha, beta, position, info);
+		return quiescence(alpha, beta, depth, position, info, table);
 	}
 
 	if ((isRepetition(position) || position->fiftyMove >= 100) && position->ply) {
@@ -252,6 +277,7 @@ static int alphaBeta(int alpha, int beta, int depth, boardStructure* position, s
 	}
 
 	if (doNull && !inCheck && position->ply && (position->normalPieces[position->side] > 1) && depth >= 4) {
+		
 		makeNullMove(position);
 		score = -alphaBeta(-beta, -beta + 1, depth - 4, position, info, table, false);
 		takeNullMove(position);
@@ -625,12 +651,12 @@ void parseGo(std::string line3, searchInfoStructure* info, boardStructure* posit
 
 }
 
-static int internalBenchmarkSearch(int depth, searchInfoStructure* info, boardStructure* position, hashTableStructure* table, int hashTableMegabytes) {
+static int internalBenchmarkSearch(int depth, int hashSizeMegabytes, searchInfoStructure* info, boardStructure* position, hashTableStructure* table) {
 
 	internalClearForSearch(position, info, table);
 	//clear hash table so it doesn't already have the answer
 	table->pTable = NULL;
-	initializeHashTable(hashTable, hashTableMegabytes);
+	initializeHashTable(hashTable, hashSizeMegabytes);
 
 	searchWorkerDataStructure workerData[1];
 	workerData->position = position;
@@ -651,7 +677,7 @@ static int internalBenchmarkSearch(int depth, searchInfoStructure* info, boardSt
 	
 	//clear before and after
 	table->pTable = NULL;
-	initializeHashTable(hashTable, hashTableMegabytes);
+	initializeHashTable(hashTable, hashSizeMegabytes);
 
 	if ((getTimeMs() - timeStarted) > 0) {
 		return timeTaken;
@@ -663,36 +689,77 @@ static int internalBenchmarkSearch(int depth, searchInfoStructure* info, boardSt
 	
 }
 
-void quickBenchmark(boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int hashTableMegabytes) {
+void benchmark(int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table) {
 
-	int depth = 7;
+	int hashSize = 4;
+
 	int timesToSample = 5;
 	int timeToComplete = 0;
+	int totalTime = 0;
 
-	parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ", position);
+	const char fens[8][100] = {
+		"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ",
+		"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
+		//"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1",
+		"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1,",
+		"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+		//"r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
+		//"2rr3k / pp3pp1 / 1nnqbN1p / 3pN3 / 2pP4 / 2P3Q1 / PPB4P / R4RK1 w - -",
+		"r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1"
 
-	for (int i = 0; i < timesToSample; i++) {
-		int singleTest = 0;
-		singleTest = internalBenchmarkSearch(depth, info, position, table, hashTableMegabytes);
-		std::cout << "test " << i + 1 << " completed in " << singleTest << " ms\n";
+	};
+
+	for (int x = 0; x < 5; x++) {
+		timeToComplete = 0;
+		parseFen(fens[x], position);
+		for (int i = 0; i < timesToSample; i++) {
+			int singleTest = 0;
+			singleTest = internalBenchmarkSearch(depth, hashSize, info, position, table);
+#ifdef VERBOSE_OUTPUT
+		std::cout << "test " << i + 1 << " completed in " << singleTest << " ms" << std::endl;
+#endif
 		timeToComplete += singleTest;
+		totalTime += singleTest;
 
+		}
+
+	std::cout << "the average time to get to depth " << depth << " for #" << x + 1 << " is " << timeToComplete / timesToSample << " ms" << std::endl;
 	}
-	std::cout << "the average time to get to depth " << depth << " for startpos is " << timeToComplete / timesToSample << " ms\n";
 
-	depth = 7;
-	timesToSample = 5;
-	timeToComplete = 0;
-	parseFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", position);
+	int seconds = 0;
+	int minutes = 0;
+	int hours = 0;
+
+	if (totalTime > 999) {
+		seconds = totalTime / 1000;
+	}
+	if (seconds > 59) {
+		minutes = seconds / 60;
+	}
+	if (minutes > 59) {
+		hours = minutes / 60;
+	}
+
+	if (hours > 0) {
+		if (minutes < 10) {
+			if (seconds < 10) {
+				std::cout << "\ntest completed in " << hours << ":0" << minutes % 60 << ":0" << seconds % 60 << "." << totalTime % 1000 << "\n";
+			}
+			std::cout << "\ntest completed in " << hours << ":0" << minutes % 60 << ":" << seconds % 60 << "." << totalTime % 1000 << "\n";
+		}
+		if (seconds < 10) {
+			std::cout << "\ntest completed in " << hours << ":" << minutes % 60 << ":0" << seconds % 60 << "." << totalTime % 1000 << "\n";
+		}
+		std::cout << "\ntest completed in " << hours << ":" << minutes % 60 << ":" << seconds % 60 << "." << totalTime % 1000 << "\n";
+	}
+	else if (minutes > 0) {
+		if (seconds < 10) {
+			std::cout << "\ntest completed in " << minutes << ":0" << seconds % 60 << "." << totalTime % 1000 << "\n";
+		}
+		std::cout << "\ntest completed in " << minutes << ":" << seconds % 60 << "." << totalTime % 1000 << "\n";
+	}
+	else if (seconds > 0) {
+		std::cout << "\ntest completed in " << seconds << "." << totalTime % 1000 << "\n";
+	}
 	
-	for (int i = 0; i < timesToSample; i++) {
-		int singleTest = 0;
-		singleTest = internalBenchmarkSearch(depth, info, position, table, hashTableMegabytes);
-		std::cout << "test " << i + 1 << " completed in " << singleTest << " ms\n";
-		timeToComplete += singleTest;
-
-	}
-	std::cout << "the average time to get to depth " << depth << " for kiwipete is " << timeToComplete / timesToSample << " ms\n";
-
-
 }

@@ -431,7 +431,7 @@ extern bool isRepetition(const boardStructure* position);
 extern int getPVLine(const int depth, boardStructure* position, const hashTableStructure* table);
 extern void searchPosition(boardStructure* position, searchInfoStructure* info, hashTableStructure* table);
 extern void joinSearchThread(searchInfoStructure* info);
-extern void quickBenchmark(boardStructure* position, searchInfoStructure* info, hashTableStructure* table, int hashTableMegabytes);
+extern void benchmark(int depth, boardStructure* position, searchInfoStructure* info, hashTableStructure* table);
 
 //tests
 extern void testMoveBoard(int moveTable, int boardArray);

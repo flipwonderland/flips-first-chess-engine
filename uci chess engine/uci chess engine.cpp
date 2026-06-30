@@ -130,12 +130,11 @@ int main(int argc, char* argv[])
 		else if (command == "perftF") {
 			fullPerftLib(currentBoard);
 		}
-		else if (command == "benchmarkQ") {
-			quickBenchmark(currentBoard, info, hashTable, hashTableMegabytes);
+		else if (command == "bench") {
+			int depth = std::stoi((inputParser(input, 1)));
+			benchmark(depth, currentBoard, info, hashTable);
 		}
-		else if (command == "benchmarkF") {
-
-		}
+	
 		else if (command == "d") {
 			printSquareBoard(currentBoard);
 		}
